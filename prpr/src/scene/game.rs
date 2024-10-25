@@ -394,6 +394,7 @@ impl GameScene {
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
                 ui.text(self.judge.combo().to_string())
                     .pos(0., top + eps * 2. - (1. - p) * 0.4)
+                    //.pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
                     .color(Color { a: color.a * c.a, ..color })
                     .scale(scale)
@@ -902,9 +903,9 @@ impl Scene for GameScene {
         let counts = self.judge.counts();
         self.res.judge_line_color = if counts[2] + counts[3] == 0 {
             Color::from_hex(if counts[1] == 0 {
-                self.res.res_pack.info.color_perfect
+                self.res.res_pack.info.color_perfect_line
             } else {
-                self.res.res_pack.info.color_good
+                self.res.res_pack.info.color_good_line
             })
         } else {
             WHITE
