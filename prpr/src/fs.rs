@@ -251,6 +251,8 @@ fn info_from_kv<'a>(it: impl Iterator<Item = (&'a str, String)>, csv: bool) -> R
             warn!("global alpha is ignored");
             continue;
         }
+        //RPE160
+        let mut deprecate = String::new();
         *match key {
             "Name" => &mut info.name,
             "Music" | "Song" => &mut info.music,
@@ -260,14 +262,19 @@ fn info_from_kv<'a>(it: impl Iterator<Item = (&'a str, String)>, csv: bool) -> R
             "Illustrator" => &mut info.illustrator,
             "Artist" | "Composer" | "Musician" => &mut info.composer,
             "Charter" | "Designer" => &mut info.charter,
-            _ => bail!("Unknown key: {key}"),
+            //_ => bail!("Unknown key: {key}"),
+            "LastEditTime" => &mut deprecate,
+            "Length" => &mut deprecate,
+            "EditTime" => &mut deprecate,
+            _ => &mut deprecate,
         } = value;
     }
     Ok(info)
 }
 
 fn info_from_txt(text: &str) -> Result<ChartInfo> {
-    let mut it = text.lines().peekable();
+    // 跳过空行
+    let mut it = text.lines().filter(|it| {!it.is_empty()}).peekable();
     let first = it.next();
     if first != Some("#") && first != Some("\u{feff}#") {
         bail!("expected the first line to be #");
