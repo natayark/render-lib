@@ -151,7 +151,7 @@ macro_rules! reset {
         $self.bad_notes.clear();
         $self.judge.reset();
         $self.chart.reset();
-        $res.judge_line_color = Color::from_hex($res.res_pack.info.color_perfect);
+        $res.judge_line_color = Color::from_hex($res.res_pack.info.color_perfect_line);
         $self.music.pause()?;
         $self.music.seek_to(0.)?;
         $tm.speed = $res.config.speed as _;
