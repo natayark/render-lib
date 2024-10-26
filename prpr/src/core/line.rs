@@ -298,7 +298,7 @@ impl JudgeLine {
                         config.draw_below = false;
                     }
                     w if (100..1000).contains(&w) => {
-                        // config.appear_before = (w as f32 - 100.) / 10.;
+                        config.appear_before = (w as f32 - 100.) / 10.;
                     }
                     w if (1000..2000).contains(&w) => {
                         // TODO unsupported
