@@ -80,12 +80,12 @@ macro_rules! validate_events {
                 true
             }
         });
+        /*事件应当连续 官谱中可能有重叠事件所以不用管这个
         for i in 0..($pgr.len() - 1) {
             if $pgr[i].end_time != $pgr[i + 1].start_time {
-                // 事件应当连续
-                // ptl!(bail "event-not-contiguous");
+                 ptl!(bail "event-not-contiguous");
             }
-        }
+        }*/
         // if $pgr.last().unwrap().end_time <= 900000000.0 {
         // bail!("End time is not great enough ({})", $pgr.last().unwrap().end_time);
         // }
@@ -169,8 +169,9 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                     1 => NoteKind::Click,
                     2 => NoteKind::Drag,
                     3 => {
+                        let start_time = (pgr.time) * r;
                         let end_time = (pgr.time + pgr.hold_time) * r;
-                        height.set_time(end_time);
+                        height.set_time(start_time);
                         let end_height = height.now();
                         NoteKind::Hold { end_time, end_height }
                     }
