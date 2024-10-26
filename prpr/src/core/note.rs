@@ -136,7 +136,7 @@ impl Note {
             if res.time >= *at {
                 immediate_particle = true;  // 立即触发
                 *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;  // 更新触发时间
-                Some(if *perfect {
+                Some(if perfect {
                     res.res_pack.info.fx_perfect()
                 } else {
                     res.res_pack.info.fx_good()
