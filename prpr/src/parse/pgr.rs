@@ -82,7 +82,8 @@ macro_rules! validate_events {
         });
         for i in 0..($pgr.len() - 1) {
             if $pgr[i].end_time != $pgr[i + 1].start_time {
-                ptl!(bail "event-not-contiguous");
+                // 事件应当连续
+                // ptl!(bail "event-not-contiguous");
             }
         }
         // if $pgr.last().unwrap().end_time <= 900000000.0 {
