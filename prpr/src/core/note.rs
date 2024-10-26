@@ -175,14 +175,24 @@ impl Note {
         if matches!(self.judge, JudgeStatus::Judged) && !matches!(self.kind, NoteKind::Hold { .. }) {
             return;
         }
-        if config.appear_before.is_finite() {
+
+        //可能和Hold消失有关
+        if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
+            let beat = bpm_list.beat(self.time);
+            let time = bpm_list.time_beats(beat - config.appear_before);
+            if time > res.time {
+                return;
+            }
+        }
+        
+        /*if config.appear_before.is_finite() {
             // TODO optimize
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
-            /*if time > res.time {
+            if time > res.time {
                 return;
-            }*/
-        }
+            }
+        }*/
         if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
             return;
         }
@@ -201,6 +211,7 @@ impl Note {
         let height = self.height / res.aspect_ratio * spd;
 
         let base = height - line_height;
+        //可能和Hold消失有关
         if !config.draw_below
             && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
             && !matches!(self.kind, NoteKind::Hold { .. })
