@@ -171,7 +171,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                         let end_time = (pgr.time + pgr.hold_time) * r;
                         height.set_time(end_time);
                         //let end_height = height.now();
-                        let end_height = (pgr.hold_time) * r;
+                        let end_height = (pgr.time + pgr.hold_time) * r;
                         NoteKind::Hold { end_time, end_height }
                     }
                     4 => NoteKind::Flick,
