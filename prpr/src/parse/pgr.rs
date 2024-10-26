@@ -170,7 +170,8 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                     2 => NoteKind::Drag,
                     3 => {
                         let end_time = (pgr.time + pgr.hold_time) * r;
-                        height.set_time(end_time);
+                        speed.set_time(time);
+                        height.set_time(end_time * (pgr.speed / speed.now()) );
                         let end_height = height.now();
                         NoteKind::Hold { end_time, end_height }
                     }
@@ -196,7 +197,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
 }
 
 fn parse_judge_line(pgr: PgrJudgeLine, max_time: f32) -> Result<JudgeLine> {
-    let r = 60. / pgr.bpm / 32.;
+    let r = 60. / 32. / pgr.bpm;
     let (mut speed, mut height) = parse_speed_events(r, pgr.speed_events, max_time).context("Failed to parse speed events")?;
     let notes_above = parse_notes(r, pgr.notes_above, &mut speed, &mut height, true).context("Failed to parse notes above")?;
     let mut notes_below = parse_notes(r, pgr.notes_below, &mut speed, &mut height, false).context("Failed to parse notes below")?;
