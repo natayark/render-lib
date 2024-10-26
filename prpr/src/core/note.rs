@@ -179,9 +179,9 @@ impl Note {
             // TODO optimize
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
-            if time > res.time {
+            /*if time > res.time {
                 return;
-            }
+            }*/
         }
         if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
             return;
