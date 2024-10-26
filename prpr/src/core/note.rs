@@ -131,9 +131,18 @@ impl Note {
 
     pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32) {
         self.object.set_time(res.time);
+        let mut immediate_particle = false;
         if let Some(color) = if let JudgeStatus::Hold(perfect, at, ..) = &mut self.judge {
             if res.time > *at {
                 *at += HOLD_PARTICLE_INTERVAL / res.config.speed;
+                Some(if *perfect {
+                    res.res_pack.info.fx_perfect()
+                } else {
+                    res.res_pack.info.fx_good()
+                })
+            } else if res.time == *at {
+                // 立即触发hitfx
+                immediate_particle = true;
                 Some(if *perfect {
                     res.res_pack.info.fx_perfect()
                 } else {
@@ -149,6 +158,10 @@ impl Note {
             res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                 res.emit_at_origin(parent_rot + if self.above { 0. } else { 180. }, color)
             });
+            // 立即触发时跳过时间间隔
+            if immediate_particle {
+                *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;
+            }
         }
     }
 
