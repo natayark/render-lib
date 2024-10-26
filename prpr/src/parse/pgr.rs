@@ -180,7 +180,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                 speed: if pgr.kind == 3 {
                     speed.set_time(time);
                     //pgr.speed / speed.now()
-                    pgr.speed
+                    pgr.speed / pgr.speed
                 } else {
                     pgr.speed
                 },
