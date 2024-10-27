@@ -181,8 +181,8 @@ impl Note {
             return;
         }
 
-        if config.appear_before.is_finite() {
-        //if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
+        //if config.appear_before.is_finite() {
+        if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
             if time > res.time {

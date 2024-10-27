@@ -108,7 +108,12 @@ fn parse_speed_events(r: f32, mut pgr: Vec<PgrSpeedEvent>, max_time: f32) -> Res
     for kf in &mut kfs {
         kf.value /= HEIGHT_RATIO;
     }
-    Ok((AnimFloat::new(pgr.iter().map(|it| Keyframe::new(it.start_time * r, it.value, 0)).collect()), AnimFloat::new(kfs)))
+    Ok((
+        AnimFloat::new(pgr.iter().map(
+            |it| Keyframe::new(it.start_time * r, it.value, 0)
+        ).collect()), 
+        AnimFloat::new(kfs)
+    ))
 }
 
 fn parse_float_events(r: f32, mut pgr: Vec<PgrEvent>) -> Result<AnimFloat> {
@@ -170,10 +175,16 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                     2 => NoteKind::Drag,
                     3 => {
                         let end_time = (pgr.time + pgr.hold_time) * r;
+                        height.set_time(pgr.time * r);
+                        let start_height = height.now();
+                        let hold_start = pgr.time * pgr.speed * r / HEIGHT_RATIO;
+                        let hold_end = hold_start + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
+
                         height.set_time(end_time);
                         let end_height = height.now();
-
-                        //let end_height = (pgr.hold_time * HEIGHT_RATIO + pgr.time) * r;
+                        //let end_height = start_height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
+                        //  HoldTime * Speed / HEIGHT_RATIO
+                        println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", pgr.time * r, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, hold_start, HEIGHT_RATIO / pgr.hold_time * pgr.speed * r );
                         NoteKind::Hold { end_time, end_height }
                     }
                     4 => NoteKind::Flick,
