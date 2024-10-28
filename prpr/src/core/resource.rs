@@ -535,9 +535,9 @@ impl Resource {
     }
 
     pub fn emit_at_origin(&mut self, rotation: f32, color: Color) {
-        if !self.config.particle {
-            return;
-        }
+        //if !self.config.particle {
+        //    return;
+        //}
         let pt = self.world_to_screen(Point::default());
         self.emitter.emit_at(
             vec2(if self.config.flip_x() { -pt.x } else { pt.x }, -pt.y),
