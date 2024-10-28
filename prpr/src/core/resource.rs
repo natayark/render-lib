@@ -535,7 +535,15 @@ impl Resource {
     }
 
     pub fn emit_at_origin(&mut self, rotation: f32, color: Color) {
-        return;
+        if !self.config.particle {
+            return;
+        }
+        let pt = self.world_to_screen(Point::default());
+        self.emitter.emit_at(
+            vec2(if self.config.flip_x() { -pt.x } else { pt.x }, -pt.y),
+            if self.res_pack.info.hit_fx_rotate { rotation.to_radians() } else { 0. },
+            color,
+        );
     }
 
     pub fn update_size(&mut self, vp: (i32, i32, i32, i32)) -> bool {
@@ -543,9 +551,9 @@ impl Resource {
             return false;
         }
         self.last_vp = vp;
-        if !self.no_effect || self.config.sample_count != 1 {
+        /*if !self.no_effect || self.config.sample_count != 1 {
             self.chart_target = Some(MSRenderTarget::new((vp.2 as u32, vp.3 as u32), self.config.sample_count));
-        }
+        }*/
         fn viewport(aspect_ratio: f32, (x, y, w, h): (i32, i32, i32, i32)) -> (i32, i32, i32, i32) {
             let w = w as f32;
             let h = h as f32;
