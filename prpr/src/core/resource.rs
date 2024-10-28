@@ -551,9 +551,9 @@ impl Resource {
             return false;
         }
         self.last_vp = vp;
-        //if !self.no_effect || self.config.sample_count != 1 {
-            self.chart_target = Some(MSRenderTarget::new((vp.2 as u32, vp.3 as u32), 4));
-        //}
+        if !self.no_effect || self.config.sample_count != 1 {
+            self.chart_target = Some(MSRenderTarget::new((vp.2 as u32, vp.3 as u32), self.config.sample_count));
+        }
         fn viewport(aspect_ratio: f32, (x, y, w, h): (i32, i32, i32, i32)) -> (i32, i32, i32, i32) {
             let w = w as f32;
             let h = h as f32;
