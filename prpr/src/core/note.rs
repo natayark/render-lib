@@ -190,7 +190,7 @@ impl Note {
             return;
         }
 
-        //if config.appear_before.is_finite() {
+        // if config.appear_before.is_finite() {
         if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
@@ -216,9 +216,13 @@ impl Note {
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
 
-        let base = height - line_height;
+        // let base = height - line_height;
+        let base = (self.height - config.line_height) / res.aspect_ratio * spd;
+
+        // show_below的判断
         if !config.draw_below
-            && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
+            // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
+            && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base < 0.))
             && !matches!(self.kind, NoteKind::Hold { .. })
         
         {
@@ -264,7 +268,7 @@ impl Note {
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height;
                     let top = end_height - line_height;
-                    // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件
+                    // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件 ChartInfo::format
                     //if res.time < self.time && bottom < -1e-6 && !config.settings.hold_partial_cover {
                     if res.time < self.time && bottom < -1e-6 && !matches!(self.kind, NoteKind::Hold { .. }){
                         return;
