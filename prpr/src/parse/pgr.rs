@@ -184,7 +184,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                         let end_height = height.now();
                         //let end_height = start_height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
                         //  HoldTime * Speed / HEIGHT_RATIO
-                        println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", pgr.time * r, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, hold_start, HEIGHT_RATIO / pgr.hold_time * pgr.speed * r );
+                        println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", pgr.time * r, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, hold_start, pgr.hold_time * pgr.speed * r /HEIGHT_RATIO );
                         NoteKind::Hold { end_time, end_height }
                     }
                     4 => NoteKind::Flick,
@@ -231,7 +231,7 @@ fn parse_judge_line(pgr: PgrJudgeLine, max_time: f32) -> Result<JudgeLine> {
         color: Anim::default(),
         parent: None,
         z_index: 0,
-        show_below: false,
+        show_below: true, //等height修好了再false回去
         attach_ui: None,
 
         cache,
