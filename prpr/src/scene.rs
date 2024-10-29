@@ -3,7 +3,7 @@ crate::tl_file!("scene" ttl);
 mod ending;
 pub use ending::{EndingScene, RecordUpdateState};
 
-mod game;
+pub mod game;
 pub use game::{GameMode, GameScene, SimpleRecord};
 
 mod loading;

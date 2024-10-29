@@ -1,5 +1,14 @@
-use super::{chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource};
-use crate::{judge::JudgeStatus, parse::RPE_HEIGHT};
+use super::{
+    chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource
+};
+use crate::{
+    judge::JudgeStatus, 
+    parse::RPE_HEIGHT,
+    info::{ChartFormat, ChartInfo},
+    scene::game::GameScene
+};
+
+
 use macroquad::prelude::*;
 
 const HOLD_PARTICLE_INTERVAL: f32 = 0.15;
@@ -255,7 +264,9 @@ impl Note {
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height;
                     let top = end_height - line_height;
-                    if res.time < self.time && bottom < -1e-6 && !config.settings.hold_partial_cover {
+                    // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件
+                    //if res.time < self.time && bottom < -1e-6 && !config.settings.hold_partial_cover {
+                    if res.time < self.time && bottom < -1e-6 && !matches!(self.kind, NoteKind::Hold { .. }){
                         return;
                     }
                     let tex = &style.hold;
