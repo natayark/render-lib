@@ -402,7 +402,8 @@ impl GameScene {
                     .bottom()
             });
             self.chart.with_element(ui, res, UIElement::Combo, |ui, color, scale| {
-                ui.text(if res.config.autoplay() && res.config.player_name != "COMBO" { "AUTOPLAY" } else { "COMBO" })
+                println!("player_name:\"{}\"",res.config.player_name);
+                ui.text(if res.config.autoplay() && res.config.player_name != "COMBO" { res.config.player_name } else { res.config.player_name })
                     .pos(0., btm + 0.007777)
                     .anchor(0.5, 0.)
                     .size(0.325)
