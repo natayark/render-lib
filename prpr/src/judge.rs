@@ -811,7 +811,7 @@ impl Judge {
                     //println!("{}\t{}\t{}", t, note.time, t - note.time);
                     // 都是AutoPlay了为什么还要输出判定时间差
                     //JudgeStatus::Hold(true, t, (t - note.time) / spd, false, f32::INFINITY)
-                    JudgeStatus::Hold(true, t, 0, true, f32::INFINITY)
+                    JudgeStatus::Hold(true, t, 0., true, f32::INFINITY)
                 } else {
                     judgements.push((line_id, *id));
                     JudgeStatus::Judged
