@@ -4,8 +4,6 @@ use super::{
 use crate::{
     judge::JudgeStatus, 
     parse::RPE_HEIGHT,
-    info::{ChartFormat, ChartInfo},
-    scene::game::GameScene
 };
 
 
@@ -140,10 +138,10 @@ impl Note {
 
     pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32) {
         self.object.set_time(res.time);
-        let mut immediate_particle = false;
+        let mut _immediate_particle = false;
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
-                immediate_particle = true;  // 立即触发
+                _immediate_particle = true;  // 立即触发
                 *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;  // 更新触发时间
                 Some(if perfect {
                     res.res_pack.info.fx_perfect()
