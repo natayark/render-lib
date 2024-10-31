@@ -100,13 +100,16 @@ fn parse_speed_events(r: f32, mut pgr: Vec<PgrSpeedEvent>, max_time: f32) -> Res
     kfs.extend(pgr[..pgr.len().saturating_sub(1)].iter().map(|it| {
         let from_pos = pos;
         pos += (it.end_time - it.start_time) * r * it.value;
+        //println!("{}\t{}\tpos:{}", it.start_time * r, it.value, from_pos);
         Keyframe::new(it.start_time * r, from_pos, 2)
     }));
     let last = pgr.last().unwrap();
     kfs.push(Keyframe::new(last.start_time * r, pos, 2));
     kfs.push(Keyframe::new(max_time, pos + (max_time - last.start_time * r) * last.value, 0));
+    println!("—————————分割线——————————");
     for kf in &mut kfs {
         kf.value /= HEIGHT_RATIO;
+        println!("kf:{}\t{}", kf.time, kf.value)
     }
     Ok((
         AnimFloat::new(pgr.iter().map(
@@ -181,8 +184,8 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                         let hold_start = pgr.time * pgr.speed * r / HEIGHT_RATIO;
                         let hold_end = hold_start + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
 
-                        height.set_time(end_time);
-                        let end_height = height.now();
+                        //height.set_time(end_time);
+                        let end_height = start_height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
                         //let end_height = start_height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
                         //  HoldTime * Speed / HEIGHT_RATIO
                         println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", pgr.time * r, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, hold_start, pgr.hold_time * pgr.speed * r /HEIGHT_RATIO );

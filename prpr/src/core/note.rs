@@ -213,9 +213,8 @@ impl Note {
 
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
-
-        // let base = height - line_height;
-        let base = (self.height - config.line_height) / res.aspect_ratio * spd;
+        let base = height - line_height;
+        //let base = (self.height - config.line_height) / res.aspect_ratio * spd;
 
         // show_below的判断
         if !config.draw_below
