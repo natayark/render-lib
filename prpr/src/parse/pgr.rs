@@ -106,10 +106,10 @@ fn parse_speed_events(r: f32, mut pgr: Vec<PgrSpeedEvent>, max_time: f32) -> Res
     let last = pgr.last().unwrap();
     kfs.push(Keyframe::new(last.start_time * r, pos, 2));
     kfs.push(Keyframe::new(max_time, pos + (max_time - last.start_time * r) * last.value, 0));
-    println!("—————————分割线——————————");
+    //println!("—————————分割线——————————");
     for kf in &mut kfs {
         kf.value /= HEIGHT_RATIO;
-        println!("kf:{}\t{}", kf.time, kf.value)
+        //println!("kf:{}\t{}", kf.time, kf.value)
     }
     Ok((
         AnimFloat::new(pgr.iter().map(
@@ -178,17 +178,10 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                     2 => NoteKind::Drag,
                     3 => {
                         let end_time = (pgr.time + pgr.hold_time) * r;
-
-                        height.set_time(pgr.time * r);
+                        height.set_time(time);
                         let start_height = height.now();
-                        let hold_start = pgr.time * pgr.speed * r / HEIGHT_RATIO;
-                        let hold_end = hold_start + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
-
-                        //height.set_time(end_time);
                         let end_height = start_height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
-                        //let end_height = start_height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
-                        //  HoldTime * Speed / HEIGHT_RATIO
-                        println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", pgr.time * r, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, hold_start, pgr.hold_time * pgr.speed * r /HEIGHT_RATIO );
+                        //println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", time, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, hold_start, pgr.hold_time * pgr.speed * r /HEIGHT_RATIO );
                         NoteKind::Hold { end_time, end_height }
                     }
                     4 => NoteKind::Flick,
