@@ -223,7 +223,7 @@ impl Note {
             && !matches!(self.kind, NoteKind::Hold { .. })
         
         {
-            println!("time:{}\tres.time:{}\tbase:{}", self.time, res.time, base);
+            //println!("time:{}\tres.time:{}\tbase:{}", self.time, res.time, base);
             return;
         }
         let order = self.kind.order();
