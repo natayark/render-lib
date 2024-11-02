@@ -76,7 +76,7 @@ impl Default for Config {
             challenge_color: ChallengeModeColor::Golden,
             challenge_rank: 45,
             chart_debug: false,
-            chart_ratio: 1.0,
+            chart_ratio: 0.2,
             disable_effect: false,
             double_click_to_pause: true,
             double_hint: true,
