@@ -193,12 +193,12 @@ impl Note {
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
             if time > res.time {
-                //return;
+                return;
             }
         }
         
         if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
-            //return;
+            return;
         }
         let scale = (if self.multiple_hint {
             res.res_pack.note_style_mh.click.width() / res.res_pack.note_style.click.width()
