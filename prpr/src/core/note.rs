@@ -83,7 +83,7 @@ fn draw_tex_pts(res: &Resource, texture: Texture2D, order: i8, p: [Point; 4], co
         || p[0].x.max(p[1].x.max(p[2].x.max(p[3].x))) < -1. / res.config.chart_ratio
         || p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) > 1. / res.config.chart_ratio
         || p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) < -1. / res.config.chart_ratio
-        && !res.config.chart_debug// 不知道为什么Phira-render的chart_ratio传不到这里(这里还是默认值)
+        // 不知道为什么Phira-render的chart_ratio传不到这里(这里还是默认值)
     {
         return;
     }
