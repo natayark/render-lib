@@ -79,12 +79,12 @@ fn draw_tex(res: &Resource, texture: Texture2D, order: i8, x: f32, y: f32, color
 }
 fn draw_tex_pts(res: &Resource, texture: Texture2D, order: i8, p: [Point; 4], color: Color, params: DrawTextureParams) {
     let mut p = p.map(|it| res.world_to_screen(it));
-    if p[0].x.min(p[1].x.min(p[2].x.min(p[3].x))) > 1.
-        || p[0].x.max(p[1].x.max(p[2].x.max(p[3].x))) < -1.
-        || p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) > 1.
-        || p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) < -1.
+    if p[0].x.min(p[1].x.min(p[2].x.min(p[3].x))) > 1. / res.config.chart_ratio
+        || p[0].x.max(p[1].x.max(p[2].x.max(p[3].x))) < -1. / res.config.chart_ratio
+        || p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) > 1. / res.config.chart_ratio
+        || p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) < -1. / res.config.chart_ratio
     {
-        return;
+        return;//这是是屏幕外面的note不渲染，需要在这除谱面揭秘倍率
     }
     let Rect { x: sx, y: sy, w: sw, h: sh } = params.source.unwrap_or(Rect { x: 0., y: 0., w: 1., h: 1. });
 
