@@ -268,12 +268,12 @@ impl Scene for EndingScene {
                 format!(" {:.2}x", self.speed)
             };
             let text = if self.autoplay {
-                format!("PHIRA[AUTOPLAY] {spd}")
+                format!("AUTOPLAY {spd}")
             } else if !self.rated {
-                format!("PHIRA[UNRATED] {spd}")
+                format!("{spd}")
             } else if let Some(state) = &self.update_state {
                 format!(
-                    "PHIRA {spd}  {}",
+                    "{spd}  {}",
                     if state.best {
                         format!("NEW BEST +{:07}", state.improvement)
                     } else {
