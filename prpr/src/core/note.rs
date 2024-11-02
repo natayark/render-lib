@@ -83,7 +83,6 @@ fn draw_tex_pts(res: &Resource, texture: Texture2D, order: i8, p: [Point; 4], co
         || p[0].x.max(p[1].x.max(p[2].x.max(p[3].x))) < -1. / res.config.chart_ratio
         || p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) > 1. / res.config.chart_ratio
         || p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) < -1. / res.config.chart_ratio
-        // 不知道为什么Phira-render的chart_ratio只有Hold传到这里
     {
         return;
     }
@@ -194,12 +193,12 @@ impl Note {
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
             if time > res.time {
-                return;
+                //return;
             }
         }
         
         if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
-            return;
+            //return;
         }
         let scale = (if self.multiple_hint {
             res.res_pack.note_style_mh.click.width() / res.res_pack.note_style.click.width()
