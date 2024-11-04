@@ -195,6 +195,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                 } else {
                     pgr.speed
                 },
+                end_speed: pgr.speed,
                 height: pgr.floor_position / HEIGHT_RATIO,
 
                 above,

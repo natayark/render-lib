@@ -38,6 +38,7 @@ pub struct Note {
     pub time: f32,
     pub height: f32,
     pub speed: f32,
+    pub end_speed: f32,
 
     pub above: bool,
     pub multiple_hint: bool,
@@ -210,6 +211,7 @@ impl Note {
         let mut color = self.object.now_color();
         color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
         let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
+        let end_spd = self.end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
 
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
