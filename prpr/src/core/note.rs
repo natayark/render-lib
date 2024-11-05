@@ -39,6 +39,7 @@ pub struct Note {
     pub height: f32,
     pub speed: f32,
     pub end_speed: f32,
+    pub start_height: f32,
 
     pub above: bool,
     pub multiple_hint: bool,
@@ -262,6 +263,8 @@ impl Note {
                         return;
                     }
                     let end_height = end_height / res.aspect_ratio * spd;
+                    //let start_height = self.start_height / res.aspect_ratio * spd;
+                    //let hold_height = (end_height - start_height) * end_spd;
 
                     let clip = !config.draw_below && config.settings.hold_partial_cover;
 
