@@ -273,7 +273,7 @@ impl Note {
                     let bottom = h - line_height; //StartY
                     //let top = end_height - line_height; //EndY
 
-                    let top = bottom + hold_height;
+                    let top = bottom + hold_height + (height - h) * end_spd;
                     //let bottom = bottom + (top - bottom) / end_spd;
                     //let top = end_height - line_height;
                     //let top = end_height - (config.line_height / res.aspect_ratio * end_spd / 2.2);
