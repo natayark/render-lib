@@ -211,7 +211,7 @@ impl Note {
         let mut color = self.object.now_color();
         color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
         let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-        let end_spd = self.end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
+        let end_spd = self.end_speed / 2.2 * ctrl_obj.y.now_opt().unwrap_or(1.);
 
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
@@ -265,9 +265,13 @@ impl Note {
 
                     let clip = !config.draw_below && config.settings.hold_partial_cover;
 
+                    let top = end_height - line_height; //EndY
+                    
                     let h = if self.time <= res.time { line_height } else { height };
-                    let bottom = h - line_height;
-                    let top = end_height - line_height;
+                    let bottom = h - line_height; //StartY
+                    //let top = end_height - line_height;
+                    //let top = end_height - (config.line_height / res.aspect_ratio * end_spd / 2.2);
+                    println!("res.time:{:.6}\tend_height:{}\tspd:{}\tend_spd:{}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}", res.time, end_height, spd, end_spd, line_height, h, bottom, top);
                     // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件 ChartInfo::format
                     //if res.time < self.time && bottom < -1e-6 && !config.settings.hold_partial_cover {
                     if res.time < self.time && bottom < -1e-6 && !matches!(self.kind, NoteKind::Hold { .. }){
