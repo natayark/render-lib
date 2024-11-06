@@ -143,8 +143,8 @@ impl Note {
         let mut _immediate_particle = false;
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
-                _immediate_particle = true;  // 立即触发
-                *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;  // 更新触发时间
+                _immediate_particle = true;
+                *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;
                 Some(if perfect {
                     res.res_pack.info.fx_perfect()
                 } else {
@@ -212,7 +212,7 @@ impl Note {
         let mut color = self.object.now_color();
         color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
         let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-        let end_spd = self.end_speed / 2.2 * ctrl_obj.y.now_opt().unwrap_or(1.);
+        let end_spd = self.end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
 
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
@@ -265,6 +265,7 @@ impl Note {
                     let end_height = end_height / res.aspect_ratio * spd;
                     let start_height = self.start_height / res.aspect_ratio * spd;
                     let hold_height = end_height - start_height;
+                    let time = if res.time >= self.time {res.time} else {self.time};
 
                     let clip = !config.draw_below && config.settings.hold_partial_cover;
 
@@ -274,14 +275,16 @@ impl Note {
                     //let top = end_height - line_height; //EndY
 
                     let top = bottom + hold_height + (height - h) * end_spd / spd;
+                    //let top = end_height - line_height - (height - h) * end_spd / spd;
+                    let top = bottom + hold_height - (time - self.time) * end_spd / res.aspect_ratio / 0.83175;
 
                     if top - bottom <= 0.{
-                        return;
+                        //return;
                     }
                     //let bottom = bottom + (top - bottom) / end_spd;
                     //let top = end_height - line_height;
                     //let top = end_height - (config.line_height / res.aspect_ratio * end_spd / 2.2);
-                    //println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
+                    println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
                     // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件 ChartInfo::format
                     //if res.time < self.time && bottom < -1e-6 && !config.settings.hold_partial_cover {
                     if res.time < self.time && bottom < -1e-6 && !matches!(self.kind, NoteKind::Hold { .. }){
