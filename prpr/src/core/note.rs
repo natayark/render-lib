@@ -4,6 +4,7 @@ use super::{
 use crate::{
     judge::JudgeStatus, 
     parse::RPE_HEIGHT,
+    core::HEIGHT_RATIO,
 };
 
 
@@ -276,7 +277,7 @@ impl Note {
 
                     //let top = bottom + hold_height + (height - h) * end_spd / spd;
                     //let top = end_height - line_height - (height - h) * end_spd / spd;
-                    let top = bottom + hold_height - (time - self.time) * end_spd / res.aspect_ratio / 0.83175;
+                    let top = bottom + hold_height - (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
 
                     if top - bottom <= 0.{
                         //return;
