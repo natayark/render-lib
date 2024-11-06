@@ -46,6 +46,7 @@ pub struct Note {
     pub multiple_hint: bool,
     pub fake: bool,
     pub judge: JudgeStatus,
+    pub format: bool,
 }
 
 pub struct RenderConfig<'a> {
@@ -274,21 +275,22 @@ impl Note {
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
                     //let top = end_height - line_height; //EndY
+                    let top = if self.format {
+                        bottom + hold_height - (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO
+                    } else {
+                        end_height - line_height
+                    };
 
-                    //let top = bottom + hold_height + (height - h) * end_spd / spd;
-                    //let top = end_height - line_height - (height - h) * end_spd / spd;
-                    let top = bottom + hold_height - (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
-
-                    if top - bottom <= 0.{
-                        //return;
-                    }
+                    /*if top - bottom <= 0.{
+                        return;
+                    }*/
                     //let bottom = bottom + (top - bottom) / end_spd;
                     //let top = end_height - line_height;
                     //let top = end_height - (config.line_height / res.aspect_ratio * end_spd / 2.2);
                     //println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
-                    // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件 ChartInfo::format
-                    //if res.time < self.time && bottom < -1e-6 && !config.settings.hold_partial_cover {
-                    if res.time < self.time && bottom < -1e-6 && !matches!(self.kind, NoteKind::Hold { .. }){
+                    // Hold在判定前消失的原因 这里得加上谱面格式不是pgr的条件
+                    if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !self.format) {
+                    //if res.time < self.time && bottom < -1e-6 && !matches!(self.kind, NoteKind::Hold { .. }){
                         return;
                     }
                     let tex = &style.hold;
