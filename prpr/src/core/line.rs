@@ -190,7 +190,7 @@ impl JudgeLine {
                         // 判定线透明度
                         color.a *= alpha.max(0.0);
                         if res.config.chart_debug {
-                            color.a = 0.15 + 0.85 * color.a;
+                            color.a = 0.10 + 0.90 * color.a;
                         }
                         let len = res.info.line_length;
                         draw_line(-len, 0., len, 0., 0.01, color);
