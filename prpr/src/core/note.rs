@@ -281,6 +281,10 @@ impl Note {
                         end_height - line_height
                     };
 
+                    if self.format && end_spd == 0. {
+                        return
+                    };
+
                     /*if top - bottom <= 0.{
                         return;
                     }*/

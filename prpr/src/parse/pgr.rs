@@ -164,7 +164,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
     if pgr.is_empty() {
         return Ok(Vec::new());
     }
-    pgr.sort_by_key(|it| it.time.not_nan());
+    pgr.sort_by_key(|it| it.time as isize); //.not_nan()
     pgr.into_iter()
         .map(|pgr| {
             let time = pgr.time * r;
