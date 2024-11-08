@@ -180,7 +180,7 @@ impl JudgeLine {
         res.with_model(self.now_transform(res, lines), |res| {
             if res.config.chart_debug {
                 res.apply_model(|_| {
-                    ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.8).draw();
+                    ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).draw();
                 });
             }
             res.with_model(self.object.now_scale(), |res| {
