@@ -2,7 +2,7 @@ use super::{draw_background, ending::RecordUpdateState, game::GameMode, GameScen
 use crate::{
     config::Config,
     core::Resource,
-    ext::{draw_illustration, draw_parallelogram, draw_text_aligned, poll_future, LocalTask, SafeTexture, BLACK_TEXTURE},
+    ext::{draw_illustration, draw_parallelogram, draw_text_aligned, draw_text_aligned_fix, poll_future, LocalTask, SafeTexture, BLACK_TEXTURE},
     fs::FileSystem,
     info::ChartInfo,
     judge::Judge,
@@ -169,19 +169,23 @@ impl Scene for LoadingScene {
         let main: Rect = Rect::new(-0.88, vo - h / 2. - top / 10., 0.78, h);
         draw_parallelogram(main, None, Color::new(0., 0., 0., 0.6), false);
         let p = (main.x + main.w * 0.09, main.y + main.h * 0.36);
-        let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 0.5).size(0.7);
-        if text.measure().w <= main.w * 0.6 {
-            text.draw();
-        } else {
-            drop(text);
-            ui.text(&self.info.name)
-                .pos(p.0, p.1)
-                .anchor(0., 0.5)
-                .max_width(main.w * 0.6)
-                .size(0.5)
-                .draw();
+
+        let mut text_size = 0.7;
+        let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 0.5).size(text_size);
+        let max_width = main.w * 0.60;
+        let text_width = text.measure().w;
+        if text_width > max_width {
+            text_size *= max_width / text_width
         }
-        draw_text_aligned(ui, &self.info.composer, main.x + main.w * 0.09, main.y + main.h * 0.73, (0., 0.5), 0.36, WHITE);
+        drop(text);
+        ui.text(&self.info.name)
+            .pos(p.0, p.1)
+            .anchor(0., 0.5)
+            //.max_width(main.w * 0.6)
+            .size(text_size)
+            .draw();
+        
+        draw_text_aligned_fix(ui, &self.info.composer, main.x + main.w * 0.09, main.y + main.h * 0.73, (0., 0.5), 0.36, WHITE, 0.40);
 
         let ext = 0.06;
         let sub = Rect::new(main.x + main.w * 0.71, main.y - main.h * ext, main.w * 0.26, main.h * (1. + ext * 2.));
@@ -192,12 +196,12 @@ impl Scene for LoadingScene {
         draw_text_aligned(ui, self.info.level.split_whitespace().nth(1).and_then(|word| word.get(3..)).unwrap_or_default(), ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.88, BLACK);
         draw_text_aligned(ui, self.info.level.split_whitespace().next().unwrap_or_default(), ct.x, ct.y + sub.h * 0.09, (0.5, 0.), 0.34, BLACK);
         let t = draw_text_aligned(ui, "Chart", main.x + main.w / 6., main.y + main.h * 1.2, (0., 0.), 0.3, WHITE);
-        draw_text_aligned(ui, &self.charter, t.x, t.y + top / 20., (0., 0.), 0.47, WHITE);
+        draw_text_aligned_fix(ui, &self.charter, t.x, t.y + top / 20., (0., 0.), 0.47, WHITE, 0.58);
         let w = 0.027;
         let t = draw_text_aligned(ui, "Illustration", t.x - w, t.y + w / 0.13 / 13. * 5., (0., 0.), 0.3, WHITE);
-        draw_text_aligned(ui, &self.info.illustrator, t.x, t.y + top / 20., (0., 0.), 0.47, WHITE);
+        draw_text_aligned_fix(ui, &self.info.illustrator, t.x, t.y + top / 20., (0., 0.), 0.47, WHITE, 0.58);
 
-        draw_text_aligned(ui, self.info.tip.as_ref().unwrap(), -0.91, top * 0.92, (0., 1.), 0.47, WHITE);
+        draw_text_aligned_fix(ui, self.info.tip.as_ref().unwrap(), -0.91, top * 0.92, (0., 1.), 0.47, WHITE, 1.5);
         let t = draw_text_aligned(ui, "Loading...", 0.87, top * 0.92, (1., 1.), 0.44, WHITE);
         let we = 0.2;
         let he = 0.5;

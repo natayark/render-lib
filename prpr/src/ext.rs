@@ -187,6 +187,13 @@ pub fn get_viewport() -> (i32, i32, i32, i32) {
 pub fn draw_text_aligned(ui: &mut Ui, text: &str, x: f32, y: f32, anchor: (f32, f32), scale: f32, color: Color) -> Rect {
     ui.text(text).pos(x, y).anchor(anchor.0, anchor.1).size(scale).color(color).draw()
 }
+pub fn draw_text_aligned_fix(ui: &mut Ui, text: &str, x: f32, y: f32, anchor: (f32, f32), mut scale: f32, color: Color, max_width: f32) -> Rect {
+    let text_width = ui.text(text).size(scale).measure().w;
+    if text_width > max_width {
+        scale *= max_width / text_width
+    }
+    ui.text(text).pos(x, y).anchor(anchor.0, anchor.1).size(scale).color(color).draw()
+}
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]

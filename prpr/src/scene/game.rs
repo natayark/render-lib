@@ -414,14 +414,27 @@ impl GameScene {
         let lf = -1. + margin;
         let bt = -top - eps * 3.64;
         self.chart.with_element(ui, res, UIElement::Name, |ui, color, scale| {
-            ui.text(&res.info.name)
-                .pos(lf, bt + (1. - p) * 0.4)
-                .anchor(0., 1.)
-                .size(0.5)
-                .color(Color { a: color.a * c.a, ..color })
-                .scale(scale)
-                .max_width(0.8)
-                .draw();
+            let mut text = ui.text(&res.info.name).pos(lf, bt + (1. - p) * 0.4).anchor(0., 1.).size(0.5);
+            let max_width = 0.9;
+            let text_width = text.measure().w;
+            if text_width <= max_width {
+                ui.text(&res.info.name)
+                    .pos(lf, bt + (1. - p) * 0.4)
+                    .anchor(0., 1.)
+                    .size(0.5)
+                    .color(Color { a: color.a * c.a, ..color })
+                    .scale(scale)
+                    .draw();
+            } else {
+                ui.text(&res.info.name)
+                    .pos(lf, bt + (1. - p) * 0.4)
+                    .anchor(0., 1.)
+                    .size(max_width / text_width * 0.5)
+                    .color(Color { a: color.a * c.a, ..color })
+                    .scale(scale)
+                    //.max_width(0.8)
+                    .draw();
+            }
         });
         self.chart.with_element(ui, res, UIElement::Level, |ui, color, scale| {
             ui.text(&res.info.level)
