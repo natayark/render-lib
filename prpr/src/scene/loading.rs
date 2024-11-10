@@ -167,7 +167,7 @@ impl Scene for LoadingScene {
         let r = draw_illustration(*self.illustration, 0.38, vo, 1., 1., WHITE);
         let h = r.h / 3.6;
         let main: Rect = Rect::new(-0.88, vo - h / 2. - top / 10., 0.78, h);
-        draw_parallelogram(main, None, Color::new(0., 0., 0., 0.7), false);
+        draw_parallelogram(main, None, Color::new(0., 0., 0., 0.6), false);
         let p = (main.x + main.w * 0.09, main.y + main.h * 0.36);
         let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 0.5).size(0.7);
         if text.measure().w <= main.w * 0.6 {
