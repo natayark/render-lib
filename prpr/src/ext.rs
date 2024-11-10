@@ -297,7 +297,7 @@ pub fn draw_illustration(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: 
             Rect::new(0.5 - w / 2., 0., w, 1.)
         }
     };
-    crate::ext::draw_parallelogram(r, Some((tex, tr)), color, true);
+    crate::ext::draw_parallelogram(r, Some((tex, tr)), color, false);
     r
 }
 
@@ -306,7 +306,7 @@ fn drop_shadow(p: [Point; 4], alpha: f32) {
     let len = (PARALLELOGRAM_SLOPE * PARALLELOGRAM_SLOPE + 1.).sqrt();
     let n1 = Vector::new(PARALLELOGRAM_SLOPE / len - 1., -1. / len) * RADIUS;
     let n2 = Vector::new(n1.x + RADIUS * 2., n1.y);
-    let c1 = Color::new(0., 0., 0., alpha * 0.11);
+    let c1 = Color::new(0., 0., 0., alpha * 0.06);
     let c2 = Color::default();
     let v = |p: Point, c: Color| Vertex::new(p.x, p.y, 0., 0., 0., c);
     let p = [

@@ -178,11 +178,6 @@ impl JudgeLine {
         let alpha = self.object.alpha.now_opt().unwrap_or(1.0) * res.alpha;
         let color = self.color.now_opt();
         res.with_model(self.now_transform(res, lines), |res| {
-            if res.config.chart_debug {
-                res.apply_model(|_| {
-                    ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).draw();
-                });
-            }
             res.with_model(self.object.now_scale(), |res| {
                 res.apply_model(|res| match &self.kind {
                     JudgeLineKind::Normal => {
@@ -354,6 +349,11 @@ impl JudgeLine {
                     }
                 }
             });
+            if res.config.chart_debug {
+                res.apply_model(|_| {
+                    ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).draw();
+                });
+            }
         });
     }
 }

@@ -60,11 +60,17 @@ impl LoadingScene {
 
             let mut blurred_rgb = image.to_rgb8();
             let mut vec = unsafe { Vec::from_raw_parts(std::mem::transmute(blurred_rgb.as_mut_ptr()), size, size) };
-            fastblur::gaussian_blur(&mut vec, w as _, h as _, 50.);
+            fastblur::gaussian_blur(&mut vec, w as _, h as _, 80.);
             std::mem::forget(vec);
             let mut blurred = Vec::with_capacity(size * 4);
             for input in blurred_rgb.chunks_exact(3) {
-                blurred.extend_from_slice(input);
+                //blurred.extend_from_slice(input);
+                let r = (input[0] as f32 * 0.8) as u8;
+                let g = (input[1] as f32 * 0.8) as u8;
+                let b = (input[2] as f32 * 0.8) as u8;
+                blurred.push(r);
+                blurred.push(g);
+                blurred.push(b);
                 blurred.push(255);
             }
             Ok((
@@ -161,7 +167,7 @@ impl Scene for LoadingScene {
         let r = draw_illustration(*self.illustration, 0.38, vo, 1., 1., WHITE);
         let h = r.h / 3.6;
         let main: Rect = Rect::new(-0.88, vo - h / 2. - top / 10., 0.78, h);
-        draw_parallelogram(main, None, Color::new(0., 0., 0., 0.7), true);
+        draw_parallelogram(main, None, Color::new(0., 0., 0., 0.7), false);
         let p = (main.x + main.w * 0.09, main.y + main.h * 0.36);
         let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 0.5).size(0.7);
         if text.measure().w <= main.w * 0.6 {

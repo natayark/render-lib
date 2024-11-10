@@ -271,6 +271,7 @@ fn parse_speed_events(r: &mut BpmList, rpe: &[RPEEventLayer], max_time: f32) -> 
             }
         });
         height += (speed + end_speed) * (end_time - now_time) / 2.;
+        //println!("time:{:.5}\tend_time:{}\theight:{}", now_time, end_time, height);
     }
     kfs.push(Keyframe::new(max_time, height, 0));
     Ok(AnimFloat::new(kfs))
