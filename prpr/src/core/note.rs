@@ -222,14 +222,15 @@ impl Note {
         //let base = (self.height - config.line_height) / res.aspect_ratio * spd;
 
         // show_below的判断
+        // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
-            // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
             && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-3))
-            //&& !matches!(self.kind, NoteKind::Hold { .. })
-        
         {
-            //println!("time:{}\tres.time:{}\tbase:{}", self.time, res.time, base);
-            return;
+            if res.config.chart_debug{
+                color.a *= 0.2;
+            } else {
+                return;
+            }
         }
         let order = self.kind.order();
         let style = if res.config.double_hint && self.multiple_hint {
@@ -282,7 +283,7 @@ impl Note {
 
                     if self.format && end_spd == 0. {
                         if res.config.chart_debug {
-                            color.a *= 0.25;
+                            color.a *= 0.2;
                         } else {
                             return;
                         }
