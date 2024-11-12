@@ -183,11 +183,11 @@ fn parse_move_events_fv1(r: f32, mut pgr: Vec<PgrEvent>) -> Result<AnimVector> {
     kf2.pop();
     for kf in &mut kf1 {
         kf.value = (-880. + kf.value * 2.) / 880.;
-        println!("x:{}", kf.value);
+        //println!("x:{}", kf.value);
     }
     for kf in &mut kf2 {
         kf.value = (-520. + kf.value * 2.) / 520.;
-        println!("y:{}", kf.value);
+        //println!("y:{}", kf.value);
     }
     Ok(AnimVector(AnimFloat::new(kf1), AnimFloat::new(kf2)))
 }
