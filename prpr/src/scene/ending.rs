@@ -251,7 +251,12 @@ impl Scene for EndingScene {
             text.draw();
         } else {
             drop(text);
-            ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 1.).size(0.5).max_width(mw).draw();
+            ui.text(&self.info.name)
+            .pos(p.0, p.1)
+            .anchor(0., 1.)
+            .size(0.5)
+            .max_width(mw)
+            .draw();
         }
         gl.pop_model_matrix();
 

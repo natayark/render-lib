@@ -159,6 +159,39 @@ fn parse_move_events(r: f32, mut pgr: Vec<PgrEvent>) -> Result<AnimVector> {
     Ok(AnimVector(AnimFloat::new(kf1), AnimFloat::new(kf2)))
 }
 
+fn parse_move_events_fv1(r: f32, mut pgr: Vec<PgrEvent>) -> Result<AnimVector> {
+    validate_events!(pgr);
+    let mut kf1 = Vec::<Keyframe<f32>>::new();
+    let mut kf2 = Vec::<Keyframe<f32>>::new();
+    for e in pgr {
+        let st = (e.start_time * r).max(0.);
+        let en = e.end_time * r;
+        if !kf1.last().map_or(false, |it| it.value == e.start) {
+            let start = (e.start - e.start % 1000.) / 1000.;
+            kf1.push(Keyframe::new(st, start, 2));
+        }
+        if !kf2.last().map_or(false, |it| it.value == e.start2) {
+            let start2 = e.start2 % 1000.;
+            kf2.push(Keyframe::new(st,  start2, 2));
+        }
+        let end = (e.end - e.end % 1000.) / 1000.;
+        let end2 = e.end % 1000.;
+        kf1.push(Keyframe::new(en, end, 2));
+        kf2.push(Keyframe::new(en, end2, 2));
+    }
+    kf1.pop();
+    kf2.pop();
+    for kf in &mut kf1 {
+        kf.value = (-880. + kf.value * 2.) / 880.;
+        println!("x:{}", kf.value);
+    }
+    for kf in &mut kf2 {
+        kf.value = (-520. + kf.value * 2.) / 520.;
+        println!("y:{}", kf.value);
+    }
+    Ok(AnimVector(AnimFloat::new(kf1), AnimFloat::new(kf2)))
+}
+
 fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mut AnimFloat, above: bool) -> Result<Vec<Note>> {
     // is_sorted is unstable...
     if pgr.is_empty() {
@@ -242,6 +275,36 @@ fn parse_judge_line(pgr: PgrJudgeLine, max_time: f32) -> Result<JudgeLine> {
     })
 }
 
+fn parse_judge_line_fv1(pgr: PgrJudgeLine, max_time: f32) -> Result<JudgeLine> {
+    let r = 60. / 32. / pgr.bpm;
+    let (mut speed, mut height) = parse_speed_events(r, pgr.speed_events, max_time).context("Failed to parse speed events")?;
+    let notes_above = parse_notes(r, pgr.notes_above, &mut speed, &mut height, true).context("Failed to parse notes above")?;
+    let mut notes_below = parse_notes(r, pgr.notes_below, &mut speed, &mut height, false).context("Failed to parse notes below")?;
+    let mut notes = notes_above;
+    notes.append(&mut notes_below);
+    let cache = JudgeLineCache::new(&mut notes);
+    Ok(JudgeLine {
+        object: Object {
+            alpha: parse_float_events(r, pgr.alpha_events).with_context(|| ptl!("alpha-events-parse-failed"))?,
+            rotation: parse_float_events(r, pgr.rotate_events).with_context(|| ptl!("rotate-events-parse-failed"))?,
+            translation: parse_move_events_fv1(r, pgr.move_events).with_context(|| ptl!("move-events-parse-failed"))?,
+            ..Default::default()
+        },
+        ctrl_obj: RefCell::default(),
+        kind: JudgeLineKind::Normal,
+        height,
+        incline: AnimFloat::default(),
+        notes,
+        color: Anim::default(),
+        parent: None,
+        z_index: 0,
+        show_below: false,
+        attach_ui: None,
+
+        cache,
+    })
+}
+
 pub fn parse_phigros(source: &str, extra: ChartExtra) -> Result<Chart> {
     let pgr: PgrChart = serde_json::from_str(source).with_context(|| ptl!("json-parse-failed"))?;
     let max_time = *pgr
@@ -264,6 +327,33 @@ pub fn parse_phigros(source: &str, extra: ChartExtra) -> Result<Chart> {
         .into_iter()
         .enumerate()
         .map(|(id, pgr)| parse_judge_line(pgr, max_time).with_context(|| ptl!("judge-line-location", "jlid" => id)))
+        .collect::<Result<Vec<_>>>()?;
+    process_lines(&mut lines);
+    Ok(Chart::new(pgr.offset, lines, BpmList::default(), ChartSettings::default(), extra))
+}
+
+pub fn parse_phigros_fv1(source: &str, extra: ChartExtra) -> Result<Chart> {
+    let pgr: PgrChart = serde_json::from_str(source).with_context(|| ptl!("json-parse-failed"))?;
+    let max_time = *pgr
+        .judge_line_list
+        .iter()
+        .map(|line| {
+            line.notes_above
+                .iter()
+                .chain(line.notes_below.iter())
+                .map(|note| note.time.not_nan())
+                .max()
+                .unwrap_or_default()
+                * (60. / line.bpm / 32.)
+        })
+        .max()
+        .unwrap_or_default()
+        + 1.;
+    let mut lines = pgr
+        .judge_line_list
+        .into_iter()
+        .enumerate()
+        .map(|(id, pgr)| parse_judge_line_fv1(pgr, max_time).with_context(|| ptl!("judge-line-location", "jlid" => id)))
         .collect::<Result<Vec<_>>>()?;
     process_lines(&mut lines);
     Ok(Chart::new(pgr.offset, lines, BpmList::default(), ChartSettings::default(), extra))
