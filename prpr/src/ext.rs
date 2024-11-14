@@ -284,7 +284,8 @@ pub fn draw_parallelogram_ex(rect: Rect, texture: Option<(Texture2D, Rect)>, top
     gl.draw_mode(DrawMode::Triangles);
     gl.geometry(&v, &[0, 2, 3, 0, 1, 3]);
     if shadow {
-        drop_shadow(p, top.a.min(bottom.a));
+        //drop_shadow(p, top.a.min(bottom.a));
+        drop_shadow(p, 1.0);
     }
 }
 

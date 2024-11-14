@@ -240,32 +240,39 @@ impl Scene for EndingScene {
             Rect::new(r.x, r.y + r.h * (1. - ratio), r.w - r.h * (1. - ratio) * slope, r.h * ratio),
             None,
             Color::default(),
-            Color::new(0., 0., 0., 0.7),
-            false,
+            Color::new(0., 0., 0., 0.6),
+            true,
         );
         let rr = draw_text_aligned(ui, &self.info.level, r.right() - r.h / 7. * 13. * 0.13 - 0.01, r.bottom() - top / 20., (1., 1.), 0.46, WHITE);
         let p = (r.x + 0.04, r.bottom() - top / 20.);
         let mw = rr.x - 0.02 - p.0;
-        let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 1.).size(0.7);
-        if text.measure().w <= mw {
-            text.draw();
-        } else {
+        let mut text_size = 0.7;
+        let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 1.).size(text_size);
+        let max_width = mw;
+        let text_width = text.measure().w;
+        if text_width > max_width {
+            text_size *= max_width / text_width
+        }
+        //if text.measure().w <= mw {
+        //    text.draw();
+        //} else {
             drop(text);
             ui.text(&self.info.name)
             .pos(p.0, p.1)
             .anchor(0., 1.)
-            .size(0.5)
-            .max_width(mw)
+            .size(text_size)
+            //.max_width(mw)
             .draw();
-        }
+        //}
         gl.pop_model_matrix();
 
         let dx = 0.06;
-        let c = Color::new(0., 0., 0., 0.6);
+        let c = Color::new(0., 0., 0., 1.0);
+        let c2 = Color::new(0., 0., 0., 0.6);
 
         tran(gl, (1. - ran(t, 0.2, 1.3)).powi(3));
         let main = Rect::new(r.right() - 0.05, r.y, r.w * 0.84, r.h / 2.);
-        draw_parallelogram(main, None, c, true);
+        draw_parallelogram(main, None, c2, true);
         {
             let spd = if (self.speed - 1.).abs() <= 1e-4 {
                 String::new()
@@ -311,7 +318,7 @@ impl Scene for EndingScene {
         tran(gl, (1. - ran(t, 0.4, 1.5)).powi(3));
         let d = r.h / 16.;
         let s1 = Rect::new(main.x - d * 4. * slope, main.bottom() + d, main.w - d * 5. * slope, d * 3.);
-        draw_parallelogram(s1, None, c, true);
+        draw_parallelogram(s1, None, c2, true);
         {
             let dy = 0.025;
             let r = draw_text_aligned(ui, "Max Combo", s1.x + dx, s1.bottom() - dy, (0., 1.), 0.34, WHITE);
@@ -323,7 +330,7 @@ impl Scene for EndingScene {
 
         tran(gl, (1. - ran(t, 0.5, 1.7)).powi(3));
         let s2 = Rect::new(s1.x - d * 4. * slope, s1.bottom() + d, s1.w, s1.h);
-        draw_parallelogram(s2, None, c, true);
+        draw_parallelogram(s2, None, c2, true);
         {
             let dy = 0.025;
             let dy2 = 0.015;
