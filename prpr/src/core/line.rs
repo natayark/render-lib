@@ -188,7 +188,7 @@ impl JudgeLine {
                             color.a = 0.10 + 0.90 * color.a;
                         }
                         let len = res.info.line_length;
-                        draw_line(-len, 0., len, 0., 0.01, color);
+                        draw_line(-len, 0., len, 0., 0.0080, color);
                     }
                     JudgeLineKind::Texture(texture, _) => {
                         let mut color = color.unwrap_or(WHITE);
