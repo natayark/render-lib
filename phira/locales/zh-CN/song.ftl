@@ -16,7 +16,7 @@ dl-status-saving = 保存中
 dl-failed = 下载失败
 dl-success = 下载完成
 
-guest = 游客
+guest = Guest
 
 warn-unrated = 本次游玩不计成绩
 failed-to-play = 启动在线模式失败
