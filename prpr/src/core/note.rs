@@ -146,6 +146,7 @@ impl Note {
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
                 _immediate_particle = true;
+                //HOLD_PARTICLE_INTERVAL = 30 / bpm
                 *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;
                 Some(if perfect {
                     res.res_pack.info.fx_perfect()
@@ -192,8 +193,8 @@ impl Note {
             return;
         }
 
-        // if config.appear_before.is_finite() {
-        if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
+        if config.appear_before.is_finite() {
+        //if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
             let beat = bpm_list.beat(self.time);
             let time = bpm_list.time_beats(beat - config.appear_before);
             if time > res.time {
@@ -269,6 +270,7 @@ impl Note {
                     let start_height = self.start_height / res.aspect_ratio * spd;
                     let hold_height = end_height - start_height;
                     let time = if res.time >= self.time {res.time} else {self.time};
+                    let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
 
                     let clip = !config.draw_below && config.settings.hold_partial_cover;
 
@@ -276,10 +278,13 @@ impl Note {
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
                     let top = if self.format {
-                        bottom + hold_height - (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO
+                        bottom + hold_height - hold_line_height
                     } else {
                         end_height - line_height
                     };
+
+                    //let max_hold_height = 3. / res.config.chart_ratio / res.aspect_ratio;
+                    //let top = if res.config.aggressive && hold_height - hold_line_height >= max_hold_height { bottom + max_hold_height } else { top };
 
                     if self.format && end_spd == 0. {
                         if res.config.chart_debug {

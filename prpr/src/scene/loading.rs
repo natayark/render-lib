@@ -193,7 +193,15 @@ impl Scene for LoadingScene {
         ct.x += sub.w * 0.02;
         draw_parallelogram(sub, None, WHITE, true);
         //draw_text_aligned(ui, &(self.info.difficulty as u32).to_string(), ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.88, BLACK);
-        draw_text_aligned(ui, self.info.level.split_whitespace().nth(1).and_then(|word| word.get(3..)).unwrap_or_default(), ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.88, BLACK);
+        let first_num = Regex::new(r"\d").unwrap();
+        draw_text_aligned(ui, self.info.level
+            .split_whitespace()
+            .nth(1)
+            //.and_then(|word| word.get(3..))
+            .and_then(|word| { first_num.find(word).map(|m| &word[m.start()..]) })
+            .unwrap_or_default()
+            , ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.88, BLACK
+        );
         draw_text_aligned(ui, self.info.level.split_whitespace().next().unwrap_or_default(), ct.x, ct.y + sub.h * 0.09, (0.5, 0.), 0.34, BLACK);
         let t = draw_text_aligned(ui, "Chart", main.x + main.w / 6., main.y + main.h * 1.2, (0., 0.), 0.3, WHITE);
         draw_text_aligned_fix(ui, &self.info.charter, t.x, t.y + top / 20., (0., 0.), 0.47, WHITE, 0.58);
