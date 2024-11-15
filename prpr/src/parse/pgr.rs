@@ -95,7 +95,7 @@ macro_rules! validate_events {
 fn parse_speed_events(r: f32, mut pgr: Vec<PgrSpeedEvent>, max_time: f32) -> Result<(AnimFloat, AnimFloat)> {
     validate_events!(pgr);
     //assert_eq!(pgr[0].start_time, 0.0);
-    if pgr[0].start_time != 0. {pgr[0].start_time = 0.}
+    if pgr[0].start_time != 0. { pgr[0].start_time = 0. }
     let mut kfs = Vec::new();
     let mut pos = 0.;
     kfs.extend(pgr[..pgr.len().saturating_sub(1)].iter().map(|it| {
