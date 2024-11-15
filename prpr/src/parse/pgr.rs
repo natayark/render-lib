@@ -172,7 +172,7 @@ fn parse_move_events_fv1(r: f32, mut pgr: Vec<PgrEvent>) -> Result<AnimVector> {
             kf1.push(Keyframe::new(st, start, 2));
         }
         if !kf2.last().map_or(false, |it| it.value == e.start2) {
-            let start2 = e.start2 % 1000.;
+            let start2 = e.start % 1000.;
             kf2.push(Keyframe::new(st,  start2, 2));
         }
         let end = (e.end - e.end % 1000.) / 1000.;
