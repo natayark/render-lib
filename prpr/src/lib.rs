@@ -27,9 +27,9 @@ pub use scene::Main;
 
 pub fn build_conf() -> macroquad::window::Conf {
     macroquad::window::Conf {
-        window_title: "Phira".to_string(),
-        window_width: 1080,
-        window_height: 608,
+        window_title: "Phigros Recorder".to_string(),
+        window_width: 1280,
+        window_height: 720,
         ..Default::default()
     }
 }

@@ -19,7 +19,7 @@ use tracing::warn;
 
 const BEFORE_TIME: f32 = 1.;
 const TRANSITION_TIME: f32 = 1.4;
-const WAIT_TIME: f32 = 0.4;
+const WAIT_TIME: f32 = 0.;
 
 pub type UploadFn = Arc<dyn Fn(Vec<u8>) -> Task<Result<RecordUpdateState>>>;
 pub type UpdateFn = Box<dyn FnMut(f32, &mut Resource, &mut Judge)>;
@@ -156,7 +156,7 @@ impl Scene for LoadingScene {
         draw_background(*self.background);
         let dx = if now > self.finish_time {
             let p = ((now - self.finish_time) / TRANSITION_TIME).min(1.);
-            p.powi(3) * 2.
+            p.powi(2) * 3. + p.powi(5) * 11.
         } else {
             0.
         };
