@@ -127,7 +127,7 @@ impl HomePage {
 
 impl Page for HomePage {
     fn label(&self) -> std::borrow::Cow<'static, str> {
-        "HOME".into()
+        "PHIGROS".into()
     }
 
     fn enter(&mut self, s: &mut SharedState) -> Result<()> {
