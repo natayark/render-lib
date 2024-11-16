@@ -4,7 +4,7 @@ use super::{draw_background, game::SimpleRecord, loading::UploadFn, NextScene, S
 use crate::{
     config::Config,
     ext::{
-        create_audio_manger, draw_illustration, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, SafeTexture, ScaleType,
+        create_audio_manger, draw_illustration, draw_illustration_shadow, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, SafeTexture, ScaleType,
         PARALLELOGRAM_SLOPE,
     },
     info::ChartInfo,
@@ -233,7 +233,7 @@ impl Scene for EndingScene {
         }
 
         tran(gl, (1. - ran(t, 0.1, 1.3)).powi(3));
-        let r = draw_illustration(*self.illustration, -0.38, 0., 1., 1.2, WHITE);
+        let r = draw_illustration_shadow(*self.illustration, -0.38, 0., 1., 1.2, WHITE);
         let slope = PARALLELOGRAM_SLOPE;
         let ratio = 0.2;
         draw_parallelogram_ex(
@@ -409,7 +409,7 @@ impl Scene for EndingScene {
             0.37,
             Color::new(0., 0., 0., alpha),
         );
-        let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color);
+        let r = draw_illustration_shadow(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color);
         let text = draw_text_aligned(ui, &self.player_name, r.x - 0.01, r.center().y, (1., 0.5), 0.54, color);
         draw_parallelogram(
             Rect::new(text.x - main.h * slope - 0.01, main.y, r.x - text.x + main.h * slope * 2. + 0.013, main.h),

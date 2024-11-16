@@ -284,8 +284,8 @@ pub fn draw_parallelogram_ex(rect: Rect, texture: Option<(Texture2D, Rect)>, top
     gl.draw_mode(DrawMode::Triangles);
     gl.geometry(&v, &[0, 2, 3, 0, 1, 3]);
     if shadow {
-        //drop_shadow(p, top.a.min(bottom.a));
-        drop_shadow(p, 1.0);
+        drop_shadow(p, top.a.min(bottom.a));
+        //drop_shadow(p, 1.0);
     }
 }
 
@@ -309,13 +309,34 @@ pub fn draw_illustration(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: 
     r
 }
 
+pub fn draw_illustration_shadow(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: Color) -> Rect {
+    let scale = 0.076;
+    let w = scale * 13. * w;
+    let h = scale * 7. * h;
+    let r = Rect::new(x - w / 2., y - h / 2., w, h);
+    let tr = {
+        let exp = w / h;
+        let act = tex.width() / tex.height();
+        if exp > act {
+            let h = act / exp;
+            Rect::new(0., 0.5 - h / 2., 1., h)
+        } else {
+            let w = exp / act;
+            Rect::new(0.5 - w / 2., 0., w, 1.)
+        }
+    };
+    crate::ext::draw_parallelogram(r, Some((tex, tr)), color, true);
+    r
+}
+
 fn drop_shadow(p: [Point; 4], alpha: f32) {
     const RADIUS: f32 = 0.018;
     let len = (PARALLELOGRAM_SLOPE * PARALLELOGRAM_SLOPE + 1.).sqrt();
     let n1 = Vector::new(PARALLELOGRAM_SLOPE / len - 1., -1. / len) * RADIUS;
     let n2 = Vector::new(n1.x + RADIUS * 2., n1.y);
     let c1 = Color::new(0., 0., 0., alpha * 0.06);
-    let c2 = Color::default();
+    //let c2 = Color::default();
+    let c2 = Color::new(0., 0., 0., 0.);
     let v = |p: Point, c: Color| Vertex::new(p.x, p.y, 0., 0., 0., c);
     let p = [
         v(p[0], c1),
