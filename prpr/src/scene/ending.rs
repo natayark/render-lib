@@ -217,13 +217,13 @@ impl Scene for EndingScene {
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
 
         const START0: f32 = 0.0;
-        const END0: f32 = 1.3;
-        const START1: f32 = 0.10;
-        const END1: f32 = 0.5;
-        const START2: f32 = 0.10;
-        const END2: f32 = 0.86;
-        const START3: f32 = 0.10;
-        const END3: f32 = 1.28;
+        const END0: f32 = 1.25;
+        const START1: f32 = 0.00;
+        const END1: f32 = 0.55;
+        const START2: f32 = 0.00;
+        const END2: f32 = 0.85;
+        const START3: f32 = 0.00;
+        const END3: f32 = 1.20;
 
         let mut cam = ui.camera();
         let asp = -cam.zoom.y;
@@ -286,7 +286,7 @@ impl Scene for EndingScene {
         draw_parallelogram(main, None, c2, true);
         {
             let spd = if (self.speed - 1.).abs() <= 1e-4 {
-                String::new()
+                format!(" ")//String::new()
             } else {
                 format!(" {:.2}x", self.speed)
             };
@@ -300,18 +300,18 @@ impl Scene for EndingScene {
                     if state.best {
                         format!("NEW BEST +{:07}", state.improvement)
                     } else {
-                        String::new()
+                        format!(" ")//String::new()
                     }
                 )
             } else {
                 "Uploading…".to_owned()
             };
-            let pa = ran(t, 0.4, 0.7).powi(5);
+            let pa = ran(t, 0.2, 0.6).powi(5);
             let r = draw_text_aligned(ui, &text, main.x + dx + 0.01, main.bottom() - 0.040, (0., 1.), 0.34, Color::new(1., 1., 1., pa));
             let r = draw_text_aligned(ui, &format!("{:07}", res.score), r.x - 0.005, r.y - 0.022, (0., 1.), 1.05, Color::new(1., 1., 1., pa));
             let icon = icon_index(res.score, res.num_of_notes == res.max_combo);
-            let p = ran(t, 1.3, 1.7).powi(5);
-            let p2 = ran(t, 1.6, 1.95).powi(3);
+            let p = ran(t, 1.2, 1.6).powi(5);
+            let p2 = ran(t, 1.65, 1.9).powi(3);
             let s = main.h * 0.72;
             let ct = (main.right() + 0.01 - main.h * slope - s / 2., r.bottom() + 0.03 - s / 2.);
             let s = s + s * (1. - p2) * 0.3;
@@ -328,13 +328,13 @@ impl Scene for EndingScene {
         }
         gl.pop_model_matrix();
 
-        tran(gl, (1. - ran(t, START2, END2)).powi(3) + p_main);
+        tran(gl, (1. - ran(t, START2, END2)).powi(2) + p_main);
         let d = r.h / 15.5;
+        let pa = ran(t, 0.6, 1.0).powi(5);
         let s1 = Rect::new(main.x - d * 4. * slope, main.bottom() + d, main.w - d * 5. * slope, d * 2.85);
         draw_parallelogram(s1, None, c2, true);
         {
             let dy = 0.025;
-            let pa = ran(t, 0.8, 1.1).powi(5);
             let r = draw_text_aligned(ui, "Max Combo", s1.x + dx - 0.01, s1.bottom() - dy, (0., 1.), 0.32, Color::new(1., 1., 1., pa));
             draw_text_aligned(ui, &res.max_combo.to_string(), r.x, r.y - 0.008, (0., 1.), 0.65, Color::new(1., 1., 1., pa));
             let r = draw_text_aligned(ui, "Accuracy", s1.right() - dx + 0.02, s1.bottom() - dy, (1., 1.), 0.32, Color::new(1., 1., 1., pa));
@@ -342,7 +342,7 @@ impl Scene for EndingScene {
         }
         gl.pop_model_matrix();
 
-        tran(gl, (1. - ran(t, START3, END3)).powi(3) + p_main);
+        tran(gl, (1. - ran(t, START3, END3)).powi(2) + p_main);
         let s2 = Rect::new(s1.x - d * 4. * slope, s1.bottom() + d, s1.w, s1.h);
         draw_parallelogram(s2, None, c2, true);
         {
@@ -350,8 +350,8 @@ impl Scene for EndingScene {
             let dy2 = 0.014;
             let bg = 0.55;
             let sm = 0.24;
+            let pa = ran(t, 1.1, 1.4).powi(5);
             let draw_count = |ui: &mut Ui, ratio: f32, name: &str, count: u32| {
-                let pa = ran(t, 1.2, 1.5).powi(5);
                 let r = draw_text_aligned(ui, name, s2.x + s2.w * ratio, s2.bottom() - dy, (0.5, 1.), sm, Color::new(1., 1., 1., pa));
                 draw_text_aligned(ui, &count.to_string(), r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa));
             };
@@ -364,17 +364,17 @@ impl Scene for EndingScene {
             let l = s2.x + s2.w * 0.70;
             let rt = s2.x + s2.w * 0.92;
             let cy = s2.center().y;
-            let r = draw_text_aligned(ui, "Early", l, cy - dy2 / 2.3, (0., 1.), sm, WHITE);
-            draw_text_aligned(ui, &res.early.to_string(), rt, r.bottom(), (1., 1.), sm, WHITE);
-            let r = draw_text_aligned(ui, "Late", l, cy + dy2 / 2.3, (0., 0.), 0.3, WHITE);
-            draw_text_aligned(ui, &res.late.to_string(), rt, r.y, (1., 0.), sm, WHITE);
+            let r = draw_text_aligned(ui, "Early", l, cy - dy2 / 2.3, (0., 1.), sm, Color::new(1., 1., 1., pa));
+            draw_text_aligned(ui, &res.early.to_string(), rt, r.bottom(), (1., 1.), sm, Color::new(1., 1., 1., pa));
+            let r = draw_text_aligned(ui, "Late", l, cy + dy2 / 2.3, (0., 0.), 0.3, Color::new(1., 1., 1., pa));
+            draw_text_aligned(ui, &res.late.to_string(), rt, r.y, (1., 0.), sm, Color::new(1., 1., 1., pa));
         }
         gl.pop_model_matrix();
 
         let dy = 0.010;
         let w = 0.195;
-        let p = (1. - ran(t, 0.75, 1.83)).powi(6); // retry
-        let p2 = (1. - ran(t, 0.75, 1.83)).powi(5); // next
+        let p = (1. - ran(t, 0.7, 1.8)).powi(7); // retry
+        let p2 = (1. - ran(t, 0.7, 1.8)).powi(5); // next
         let h = 0.12;
         let s = 0.08;
         let hs = h * 0.28;
