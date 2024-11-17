@@ -198,7 +198,8 @@ impl Scene for LoadingScene {
         let first_num = Regex::new(r"[0-9?]").unwrap();
         draw_text_aligned(ui, self.info.level
             .split_whitespace()
-            .nth(1)
+            .rev()
+            .nth(0)
             //.and_then(|word| word.get(3..))
             .and_then(|word| { first_num.find(word).map(|m| &word[m.start()..]) })
             .unwrap_or_default()
