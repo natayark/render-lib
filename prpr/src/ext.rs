@@ -289,7 +289,7 @@ pub fn draw_parallelogram_ex(rect: Rect, texture: Option<(Texture2D, Rect)>, top
     }
 }
 
-pub fn draw_illustration(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: Color) -> Rect {
+pub fn draw_illustration(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: Color, shadow: bool) -> Rect {
     let scale = 0.076;
     let w = scale * 13. * w;
     let h = scale * 7. * h;
@@ -305,29 +305,10 @@ pub fn draw_illustration(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: 
             Rect::new(0.5 - w / 2., 0., w, 1.)
         }
     };
-    crate::ext::draw_parallelogram(r, Some((tex, tr)), color, false);
+    crate::ext::draw_parallelogram(r, Some((tex, tr)), color, shadow);
     r
 }
 
-pub fn draw_illustration_shadow(tex: Texture2D, x: f32, y: f32, w: f32, h: f32, color: Color) -> Rect {
-    let scale = 0.076;
-    let w = scale * 13. * w;
-    let h = scale * 7. * h;
-    let r = Rect::new(x - w / 2., y - h / 2., w, h);
-    let tr = {
-        let exp = w / h;
-        let act = tex.width() / tex.height();
-        if exp > act {
-            let h = act / exp;
-            Rect::new(0., 0.5 - h / 2., 1., h)
-        } else {
-            let w = exp / act;
-            Rect::new(0.5 - w / 2., 0., w, 1.)
-        }
-    };
-    crate::ext::draw_parallelogram(r, Some((tex, tr)), color, true);
-    r
-}
 
 fn drop_shadow(p: [Point; 4], alpha: f32) {
     const RADIUS: f32 = 0.018;

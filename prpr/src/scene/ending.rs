@@ -4,7 +4,7 @@ use super::{draw_background, game::SimpleRecord, loading::UploadFn, NextScene, S
 use crate::{
     config::Config,
     ext::{
-        create_audio_manger, draw_illustration, draw_illustration_shadow, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, SafeTexture, ScaleType,
+        create_audio_manger, draw_illustration, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, SafeTexture, ScaleType,
         PARALLELOGRAM_SLOPE,
     },
     info::ChartInfo,
@@ -244,7 +244,7 @@ impl Scene for EndingScene {
 
         let p_main = (1. - ran(t, START0, END0)).powi(6);
         tran(gl, p_main);
-        let r = draw_illustration_shadow(*self.illustration, -0.37, 0., 1.03, 1.2, WHITE);
+        let r = draw_illustration(*self.illustration, -0.37, 0., 1.03, 1.2, WHITE, true);
         let slope = PARALLELOGRAM_SLOPE;
         let ratio = 0.2;
         draw_parallelogram_ex(
@@ -425,15 +425,15 @@ impl Scene for EndingScene {
             0.37,
             Color::new(0., 0., 0., alpha),
         );
-        let r = draw_illustration_shadow(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color);
+        let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color, true);
         let text = draw_text_aligned(ui, &self.player_name, r.x - 0.005, r.center().y, (1., 0.5), 0.54, color);
         draw_parallelogram(
-            Rect::new(text.x - main.h * slope - 0.02, main.y, r.x - text.x + main.h * slope * 2. + 0.0229, main.h),
+            Rect::new(text.x - main.h * slope - 0.02, main.y, r.x - text.x + main.h * slope * 2. + 0.0220, main.h),
             None,
             Color::new(0., 0., 0., c.a * alpha),
             false,
         );
-        let r = draw_illustration_shadow(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color); //懒得搞了 怎么写方便就怎么写(
+        //let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color, true); //懒得搞了 怎么写方便就怎么写(
         draw_text_aligned(ui, &self.player_name, r.x - 0.01, r.center().y, (1., 0.5), 0.54, color);
 
         let ct = (1. - 0.1 + 0.043, main.center().y - 0.034 + 0.02);
