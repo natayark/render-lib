@@ -153,16 +153,15 @@ impl Note {
         // && self.ctrl_obj.is_default()
     }
 
-    pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32, _bpm_list: &mut BpmList) {
+    pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32, bpm_list: &mut BpmList) {
         self.object.set_time(res.time);
         //let mut _immediate_particle = false;
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
                 //_immediate_particle = true;
-                //let beat = if self.format { bpm_list.now_bpm(self.time) } else { bpm_list.now_bpm(self.time) };
-                //println!("{beat}");
-                //let time = bpm_list.time_beats(beat);
-                *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;
+                let beat = if self.format { 30. / bpm_list.now_bpm(0.) } else { 30. / bpm_list.now_bpm(self.time) };
+                //println!("{} {} {}", bpm_list.now_bpm(0.), beat, res.config.speed);
+                *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
                 Some(if perfect {
                     res.res_pack.info.fx_perfect()
                 } else {
