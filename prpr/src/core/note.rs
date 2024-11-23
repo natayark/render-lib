@@ -9,6 +9,7 @@ use crate::{
 
 
 use macroquad::prelude::*;
+use ::rand::{thread_rng, Rng};
 
 const HOLD_PARTICLE_INTERVAL: f32 = 0.15;
 const FADEOUT_TIME: f32 = 0.16;
@@ -130,6 +131,18 @@ fn draw_center(res: &Resource, tex: Texture2D, order: i8, scale: f32, color: Col
     );
 }
 
+fn random_rotate() -> f32 {
+    let mut rng = thread_rng();
+    let rotation_degrees: f32 = match rng.gen_range(0..4) {
+        0 => 0.,
+        1 => 90.,
+        2 => 180.,
+        3 => 270.,
+        _ => 0.,
+    };
+    rotation_degrees
+}
+
 impl Note {
     pub fn rotation(&self, line: &JudgeLine) -> f32 {
         line.object.rotation.now() + if self.above { 0. } else { 180. }
@@ -140,13 +153,15 @@ impl Note {
         // && self.ctrl_obj.is_default()
     }
 
-    pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32) {
+    pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32, _bpm_list: &mut BpmList) {
         self.object.set_time(res.time);
-        let mut _immediate_particle = false;
+        //let mut _immediate_particle = false;
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
-                _immediate_particle = true;
-                //HOLD_PARTICLE_INTERVAL = 30 / bpm
+                //_immediate_particle = true;
+                //let beat = if self.format { bpm_list.now_bpm(self.time) } else { bpm_list.now_bpm(self.time) };
+                //println!("{beat}");
+                //let time = bpm_list.time_beats(beat);
                 *at = res.time + HOLD_PARTICLE_INTERVAL / res.config.speed;
                 Some(if perfect {
                     res.res_pack.info.fx_perfect()
@@ -164,6 +179,14 @@ impl Note {
             self.init_ctrl_obj(ctrl_obj, line_height);
             res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                 res.emit_at_origin(parent_rot + if self.above { 0. } else { 180. }, color)
+            });
+        }
+
+        if let Some(color) = color {
+            self.init_ctrl_obj(ctrl_obj, line_height);
+            let rotation = random_rotate();
+            res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
+                res.emit_at_origin(parent_rot + rotation, color)
             });
         }
     }
