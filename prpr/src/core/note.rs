@@ -182,11 +182,13 @@ impl Note {
         }
 
         if let Some(color) = color {
-            self.init_ctrl_obj(ctrl_obj, line_height);
-            let rotation = random_rotate();
-            res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
-                res.emit_at_origin(parent_rot + rotation, color)
-            });
+            if !res.config.chart_debug {
+                self.init_ctrl_obj(ctrl_obj, line_height);
+                let rotation = random_rotate();
+                res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
+                    res.emit_at_origin(parent_rot + rotation, color)
+                });
+            }
         }
     }
     
