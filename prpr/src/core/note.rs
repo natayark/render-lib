@@ -11,7 +11,7 @@ use crate::{
 use macroquad::prelude::*;
 use ::rand::{thread_rng, Rng};
 
-const HOLD_PARTICLE_INTERVAL: f32 = 0.15;
+//const HOLD_PARTICLE_INTERVAL: f32 = 0.15;
 const FADEOUT_TIME: f32 = 0.16;
 const BAD_TIME: f32 = 0.5;
 
@@ -243,7 +243,7 @@ impl Note {
         // show_below的判断
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
-            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && base <= -1e-3))
+            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && base <= -0.005))
         {
             if res.config.chart_debug{
                 color.a *= 0.2;
