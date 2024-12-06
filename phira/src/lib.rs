@@ -205,7 +205,8 @@ async fn the_main() -> Result<()> {
             Ok(())
         }();
         if let Err(err) = res {
-            error!("uncaught error: {err:?}");
+            //error!("uncaught error: {err:?}");
+            eprint!("uncaught error: {err:?}");
             show_error(err);
         }
         if main.should_exit() {
