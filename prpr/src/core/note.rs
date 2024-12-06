@@ -243,7 +243,8 @@ impl Note {
         // show_below的判断
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
-            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && base <= -0.0075)) && self.speed != 0.
+            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })))
+            && self.speed != 0.
         {
             if res.config.chart_debug{
                 color.a *= 0.2;
