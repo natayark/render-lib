@@ -432,9 +432,10 @@ pub fn create_audio_manger(config: &Config) -> Result<AudioManager> {
     #[cfg(not(target_os = "android"))]
     {
         use sasa::backend::cpal::*;
-        AudioManager::new(CpalBackend::new(CpalSettings {
+        Ok(AudioManager::new(CpalBackend::new(CpalSettings {
             buffer_size: config.audio_buffer_size,
         }))
+        .expect("Failed to play sound"))
     }
 }
 
