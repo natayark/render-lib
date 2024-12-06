@@ -247,10 +247,10 @@ impl Note {
             && self.speed != 0.
         {
             if res.config.chart_debug{
-                //color.a *= 0.2;
+                color.a *= 0.2;
                 //println!("{}", base);
             } else {
-                //return;
+                return;
             }
         }
         let order = self.kind.order();
