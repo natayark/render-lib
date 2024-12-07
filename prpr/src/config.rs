@@ -78,7 +78,7 @@ impl Default for Config {
             aggressive: false,
             aspect_ratio: None,
             audio_buffer_size: None,
-            challenge_color: ChallengeModeColor::Golden,
+            challenge_color: ChallengeModeColor::Rainbow,
             challenge_rank: 45,
             chart_debug: false,
             chart_ratio: 1.0,
