@@ -444,20 +444,28 @@ impl GameScene {
                 .scale(scale)
                 .draw();
 
-            ui.text(&res.config.watermark)
+            /*let watermark = if res.config.watermark == "AntiLeave" { 
+                "".to_string() 
+            } else { 
+                format!("{}Phigros Recorder - Code by HLMC", res.config.watermark) 
+            };*/
+            let watermark = res.config.watermark.clone();
+            ui.text(&watermark)
                 .pos(0., -top * 0.98 + (1. - p) * 0.4)
                 .anchor(0.5, 1.)
-                .size(0.35)
+                .size(0.2)
                 .color(Color::new(1., 1., 1., 0.5))
                 .scale(scale)
                 .draw();
-            ui.text(&res.config.watermark)
+            if res.config.chart_ratio <= 0.95 {
+                ui.text(&watermark)
                 .pos(0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio)
                 .anchor(0.5, 1.)
-                .size(0.35 / res.config.chart_ratio)
+                .size(0.2 / res.config.chart_ratio)
                 .color(Color::new(1., 1., 1., 0.5))
                 .scale(scale)
                 .draw();
+            }
         });
         let hw = 0.0015;
         let height = eps * 1.1;
