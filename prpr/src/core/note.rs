@@ -162,7 +162,7 @@ impl Note {
                 let beat = if self.format { 30. / bpm_list.now_bpm(0.) } else { 30. / bpm_list.now_bpm(self.time) };
                 //println!("{} {} {}", bpm_list.now_bpm(0.), beat, res.config.speed);
                 *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
-                Some(if perfect {
+                Some(if perfect && !res.config.all_good {
                     res.res_pack.info.fx_perfect()
                 } else {
                     res.res_pack.info.fx_good()
