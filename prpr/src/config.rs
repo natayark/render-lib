@@ -97,7 +97,7 @@ impl Default for Config {
             offline_mode: false,
             offset: 0.,
             particle: true,
-            player_name: "HLMC".to_string(),
+            player_name: "Guest".to_string(),
             player_rks: 15.,
             res_pack_path: None,
             sample_count: 1,

@@ -42,6 +42,7 @@ item-touch-debug = Touch debug mode
 item-touch-debug-sub = Display touch points
 item-chart_ratio = Chart zoom ratio
 item-all-good = Force Good judgment
+item-watermark = Watermark
 
 load-cali-failed = Failed to load audio
 

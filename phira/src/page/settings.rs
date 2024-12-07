@@ -628,6 +628,7 @@ struct DebugList {
     touch_debug_btn: DRectButton,
     ratio_slider: Slider,
     all_good_btn: DRectButton,
+    watermark: DRectButton,
 }
 
 impl DebugList {
@@ -637,6 +638,7 @@ impl DebugList {
             touch_debug_btn: DRectButton::new(),
             ratio_slider: Slider::new(0.05..1.0, 0.05),
             all_good_btn: DRectButton::new(),
+            watermark: DRectButton::new(),
         }
     }
 
@@ -662,10 +664,23 @@ impl DebugList {
             config.all_good ^= true;
             return Ok(Some(true));
         }
+        if self.watermark.touch(touch, t) {
+            request_input("watermark", &config.watermark);
+            return Ok(Some(true));
+        }
         Ok(None)
     }
 
     pub fn update(&mut self, _t: f32) -> Result<bool> {
+        let data = get_data_mut();
+        if let Some((id, text)) = take_input() {
+            if id == "watermark" {
+                data.config.watermark = text;
+                return Ok(true);
+            } else {
+                return_input(id, text);
+            }
+        }
         Ok(false)
     }
 
@@ -698,6 +713,10 @@ impl DebugList {
         item! {
             render_title(ui, c, tl!("item-all-good"), None);
             render_switch(ui, rr, t, c, &mut self.all_good_btn, config.all_good);
+        }
+        item! {
+            render_title(ui, c, tl!("item-watermark"), None);
+            self.watermark.render_text(ui, rr, t, c.a, &config.watermark, 0.4, false);
         }
         (w, h)
     }
