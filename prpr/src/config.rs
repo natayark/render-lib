@@ -68,6 +68,7 @@ pub struct Config {
 
     // for compatibility
     pub autoplay: Option<bool>,
+    pub all_good: bool,
 }
 
 impl Default for Config {
@@ -106,6 +107,7 @@ impl Default for Config {
             volume_bgm: 1.,
 
             autoplay: None,
+            all_good: false,
         }
     }
 }

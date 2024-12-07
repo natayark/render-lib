@@ -785,6 +785,11 @@ impl Judge {
 
     fn auto_play_update(&mut self, res: &mut Resource, chart: &mut Chart) {
         let t = res.time;
+        let (judge_type, judge_time, fx_color) = if res.config.all_good {
+            (Judgement::Good, LIMIT_GOOD, res.res_pack.info.fx_good())
+        } else {
+            (Judgement::Perfect, 0., res.res_pack.info.fx_perfect())
+        };
         //let spd = res.config.speed;
         let mut judgements = Vec::new();
         for (line_id, (line, (idx, st))) in chart.lines.iter_mut().zip(self.notes.iter_mut()).enumerate() {
@@ -811,7 +816,7 @@ impl Judge {
                     //println!("{}\t{}\t{}", t, note.time, t - note.time);
                     // 都是AutoPlay了为什么还要输出判定时间差
                     //JudgeStatus::Hold(true, t, (t - note.time) / spd, false, f32::INFINITY)
-                    JudgeStatus::Hold(true, t, 0., true, f32::INFINITY)
+                    JudgeStatus::Hold(true, t, judge_time, true, f32::INFINITY)
                 } else {
                     judgements.push((line_id, *id));
                     JudgeStatus::Judged
@@ -825,7 +830,6 @@ impl Judge {
             }
         }
         for (line_id, id) in judgements.into_iter() {
-            self.commit(t, Judgement::Perfect, line_id as _, id, 0.);
             let (note_transform, note_kind) = {
                 let line = &mut chart.lines[line_id];
                 let note = &mut line.notes[id as usize];
@@ -835,11 +839,25 @@ impl Judge {
                 (note.object.now(res), note.kind.clone())
             };
             let line = &chart.lines[line_id];
-            res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
-                if !matches!(note_kind, NoteKind::Hold { .. }){
-                    res.emit_at_origin(line.notes[id as usize].rotation(line), res.res_pack.info.fx_perfect())
+            match note_kind {
+                NoteKind::Click => {
+                    self.commit(t, judge_type, line_id as _, id, 0.);
+                    res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
+                        res.emit_at_origin(line.notes[id as usize].rotation(line), fx_color)
+        
+                    });
                 }
-            });
+                NoteKind::Hold { .. } => {
+                    self.commit(t, judge_type, line_id as _, id, 0.);
+                }
+                _ => {
+                    self.commit(t, Judgement::Perfect, line_id as _, id, 0.);
+                    res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
+                        res.emit_at_origin(line.notes[id as usize].rotation(line), res.res_pack.info.fx_perfect())
+        
+                    });
+                },
+            };
             if let Some(sfx) = match note_kind {
                 NoteKind::Click => Some(&mut res.sfx_click),
                 NoteKind::Drag => Some(&mut res.sfx_drag),
@@ -947,13 +965,13 @@ pub struct PlayResult {
 
 pub fn icon_index(score: u32, full_combo: bool) -> usize {
     match (score, full_combo) {
+        (x, _) if x >= 1000000 => 7,
+        (_, true) => 6,
         (x, _) if x < 700000 => 0,
         (x, _) if x < 820000 => 1,
         (x, _) if x < 880000 => 2,
         (x, _) if x < 920000 => 3,
         (x, _) if x < 960000 => 4,
-        (1000000, _) => 7,
         (_, false) => 5,
-        (_, true) => 6,
     }
 }
