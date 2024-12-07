@@ -444,20 +444,20 @@ impl GameScene {
                 .scale(scale)
                 .draw();
 
-            /*ui.text("Phigros Recorder by HLMC")
-                .pos(0., -top + (1. - p) * 0.2)
+            ui.text(&res.config.watermark)
+                .pos(0., -top * 0.98 + (1. - p) * 0.4)
                 .anchor(0.5, 1.)
-                .size(0.4)
+                .size(0.35)
                 .color(Color::new(1., 1., 1., 0.5))
                 .scale(scale)
                 .draw();
-            ui.text("Phigros Recorder by HLMC")
-                .pos(0., (-top + (1. - p) * 0.2) / res.config.chart_ratio)
+            ui.text(&res.config.watermark)
+                .pos(0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio)
                 .anchor(0.5, 1.)
-                .size(0.4 / res.config.chart_ratio)
+                .size(0.35 / res.config.chart_ratio)
                 .color(Color::new(1., 1., 1., 0.5))
                 .scale(scale)
-                .draw();*/
+                .draw();
         });
         let hw = 0.0015;
         let height = eps * 1.1;
