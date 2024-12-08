@@ -509,7 +509,7 @@ impl Scene for EndingScene {
         let challenge_rank = if self.config.roman {GameScene::int_to_roman(self.challenge_rank)} else if self.config.chinese {GameScene::int_to_chinese(self.challenge_rank)} else {self.challenge_rank.to_string()};
         let mut text_size = 0.46;
         let mut text = ui.text(&challenge_rank).size(text_size);
-        let max_width = 0.06;
+        let max_width = 0.05;
         let text_width = text.measure().w;
         if text_width > max_width {
             text_size *= max_width / text_width
