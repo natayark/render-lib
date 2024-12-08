@@ -234,7 +234,8 @@ impl Scene for LoadingScene {
         draw_text_aligned_fix(ui, &self.info.illustrator, t.x - 0.002, t.y + top / 22., (0., 0.), 0.415, WHITE, 0.58);
         let text_tip = if self.config.chinese {format!("提示：{}", self.info.tip.as_ref().unwrap())} else {format!("Tip: {}", self.info.tip.as_ref().unwrap())};
         draw_text_aligned_fix(ui, &text_tip, -0.895, top * 0.88, (0., 1.), 0.47, WHITE, 1.5);
-        let t = draw_text_aligned(ui, &text_tip, 0.865, top * 0.865, (1., 1.), 0.41, WHITE);
+        let text_loading = if self.config.chinese {"加载中..."} else {"Loading..."};
+        let t = draw_text_aligned(ui, &text_loading, 0.865, top * 0.865, (1., 1.), 0.41, WHITE);
         let we = 0.19;
         let he = 0.35;
         let r = Rect::new(t.x - t.w * we, t.y - t.h * he, t.w * (1. + we * 2.2), t.h * (1. + he * 2.2));
@@ -249,7 +250,6 @@ impl Scene for LoadingScene {
         ui.fill_rect(r, WHITE);
         r.x += dx;
         ui.scissor(Some(r));
-        let text_loading = if self.config.chinese {"加载中..."} else {"Loading..."};
         draw_text_aligned(ui, text_loading, 0.865, top * 0.865, (1., 1.), 0.41, BLACK);
         ui.scissor(None);
 
