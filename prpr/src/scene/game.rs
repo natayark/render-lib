@@ -2,6 +2,7 @@
 
 crate::tl_file!("game");
 
+use chinese_number::{ChineseCase, ChineseCountMethod, ChineseVariant, NumberToChinese, ChineseToNumber};
 use super::{
     draw_background,
     ending::RecordUpdateState,
@@ -212,39 +213,60 @@ impl GameScene {
     }
 
     pub fn int_to_chinese(num: u32) -> String {
+        num.to_chinese(ChineseVariant::Simple, ChineseCase::Lower, ChineseCountMethod::TenThousand).unwrap()
+    }
+
+    pub fn float_to_chinese(num: f32) -> String {
         let chinese_digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
         let chinese_units = ["", "十", "百", "千", "万", "十万", "百万", "千万", "亿"];
     
-        if num == 0 {
-            return chinese_digits[0].to_string();
-        }
+        let integer_part = num.trunc() as u64;
+        let decimal_part = (num.fract() * 100.0).round() / 100.0;
     
         let mut result = String::new();
-        let mut n = num;
-        let mut unit_index = 0;
-        let mut need_zero = false;
     
-        while n > 0 {
-            let digit = (n % 10) as usize;
-            if digit != 0 {
-                if need_zero {
-                    result.insert(0, '零');
-                    need_zero = false;
+        // 整数
+        if integer_part == 0 {
+            result.push_str(chinese_digits[0]);
+        } else {
+            let mut n = integer_part;
+            let mut unit_index = 0;
+            let mut need_zero = false;
+    
+            while n > 0 {
+                let digit = (n % 10) as usize;
+                if digit != 0 {
+                    if need_zero {
+                        result.insert(0, '零');
+                        need_zero = false;
+                    }
+                    result.insert_str(0, chinese_units[unit_index]);
+                    result.insert_str(0, chinese_digits[digit]);
+                } else {
+                    if !result.starts_with("零") {
+                        need_zero = true;
+                    }
                 }
-                result.insert_str(0, chinese_units[unit_index]);
-                result.insert_str(0, chinese_digits[digit]);
-            } else {
-                need_zero = !result.starts_with("零");
+                n /= 10;
+                unit_index += 1;
             }
-            n /= 10;
-            unit_index += 1;
+    
+            if result.starts_with("一十") {
+                result.remove(0);
+            }
+            if result.ends_with("零") {
+                result.pop();
+            }
         }
     
-        if result.starts_with("一十") {
-            result.remove(0);
-        }
-        if result.ends_with("零") {
-            result.pop();
+        // 小数
+        if decimal_part > 0.0 {
+            result.push('点');
+            let decimal_str = decimal_part.to_string();
+            for c in decimal_str.chars().skip(2) { // 跳过"0."
+                let digit = c.to_digit(10).unwrap() as usize;
+                result.push_str(chinese_digits[digit]);
+            }
         }
     
         result

@@ -12,6 +12,7 @@ closed = []
 log = ["dep:tracing-subscriber", "dep:colored"]
 
 [dependencies]
+chinese-number = "0.7.7"
 anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.21.0"

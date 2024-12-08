@@ -382,8 +382,13 @@ impl Scene for EndingScene {
             let max_combo = if self.config.roman {GameScene::int_to_roman(res.max_combo)} else if self.config.chinese {GameScene::int_to_chinese(res.max_combo)} else {res.max_combo.to_string()};
             draw_text_aligned_fix(ui, &max_combo, r.x, r.y - 0.008, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.15);
             let r = draw_text_aligned(ui, text_accuracy, s1.right() - dx + 0.02, s1.bottom() - dy, (1., 1.), 0.32, Color::new(1., 1., 1., pa));
-            let accuracy = if self.config.roman {format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))} else if self.config.chinese {format!("百分之{}", GameScene::int_to_chinese((res.accuracy * 100.) as u32))} else {format!("{:.2}%", res.accuracy * 100.)};
-            draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.63, Color::new(1., 1., 1., pa), 0.15);
+            let accuracy = if self.config.roman {
+                format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))
+            } else if self.config.chinese {
+                format!("百分之{}", GameScene::float_to_chinese((res.accuracy * 100.) as f32))
+            } else {format!("{:.2}%", res.accuracy * 100.)
+        };
+            draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.63, Color::new(1., 1., 1., pa), 0.3);
         }
         gl.pop_model_matrix();
 
@@ -470,7 +475,7 @@ impl Scene for EndingScene {
                 if self.config.roman {
                     GameScene::int_to_roman(rks.clone() as u32)
                 } else if self.config.chinese {
-                    GameScene::int_to_chinese(rks.clone() as u32)
+                    GameScene::float_to_chinese(rks.clone())
                 } 
                 else {
                     format!("{rks:.2}")
@@ -484,7 +489,7 @@ impl Scene for EndingScene {
             (0.5, 0.5),
             0.37,
             Color::new(0., 0., 0., alpha),
-            0.15
+            0.10
         );
         let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color, true);
         let text = draw_text_aligned(ui, &self.player_name, r.x - 0.005, r.center().y, (1., 0.5), 0.54, color);
@@ -504,7 +509,7 @@ impl Scene for EndingScene {
         let challenge_rank = if self.config.roman {GameScene::int_to_roman(self.challenge_rank)} else if self.config.chinese {GameScene::int_to_chinese(self.challenge_rank)} else {self.challenge_rank.to_string()};
         let mut text_size = 0.46;
         let mut text = ui.text(&challenge_rank).size(text_size);
-        let max_width = 0.05;
+        let max_width = 0.06;
         let text_width = text.measure().w;
         if text_width > max_width {
             text_size *= max_width / text_width
