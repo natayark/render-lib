@@ -543,7 +543,7 @@ impl GameScene {
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
                     //Color{ a: color.a * c.a * 0.6, ..color},
-                    Color::new(0.45, 0.45, 0.45, 1.),
+                    Color::new(0.565, 0.565, 0.565, 1.),
                 );
                 ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color { a: color.a * c.a, ..color });
             });
