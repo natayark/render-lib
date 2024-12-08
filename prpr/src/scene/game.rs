@@ -234,7 +234,7 @@ impl GameScene {
                 result.insert_str(0, chinese_units[unit_index]);
                 result.insert_str(0, chinese_digits[digit]);
             } else {
-                need_zero = true;
+                need_zero = !result.starts_with("零");
             }
             n /= 10;
             unit_index += 1;
@@ -242,6 +242,9 @@ impl GameScene {
     
         if result.starts_with("一十") {
             result.remove(0);
+        }
+        if result.ends_with("零") {
+            result.pop();
         }
     
         result
