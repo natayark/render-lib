@@ -72,7 +72,7 @@ impl EndingScene {
         info: ChartInfo,
         result: PlayResult,
         challenge_texture: SafeTexture,
-        mut config: &Config,
+        config: &Config,
         bgm: AudioClip,
         upload_fn: Option<UploadFn>,
         player_rks: Option<f32>,

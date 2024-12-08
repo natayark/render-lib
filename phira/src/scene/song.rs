@@ -777,7 +777,7 @@ impl SongScene {
             LoadingScene::new(
                 mode,
                 info,
-                config,
+                &config,
                 fs,
                 get_data().me.as_ref().map(|it| BasicPlayer {
                     avatar: UserManager::get_avatar(it.id).flatten(),

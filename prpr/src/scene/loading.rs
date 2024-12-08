@@ -32,6 +32,7 @@ pub struct BasicPlayer {
 
 pub struct LoadingScene {
     info: ChartInfo,
+    config: Config,
     background: SafeTexture,
     illustration: SafeTexture,
     pub load_task: LocalTask<Result<GameScene>>,
@@ -47,7 +48,7 @@ impl LoadingScene {
     pub async fn new(
         mode: GameMode,
         mut info: ChartInfo,
-        config: Config,
+        config: &Config,
         mut fs: Box<dyn FileSystem>,
         player: Option<BasicPlayer>,
         upload_fn: Option<UploadFn>,
@@ -96,11 +97,12 @@ impl LoadingScene {
         if info.tip.is_none() {
             info.tip = Some(crate::config::TIPS.choose(&mut thread_rng()).unwrap().to_owned());
         }
-        let future = Box::pin(GameScene::new(mode, info.clone(), config, fs, player, background.clone(), illustration.clone(), upload_fn, update_fn));
+        let future = Box::pin(GameScene::new(mode, info.clone(), config.clone(), fs, player, background.clone(), illustration.clone(), upload_fn, update_fn));
         let charter = Regex::new(r"\[!:[0-9]+:([^:]*)\]").unwrap().replace_all(&info.charter, "$1").to_string();
 
         Ok(Self {
             info,
+            config: config.clone(),
             background,
             illustration,
             load_task: Some(future),
@@ -195,22 +197,28 @@ impl Scene for LoadingScene {
         ct.y += sub.h * 0.05;
         draw_parallelogram(sub, None, WHITE, true);
         //draw_text_aligned(ui, &(self.info.difficulty as u32).to_string(), ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.88, BLACK);
-        let first_str = Regex::new(r"[0-9?]+").unwrap();
-        let last_str = Regex::new(r"[0-9?.]+").unwrap();
-        draw_text_aligned_fix(ui, self.info.level
-            .split_whitespace()
-            .rev()
-            .nth(0)
-            //.and_then(|word| word.get(3..))
-            .and_then(|word| { first_str.find(word).map(|m| &word[m.start()..]) })
-            .and_then(|word| { last_str.find(word).map(|m| &word[..m.end()]) })
-            //.unwrap_or_default()
-            .unwrap_or(
-                //self.info.level.split_whitespace().rev().nth(0).and_then(|word| word.find('.').map(|pos| &word[(pos + 1)..])).unwrap_or("?")
-                "?"
-            )
-            , ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.90, BLACK, main.w * 0.18
-        );
+        if self.config.difficulty.len() > 0 {
+            draw_text_aligned_fix(ui, &self.config.difficulty
+                , ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.90, BLACK, main.w * 0.18
+            );
+        } else {
+            let first_str = Regex::new(r"[0-9?]+").unwrap();
+            let last_str = Regex::new(r"[0-9?.]+").unwrap();
+            draw_text_aligned_fix(ui, self.info.level
+                .split_whitespace()
+                .rev()
+                .nth(0)
+                //.and_then(|word| word.get(3..))
+                .and_then(|word| { first_str.find(word).map(|m| &word[m.start()..]) })
+                .and_then(|word| { last_str.find(word).map(|m| &word[..m.end()]) })
+                //.unwrap_or_default()
+                .unwrap_or(
+                    //self.info.level.split_whitespace().rev().nth(0).and_then(|word| word.find('.').map(|pos| &word[(pos + 1)..])).unwrap_or("?")
+                    "?"
+                )
+                , ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.90, BLACK, main.w * 0.18
+            );
+        }
         //难度
         draw_text_aligned_fix(ui, self.info.level
             .split_whitespace()
