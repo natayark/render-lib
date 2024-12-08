@@ -249,7 +249,8 @@ impl Scene for LoadingScene {
         ui.fill_rect(r, WHITE);
         r.x += dx;
         ui.scissor(Some(r));
-        draw_text_aligned(ui, "Loading...", 0.865, top * 0.865, (1., 1.), 0.41, BLACK);
+        let text_loading = if self.config.chinese {"加载中..."} else {"Loading..."};
+        draw_text_aligned(ui, text_loading, 0.865, top * 0.865, (1., 1.), 0.41, BLACK);
         ui.scissor(None);
 
         if dx != 0. {
