@@ -232,8 +232,8 @@ impl Scene for LoadingScene {
         let w = 0.031;
         let t = draw_text_aligned(ui, "Illustration", t.x - w, t.y + w / 0.135 / 13. * 5., (0., 0.), 0.253, WHITE);
         draw_text_aligned_fix(ui, &self.info.illustrator, t.x - 0.002, t.y + top / 22., (0., 0.), 0.415, WHITE, 0.58);
-
-        draw_text_aligned_fix(ui, self.info.tip.as_ref().unwrap(), -0.895, top * 0.88, (0., 1.), 0.47, WHITE, 1.5);
+        let text_tip = if self.config.chinese {format!("提示：{}", self.info.tip.as_ref().unwrap())} else {format!("Tip: {}", self.info.tip.as_ref().unwrap())};
+        draw_text_aligned_fix(ui, &text_tip, -0.895, top * 0.88, (0., 1.), 0.47, WHITE, 1.5);
         let t = draw_text_aligned(ui, "Loading...", 0.865, top * 0.865, (1., 1.), 0.41, WHITE);
         let we = 0.19;
         let he = 0.35;

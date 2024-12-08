@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub static TIPS: Lazy<Vec<String>> = Lazy::new(|| 
     include_str!("tips.txt").split('\n')
     //.map(str::to_owned)
-    .map(|s| format!("Tip: {}", s))
+    .map(|s| format!("{}", s))
     .collect());
 
 bitflags! {
