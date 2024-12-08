@@ -177,6 +177,40 @@ impl GameScene {
         bail!("Cannot find chart file")
     }
 
+    pub fn int_to_roman(mut num: u32) -> String {
+        if num.to_string() == "0" {
+            return "-".to_string()
+        };
+        let mut roman: String = String::new();
+        let roman_numerals = [
+            (1000000, "[MM]"),
+            (100000, "[MC]"),
+            (10000, "[MX]"),
+            (1000, "M"),
+            (900, "CM"),
+            (500, "D"),
+            (400, "CD"),
+            (100, "C"),
+            (90, "XC"),
+            (50, "L"),
+            (40, "XL"),
+            (10, "X"),
+            (9, "IX"),
+            (5, "V"),
+            (4, "IV"),
+            (1, "I"),
+        ];
+    
+        for &(value, symbol) in roman_numerals.iter() {
+            while num >= value {
+                roman.push_str(symbol);
+                num -= value;
+            }
+        }
+        roman
+        
+    }
+
     pub async fn load_chart(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<(Chart, Vec<u8>, ChartFormat)> {
         let extra = fs.load_file("extra.json").await.ok().map(String::from_utf8).transpose()?;
         let extra = if let Some(extra) = extra {
@@ -368,11 +402,24 @@ impl GameScene {
 
         let margin = 0.046;
 
+        let score = if res.config.roman {
+            Self::int_to_roman(self.judge.score())
+        } else {
+            format!("{:07}", self.judge.score())
+        };
         self.chart.with_element(ui, res, UIElement::Score, |ui, color, scale| {
-            ui.text(format!("{:07}", self.judge.score()))
+            let mut text_size = 0.70867;
+            let mut text = ui.text(&score).size(text_size);
+            let max_width = 0.75;
+            let text_width = text.measure().w;
+            if text_width > max_width {
+                text_size *= max_width / text_width
+            }
+            drop(text);
+            ui.text(score)
                 .pos(1. - margin + 0.001, top + eps * 2.8125 - (1. - p) * 0.4)
                 .anchor(1., 0.)
-                .size(0.70867)
+                .size(text_size)
                 .color(Color { a: color.a * c.a, ..color })
                 .scale(scale)
                 .draw();
@@ -396,12 +443,31 @@ impl GameScene {
             });
         });
         if self.judge.combo() >= 3 {
+            let combo = if res.config.roman {
+                Self::int_to_roman(self.judge.combo())
+            } else {
+                self.judge.combo().to_string()
+            };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
-                ui.text(self.judge.combo().to_string())
-                    //.pos(0., top + eps * 2. - (1. - p) * 0.4)
+                let mut text_size = 1.;
+                let mut text = ui.text(&combo).size(text_size);
+                let max_width = 0.35;
+                let text_width = text.measure().w;
+                if text_width > max_width {
+                    text_size *= max_width / text_width
+                }
+                drop(text);
+                ui.text(&combo)
                     .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
                     .color(Color { a: color.a * c.a, ..color })
+                    .size(text_size)
+                    .scale(scale)
+                    .draw();
+                ui.text(&combo)
+                    .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
+                    .anchor(0.5, 0.)
+                    .color(Color::new(0., 0., 0., 0.))
                     .scale(scale)
                     .draw()
                     .bottom()
@@ -415,12 +481,13 @@ impl GameScene {
                     .scale(scale)
                     .draw();
             });
+
         }
         let lf = -1. + margin;
         let bt = -top - eps * 3.64;
         self.chart.with_element(ui, res, UIElement::Name, |ui, color, scale| {
             let mut text_size = 0.5;
-            let mut text = ui.text(&res.info.name).pos(lf, bt + (1. - p) * 0.4).anchor(0., 1.).size(text_size);
+            let mut text = ui.text(&res.info.name).size(text_size);
             let max_width = 0.9;
             let text_width = text.measure().w;
             if text_width > max_width {
