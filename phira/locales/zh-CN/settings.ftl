@@ -44,6 +44,7 @@ item-chart_ratio = 谱面缩放倍率
 item-all-good = 强制 Good 判定
 item-watermark = 水印
 item-roman = 罗马模式
+item-chinese = 中文模式
 
 load-cali-failed = 加载音频失败
 

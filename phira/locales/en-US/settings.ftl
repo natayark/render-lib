@@ -44,6 +44,7 @@ item-chart_ratio = Chart zoom ratio
 item-all-good = Force Good judgment
 item-watermark = Watermark
 item-roman = Roman Mode
+item-chinese = Chinese Mode
 
 load-cali-failed = Failed to load audio
 

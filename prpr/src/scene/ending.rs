@@ -310,7 +310,7 @@ impl Scene for EndingScene {
             };
             let pa = ran(t, 0.2, 0.6).powi(5);
             let r = draw_text_aligned(ui, &text, main.x + dx + 0.01, main.bottom() - 0.040, (0., 1.), 0.34, Color::new(1., 1., 1., pa));
-            let score = if self.config.roman {GameScene::int_to_roman(res.score)} else {format!("{:07}", res.score)};
+            let score = if self.config.roman {GameScene::int_to_roman(res.score)} else if self.config.chinese {GameScene::int_to_chinese(res.score)} else {format!("{:07}", res.score)};
             let r = draw_text_aligned_fix(ui, &score, r.x - 0.005, r.y - 0.022, (0., 1.), 1.05, Color::new(1., 1., 1., pa), 0.4);
             let icon = icon_index(res.score, res.num_of_notes == res.max_combo);
             let p = ran(t, 1.2, 1.6).powi(5);
@@ -339,10 +339,10 @@ impl Scene for EndingScene {
         {
             let dy = 0.025;
             let r = draw_text_aligned(ui, "Max Combo", s1.x + dx - 0.01, s1.bottom() - dy, (0., 1.), 0.32, Color::new(1., 1., 1., pa));
-            let max_combo = if self.config.roman {GameScene::int_to_roman(res.max_combo)} else {res.max_combo.to_string()};
+            let max_combo = if self.config.roman {GameScene::int_to_roman(res.max_combo)} else if self.config.chinese {GameScene::int_to_chinese(res.max_combo)} else {res.max_combo.to_string()};
             draw_text_aligned_fix(ui, &max_combo, r.x, r.y - 0.008, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.15);
             let r = draw_text_aligned(ui, "Accuracy", s1.right() - dx + 0.02, s1.bottom() - dy, (1., 1.), 0.32, Color::new(1., 1., 1., pa));
-            let accuracy = if self.config.roman {format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))} else {format!("{:.2}%", res.accuracy * 100.)};
+            let accuracy = if self.config.roman {format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))} else if self.config.chinese {format!("{}%", GameScene::int_to_chinese((res.accuracy * 100.) as u32))} else {format!("{:.2}%", res.accuracy * 100.)};
             draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.63, Color::new(1., 1., 1., pa), 0.15);
         }
         gl.pop_model_matrix();
@@ -358,7 +358,7 @@ impl Scene for EndingScene {
             let pa = ran(t, 1.1, 1.4).powi(5);
             let draw_count = |ui: &mut Ui, ratio: f32, name: &str, count: u32| {
                 let r = draw_text_aligned(ui, name, s2.x + s2.w * ratio, s2.bottom() - dy, (0.5, 1.), sm, Color::new(1., 1., 1., pa));
-                let text = if self.config.roman {GameScene::int_to_roman(count)} else {count.to_string()};
+                let text = if self.config.roman {GameScene::int_to_roman(count)} else if self.config.chinese {GameScene::int_to_chinese(count)} else {count.to_string()};
                 draw_text_aligned_fix(ui, &text, r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa), 0.1);
             };
             draw_count(ui, 0.13, "Perfect", res.counts[0]);
@@ -371,7 +371,7 @@ impl Scene for EndingScene {
             let rt = s2.x + s2.w * 0.92;
             let cy = s2.center().y;
             let r = draw_text_aligned(ui, "Early", l, cy - dy2 / 2.3, (0., 1.), sm, Color::new(1., 1., 1., pa));
-            let (early, late) = if self.config.roman {(GameScene::int_to_roman(res.early), GameScene::int_to_roman(res.late))} else {(res.early.to_string(), res.late.to_string())};
+            let (early, late) = if self.config.roman {(GameScene::int_to_roman(res.early), GameScene::int_to_roman(res.late))} else if self.config.chinese {(GameScene::int_to_chinese(res.early), GameScene::int_to_chinese(res.late))} else {(res.early.to_string(), res.late.to_string())};
             draw_text_aligned_fix(ui, &early, rt, r.bottom(), (1., 1.), sm, Color::new(1., 1., 1., pa), 0.1);
             let r = draw_text_aligned(ui, "Late", l, cy + dy2 / 2.3, (0., 0.), 0.3, Color::new(1., 1., 1., pa));
             draw_text_aligned_fix(ui, &late, rt, r.y, (1., 0.), sm, Color::new(1., 1., 1., pa), 0.1);
@@ -429,7 +429,10 @@ impl Scene for EndingScene {
             &if let Some(rks) = &self.player_rks {
                 if self.config.roman {
                     GameScene::int_to_roman(rks.clone() as u32)
-                } else {
+                } else if self.config.chinese {
+                    GameScene::int_to_chinese(rks.clone() as u32)
+                } 
+                else {
                     format!("{rks:.2}")
                 }
             } else {
@@ -458,7 +461,7 @@ impl Scene for EndingScene {
         let r = Rect::new(ct.0 - w / 2., ct.1 - h / 2., w, h);
         ui.fill_rect(r, (*self.challenge_texture, r, ScaleType::Fit, color));
         let ct = r.center();
-        let challenge_rank = if self.config.roman {GameScene::int_to_roman(self.challenge_rank)} else {self.challenge_rank.to_string()};
+        let challenge_rank = if self.config.roman {GameScene::int_to_roman(self.challenge_rank)} else if self.config.chinese {GameScene::int_to_chinese(self.challenge_rank)} else {self.challenge_rank.to_string()};
         let mut text_size = 0.46;
         let mut text = ui.text(&challenge_rank).size(text_size);
         let max_width = 0.05;

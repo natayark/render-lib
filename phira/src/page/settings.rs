@@ -630,6 +630,7 @@ struct DebugList {
     all_good_btn: DRectButton,
     watermark: DRectButton,
     roman_btn: DRectButton,
+    chinese_btn: DRectButton,
 }
 
 impl DebugList {
@@ -641,6 +642,7 @@ impl DebugList {
             all_good_btn: DRectButton::new(),
             watermark: DRectButton::new(),
             roman_btn: DRectButton::new(),
+            chinese_btn: DRectButton::new(),
         }
     }
 
@@ -672,6 +674,10 @@ impl DebugList {
         }
         if self.roman_btn.touch(touch, t) {
             config.roman ^= true;
+            return Ok(Some(true));
+        }
+        if self.chinese_btn.touch(touch, t) {
+            config.chinese ^= true;
             return Ok(Some(true));
         }
         Ok(None)
@@ -727,6 +733,10 @@ impl DebugList {
         item! {
             render_title(ui, c, tl!("item-roman"), None);
             render_switch(ui, rr, t, c, &mut self.roman_btn, config.roman);
+        }
+        item! {
+            render_title(ui, c, tl!("item-chinese"), None);
+            render_switch(ui, rr, t, c, &mut self.chinese_btn, config.chinese);
         }
         (w, h)
     }

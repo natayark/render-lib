@@ -68,6 +68,7 @@ pub struct Config {
     pub volume_bgm: f32,
     pub watermark: String,
     pub roman: bool,
+    pub chinese: bool,
     pub combo: String,
 
     // for compatibility
@@ -111,6 +112,7 @@ impl Default for Config {
             volume_bgm: 1.,
             watermark: "".to_string(),
             roman: false,
+            chinese: false,
             combo: "COMBO".to_string(),
 
             autoplay: None,

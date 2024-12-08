@@ -211,6 +211,43 @@ impl GameScene {
         
     }
 
+    pub fn int_to_chinese(num: u32) -> String {
+        let chinese_digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+        let chinese_units = ["", "十", "百", "千", "万", "十万", "百万", "千万", "亿"];
+    
+        if num == 0 {
+            return chinese_digits[0].to_string();
+        }
+    
+        let mut result = String::new();
+        let mut n = num;
+        let mut unit_index = 0;
+        let mut need_zero = false;
+    
+        while n > 0 {
+            let digit = (n % 10) as usize;
+            if digit != 0 {
+                if need_zero {
+                    result.insert(0, '零');
+                    need_zero = false;
+                }
+                result.insert_str(0, chinese_units[unit_index]);
+                result.insert_str(0, chinese_digits[digit]);
+            } else {
+                need_zero = true;
+            }
+            n /= 10;
+            unit_index += 1;
+        }
+    
+        if result.starts_with("一十") {
+            result.remove(0);
+        }
+    
+        result
+    }
+    
+
     pub async fn load_chart(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<(Chart, Vec<u8>, ChartFormat)> {
         let extra = fs.load_file("extra.json").await.ok().map(String::from_utf8).transpose()?;
         let extra = if let Some(extra) = extra {
@@ -404,7 +441,10 @@ impl GameScene {
 
         let score = if res.config.roman {
             Self::int_to_roman(self.judge.score())
-        } else {
+        } else if res.config.chinese {
+            Self::int_to_chinese(self.judge.score())
+        }
+        else {
             format!("{:07}", self.judge.score())
         };
         self.chart.with_element(ui, res, UIElement::Score, |ui, color, scale| {
@@ -445,7 +485,10 @@ impl GameScene {
         if self.judge.combo() >= 3 {
             let combo = if res.config.roman {
                 Self::int_to_roman(self.judge.combo())
-            } else {
+            } else if res.config.chinese {
+                Self::int_to_chinese(self.judge.combo())
+            }
+            else {
                 self.judge.combo().to_string()
             };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
