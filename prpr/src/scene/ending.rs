@@ -380,7 +380,7 @@ impl Scene for EndingScene {
             let dy = 0.025;
             let r = draw_text_aligned(ui, text_max_combo, s1.x + dx - 0.01, s1.bottom() - dy, (0., 1.), 0.32, Color::new(1., 1., 1., pa));
             let max_combo = if self.config.roman {GameScene::int_to_roman(res.max_combo)} else if self.config.chinese {GameScene::int_to_chinese(res.max_combo)} else {res.max_combo.to_string()};
-            draw_text_aligned_fix(ui, &max_combo, r.x, r.y - 0.008, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.25);
+            draw_text_aligned_fix(ui, &max_combo, r.x, r.y - 0.008, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.3);
             let r = draw_text_aligned(ui, text_accuracy, s1.right() - dx + 0.02, s1.bottom() - dy, (1., 1.), 0.32, Color::new(1., 1., 1., pa));
             let accuracy = if self.config.roman {
                 format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))
@@ -388,7 +388,7 @@ impl Scene for EndingScene {
                 format!("百分之{}", GameScene::float_to_chinese((res.accuracy * 100.) as f32))
             } else {format!("{:.2}%", res.accuracy * 100.)
         };
-            draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.63, Color::new(1., 1., 1., pa), 0.25);
+            draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.63, Color::new(1., 1., 1., pa), 0.3);
         }
         gl.pop_model_matrix();
 
