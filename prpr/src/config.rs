@@ -70,6 +70,7 @@ pub struct Config {
     pub roman: bool,
     pub chinese: bool,
     pub combo: String,
+    pub difficulty: String,
 
     // for compatibility
     pub autoplay: Option<bool>,
@@ -114,6 +115,7 @@ impl Default for Config {
             roman: false,
             chinese: false,
             combo: "COMBO".to_string(),
+            difficulty: "".to_string(),
 
             autoplay: None,
         }

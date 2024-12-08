@@ -227,6 +227,46 @@ impl Scene for EndingScene {
         const START3: f32 = 0.00;
         const END3: f32 = 1.20;
 
+        let (
+            text_max_combo,
+            text_accuracy,
+            text_autoplay,
+            text_new_best,
+            text_perfect,
+            text_good,
+            text_bad,
+            text_miss,
+            text_early,
+            text_late,
+        ) = if self.config.chinese{
+            (
+                "最大连击数",
+                "准确率",
+                "自动游玩",
+                "新纪录",
+                "完美",
+                "良好",
+                "失败",
+                "错过",
+                "太早",
+                "太晚",
+            )
+        } else {
+            (
+                "Max Combo",
+                "Accuracy",
+                "AUTOPLAY",
+                "NEW BEST",
+                "Perfect",
+                "Good",
+                "Bad",
+                "Miss",
+                "Early",
+                "Late",
+            )
+        };
+            
+
         let mut cam = ui.camera();
         let asp = -cam.zoom.y;
         let top = 1. / asp;
@@ -293,14 +333,14 @@ impl Scene for EndingScene {
                 format!(" {:.2}x", self.speed)
             };
             let text = if self.autoplay {
-                format!("AUTOPLAY {spd}")
+                format!("{text_autoplay} {spd}")
             } else if !self.rated {
                 format!("{spd}")
             } else if let Some(state) = &self.update_state {
                 format!(
                     "{spd}  {}",
                     if state.best {
-                        format!("NEW BEST +{:07}", state.improvement)
+                        format!("{text_new_best} +{:07}", state.improvement)
                     } else {
                         format!(" ")//String::new()
                     }
@@ -338,10 +378,10 @@ impl Scene for EndingScene {
         draw_parallelogram(s1, None, c2, true);
         {
             let dy = 0.025;
-            let r = draw_text_aligned(ui, "Max Combo", s1.x + dx - 0.01, s1.bottom() - dy, (0., 1.), 0.32, Color::new(1., 1., 1., pa));
+            let r = draw_text_aligned(ui, text_max_combo, s1.x + dx - 0.01, s1.bottom() - dy, (0., 1.), 0.32, Color::new(1., 1., 1., pa));
             let max_combo = if self.config.roman {GameScene::int_to_roman(res.max_combo)} else if self.config.chinese {GameScene::int_to_chinese(res.max_combo)} else {res.max_combo.to_string()};
             draw_text_aligned_fix(ui, &max_combo, r.x, r.y - 0.008, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.15);
-            let r = draw_text_aligned(ui, "Accuracy", s1.right() - dx + 0.02, s1.bottom() - dy, (1., 1.), 0.32, Color::new(1., 1., 1., pa));
+            let r = draw_text_aligned(ui, text_accuracy, s1.right() - dx + 0.02, s1.bottom() - dy, (1., 1.), 0.32, Color::new(1., 1., 1., pa));
             let accuracy = if self.config.roman {format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))} else if self.config.chinese {format!("百分之{}", GameScene::int_to_chinese((res.accuracy * 100.) as u32))} else {format!("{:.2}%", res.accuracy * 100.)};
             draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.63, Color::new(1., 1., 1., pa), 0.15);
         }
@@ -361,19 +401,19 @@ impl Scene for EndingScene {
                 let text = if self.config.roman {GameScene::int_to_roman(count)} else if self.config.chinese {GameScene::int_to_chinese(count)} else {count.to_string()};
                 draw_text_aligned_fix(ui, &text, r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa), 0.1);
             };
-            draw_count(ui, 0.13, "Perfect", res.counts[0]);
-            draw_count(ui, 0.31, "Good", res.counts[1]);
-            draw_count(ui, 0.45, "Bad", res.counts[2]);
-            draw_count(ui, 0.59, "Miss", res.counts[3]);
+            draw_count(ui, 0.13, text_perfect, res.counts[0]);
+            draw_count(ui, 0.31, text_good, res.counts[1]);
+            draw_count(ui, 0.45, text_bad, res.counts[2]);
+            draw_count(ui, 0.59, text_miss, res.counts[3]);
 
             let sm = 0.3;
             let l = s2.x + s2.w * 0.70;
             let rt = s2.x + s2.w * 0.92;
             let cy = s2.center().y;
-            let r = draw_text_aligned(ui, "Early", l, cy - dy2 / 2.3, (0., 1.), sm, Color::new(1., 1., 1., pa));
+            let r = draw_text_aligned(ui, text_early, l, cy - dy2 / 2.3, (0., 1.), sm, Color::new(1., 1., 1., pa));
             let (early, late) = if self.config.roman {(GameScene::int_to_roman(res.early), GameScene::int_to_roman(res.late))} else if self.config.chinese {(GameScene::int_to_chinese(res.early), GameScene::int_to_chinese(res.late))} else {(res.early.to_string(), res.late.to_string())};
             draw_text_aligned_fix(ui, &early, rt, r.bottom(), (1., 1.), sm, Color::new(1., 1., 1., pa), 0.1);
-            let r = draw_text_aligned(ui, "Late", l, cy + dy2 / 2.3, (0., 0.), 0.3, Color::new(1., 1., 1., pa));
+            let r = draw_text_aligned(ui, text_late, l, cy + dy2 / 2.3, (0., 0.), 0.3, Color::new(1., 1., 1., pa));
             draw_text_aligned_fix(ui, &late, rt, r.y, (1., 0.), sm, Color::new(1., 1., 1., pa), 0.1);
         }
         gl.pop_model_matrix();
@@ -444,7 +484,7 @@ impl Scene for EndingScene {
             (0.5, 0.5),
             0.37,
             Color::new(0., 0., 0., alpha),
-            0.1
+            0.15
         );
         let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color, true);
         let text = draw_text_aligned(ui, &self.player_name, r.x - 0.005, r.center().y, (1., 0.5), 0.54, color);
