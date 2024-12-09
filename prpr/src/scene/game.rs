@@ -518,13 +518,20 @@ impl GameScene {
             };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
                 let mut text_size = 1.;
-                let mut text = ui.text(&combo).size(text_size);
+                let mut text = ui.text(&combo)
+                    .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
+                    .anchor(0.5, 0.)
+                    .color(Color::new(0., 0., 0., 0.))
+                    .scale(scale)
+                    //.draw()
+                    //.bottom()
+                    ;
                 let max_width = 0.35;
                 let text_width = text.measure().w;
+                let text_btm = text.draw().bottom();
                 if text_width > max_width {
                     text_size *= max_width / text_width
                 }
-                drop(text);
                 ui.text(&combo)
                     .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
@@ -532,13 +539,7 @@ impl GameScene {
                     .size(text_size)
                     .scale(scale)
                     .draw();
-                ui.text(&combo)
-                    .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
-                    .anchor(0.5, 0.)
-                    .color(Color::new(0., 0., 0., 0.))
-                    .scale(scale)
-                    .draw()
-                    .bottom()
+                text_btm
             });
             self.chart.with_element(ui, res, UIElement::Combo, |ui, color, scale| {
                 ui.text(&res.config.combo)
