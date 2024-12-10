@@ -184,9 +184,15 @@ impl GameScene {
         };
         let mut roman: String = String::new();
         let roman_numerals = [
-            (1000000, "[MM]"),
-            (100000, "[MC]"),
-            (10000, "[MX]"),
+            (1000000, "M￣"),
+            (900000, "CM￣"),
+            (500000, "D￣"),
+            (400000, "CD￣"),
+            (100000, "C￣"),
+            (90000, "XC￣"),
+            (50000, "L￣"),
+            (40000, "XL￣"),
+            (10000, "X￣"),
             (1000, "M"),
             (900, "CM"),
             (500, "D"),
@@ -518,15 +524,12 @@ impl GameScene {
             };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
                 let mut text_size = 1.;
+                let max_width = 0.35;
                 let mut text = ui.text(&combo)
                     .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
                     .color(Color::new(0., 0., 0., 0.))
-                    .scale(scale)
-                    //.draw()
-                    //.bottom()
-                    ;
-                let max_width = 0.35;
+                    .scale(scale);
                 let text_width = text.measure().w;
                 let text_btm = text.draw().bottom();
                 if text_width > max_width {
