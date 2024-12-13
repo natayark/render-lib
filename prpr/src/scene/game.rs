@@ -873,7 +873,7 @@ impl GameScene {
             let height = 0.4;
             ui.dx(1. - width - 0.02);
             ui.dy(ui.top - height - 0.02);
-            ui.fill_rect(Rect::new(0., 0., width, height), Color { r: 0., g: 0., b: 0., a: 0.25 });
+            ui.fill_rect(Rect::new(0., 0., width, height), Color { r: 0.13, g: 0.13, b: 0.13, a: 0.5 });
             ui.dy(0.02);
             ui.text(tl!("adjust-offset")).pos(width / 2., 0.).anchor(0.5, 0.).size(0.7).draw();
             ui.dy(0.16);

@@ -832,7 +832,9 @@ impl<'a> Ui<'a> {
     }
 
     pub fn background(&self) -> Color {
-        Color::from_hex(0xff546e7a)
+        //Color::from_hex(0xff546e7a)
+        //Color::from_hex(0xff3F51B5)
+        Color::from_hex(0xff212121)
     }
 
     pub fn button(&mut self, id: &str, rect: Rect, text: impl Into<String>) -> bool {
