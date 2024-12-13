@@ -269,7 +269,7 @@ async fn the_main() -> Result<()> {
 fn show_and_exit(msg: &str) {
     prpr::ui::Dialog::simple(msg)
         .buttons(vec!["确定".to_owned()])
-        .listener(|_| std::process::exit(0))
+        .listener(|_, _| std::process::exit(0))
         .show();
 }
 
@@ -277,7 +277,7 @@ fn show_and_exit(msg: &str) {
 pub extern "C" fn quad_main() {
     macroquad::Window::from_config(build_conf(), async {
         if let Err(err) = the_main().await {
-            error!("Error: {:?}", err);
+            error!(?err, "global error");
         }
     });
 }
@@ -326,15 +326,13 @@ pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnDestroy(_: *mut std
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_setDataPath(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, path: ndk_sys::jstring) {
-    let env = crate::miniquad::native::attach_jni_env();
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_setDataPath(env: *mut ndk_sys::JNIEnv, _: *const std::ffi::c_void, path: ndk_sys::jstring) {
     *DATA_PATH.lock().unwrap() = Some(string_from_java(env, path));
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_setTempDir(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, path: ndk_sys::jstring) {
-    let env = crate::miniquad::native::attach_jni_env();
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_setTempDir(env: *mut ndk_sys::JNIEnv, _: *const std::ffi::c_void, path: ndk_sys::jstring) {
     let path = string_from_java(env, path);
     std::env::set_var("TMPDIR", path.clone());
     *CACHE_DIR.lock().unwrap() = Some(path);
@@ -348,10 +346,8 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_setDpi(_: *mut std::ffi::c
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_setChosenFile(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, file: ndk_sys::jstring) {
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_setChosenFile(env: *mut ndk_sys::JNIEnv, _: *const std::ffi::c_void, file: ndk_sys::jstring) {
     use prpr::scene::CHOSEN_FILE;
-
-    let env = crate::miniquad::native::attach_jni_env();
     CHOSEN_FILE.lock().unwrap().1 = Some(string_from_java(env, file));
 }
 
@@ -373,10 +369,8 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_markImportRespack(_: *mut 
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_setInputText(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, text: ndk_sys::jstring) {
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_setInputText(env: *mut ndk_sys::JNIEnv, _: *const std::ffi::c_void, text: ndk_sys::jstring) {
     use prpr::scene::INPUT_TEXT;
-
-    let env = crate::miniquad::native::attach_jni_env();
     INPUT_TEXT.lock().unwrap().1 = Some(string_from_java(env, text));
 }
 

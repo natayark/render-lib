@@ -873,7 +873,7 @@ impl GameScene {
             let height = 0.4;
             ui.dx(1. - width - 0.02);
             ui.dy(ui.top - height - 0.02);
-            ui.fill_rect(Rect::new(0., 0., width, height), GRAY);
+            ui.fill_rect(Rect::new(0., 0., width, height), Color { r: 0.51, g: 0.51, b: 0.51, a: 0.5 });
             ui.dy(0.02);
             ui.text(tl!("adjust-offset")).pos(width / 2., 0.).anchor(0.5, 0.).size(0.7).draw();
             ui.dy(0.16);
@@ -918,7 +918,6 @@ impl GameScene {
             }
             r.x += r.w + spacing;
             if ui.button("save", r, tl!("offset-save")) {
-                self.res.info.offset = self.info_offset;
                 self.next_scene = Some(NextScene::PopWithResult(Box::new(Some(self.info_offset))));
             }
         });
