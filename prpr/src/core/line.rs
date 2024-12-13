@@ -292,7 +292,16 @@ impl JudgeLine {
             }
             if alpha < 0.0 {
                 if !settings.pe_alpha_extension {
-                    return;
+                    if res.config.chart_debug {
+                        if let Some(mut color) = color {
+                            color.r = 1.0;
+                            color.g = 0.0;
+                            color.b = 0.0;
+                            color.a = 0.5;
+                        }                        
+                    } else {
+                        return
+                    };
                 }
                 let w = (-alpha).floor() as u32;
                 match w {
