@@ -1174,7 +1174,8 @@ impl Scene for GameScene {
         let res = &mut self.res;
         let asp = ui.viewport.2 as f32 / ui.viewport.3 as f32;
         let vec2_asp = vec2(1. * &res.config.chart_ratio, -asp * &res.config.chart_ratio);
-        let vec2_aspy = vec2(1., asp);
+        //let vec2_asp1 = vec2(1. * &res.config.chart_ratio, asp * &res.config.chart_ratio);
+        let vec2_asp2 = vec2(1., asp);
         if res.update_size(ui.viewport) || self.mode == GameMode::View {
             set_camera(&res.camera);
         }
@@ -1242,7 +1243,7 @@ impl Scene for GameScene {
         if !self.res.no_effect && !self.effects.is_empty() {
             push_camera_state();
             set_camera(&Camera2D {
-                zoom: vec2_asp,
+                zoom: vec2_asp2,
                 ..Default::default()
             });
             for e in &self.effects {
@@ -1257,7 +1258,7 @@ impl Scene for GameScene {
                 push_camera_state();
                 self.gl.quad_gl.viewport(None);
                 set_camera(&Camera2D {
-                    zoom: vec2_aspy,
+                    zoom: vec2_asp2,
                     render_target: self.res.camera.render_target,
                     viewport: Some(ui.viewport),
                     ..Default::default()
