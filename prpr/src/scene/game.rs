@@ -918,7 +918,7 @@ impl GameScene {
             }
             r.x += r.w + spacing;
             if ui.button("save", r, tl!("offset-save")) {
-                self.res.info.offset = self.info_offset;
+                //self.res.info.offset = self.info_offset;
                 self.next_scene = Some(NextScene::PopWithResult(Box::new(Some(self.info_offset))));
             }
         });
