@@ -251,9 +251,6 @@ fn info_from_kv<'a>(it: impl Iterator<Item = (&'a str, String)>, csv: bool) -> R
             warn!("global alpha is ignored");
             continue;
         }
-        if key == "Offset" {
-            *&mut info.offset = value.parse().unwrap_or_default();
-        }
         //RPE160
         let mut deprecate = String::new();
         *match key {
