@@ -343,6 +343,7 @@ pub async fn fix_info(fs: &mut dyn FileSystem, info: &mut ChartInfo) -> Result<(
                     charter: String,
                     composer: Option<String>,
                     illustrator: Option<String>,
+                    offset: f32,
                     song: String,
                 }
                 if let Ok(mut meta) = serde_json::from_value::<RPEMeta>(value["META"].take()) {
@@ -350,6 +351,7 @@ pub async fn fix_info(fs: &mut dyn FileSystem, info: &mut ChartInfo) -> Result<(
                     infer_diff(info, &meta.level);
                     info.level = meta.level;
                     info.charter = meta.charter;
+                    info.offset = meta.offset;
                     if let Some(val) = meta.composer {
                         info.composer = val;
                     }
