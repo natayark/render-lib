@@ -481,7 +481,7 @@ impl GameScene {
         self.chart.with_element(ui, res, UIElement::Score, |ui, color, scale| {
             let mut text_size = 0.70867;
             let mut text = ui.text(&score).size(text_size);
-            let max_width = 0.75;
+            let max_width = 0.55;
             let text_width = text.measure().w;
             if text_width > max_width {
                 text_size *= max_width / text_width
@@ -524,7 +524,7 @@ impl GameScene {
             };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
                 let mut text_size = 1.;
-                let max_width = 0.35;
+                let max_width = 0.55;
                 let mut text = ui.text(&combo)
                     .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
@@ -1275,6 +1275,8 @@ impl Scene for GameScene {
                 );
                 pop_camera_state();
             }
+        } else {
+            self.gl.flush();
         }
         Ok(())
     }

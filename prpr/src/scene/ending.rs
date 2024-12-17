@@ -404,7 +404,7 @@ impl Scene for EndingScene {
             let draw_count = |ui: &mut Ui, ratio: f32, name: &str, count: u32| {
                 let r = draw_text_aligned(ui, name, s2.x + s2.w * ratio, s2.bottom() - dy, (0.5, 1.), sm, Color::new(1., 1., 1., pa));
                 let text = if self.config.roman {GameScene::int_to_roman(count)} else if self.config.chinese {GameScene::int_to_chinese(count)} else {count.to_string()};
-                draw_text_aligned_fix(ui, &text, r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa), 0.1);
+                draw_text_aligned_fix(ui, &text, r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa), 0.125);
             };
             draw_count(ui, 0.13, text_perfect, res.counts[0]);
             draw_count(ui, 0.31, text_good, res.counts[1]);
