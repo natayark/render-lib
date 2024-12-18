@@ -238,6 +238,15 @@ impl Note {
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
+        let cover_base = match self.kind {
+            NoteKind::Hold { end_time: _, end_height } => {
+                let end_height = end_height / res.aspect_ratio * end_spd;
+                end_height - line_height
+            }
+            _ => {
+                height - line_height
+            }
+        };
         if res.config.aggressive && base > 2.0 {
             return;
         }
@@ -246,8 +255,8 @@ impl Note {
         // show_below的判断
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
-            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && base <= -0.0075))
-            && self.speed != 0.
+            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.0075))
+            // && self.speed != 0.
         {
             if res.config.chart_debug{
                 color.a *= 0.2;

@@ -511,7 +511,7 @@ impl Resource {
             icons: Self::load_icons().await?,
             challenge_icons: Self::load_challenge_icons().await?,
             res_pack,
-            player: if let Some(player) = player { player } else { load_tex!("player.jpg") },
+            player: if let Some(player) = player { player } else { load_tex!("player.png") },
             icon_back: load_tex!("back.png"),
             icon_retry: load_tex!("retry.png"),
             icon_resume: load_tex!("resume.png"),
