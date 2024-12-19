@@ -238,13 +238,17 @@ impl Note {
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
-        let cover_base = match self.kind {
-            NoteKind::Hold { end_time: _, end_height } => {
-                let end_height = end_height / res.aspect_ratio * end_spd;
-                end_height - line_height
-            }
-            _ => {
-                height - line_height
+        let cover_base = if res.config.phira_mode {
+            height - line_height
+        } else {
+            match self.kind {
+                NoteKind::Hold { end_time: _, end_height } => {
+                    let end_height = end_height / res.aspect_ratio * end_spd;
+                    end_height - line_height
+                }
+                _ => {
+                    height - line_height
+                }
             }
         };
         if res.config.aggressive && base > 2.0 {

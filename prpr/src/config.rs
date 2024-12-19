@@ -71,6 +71,7 @@ pub struct Config {
     pub chinese: bool,
     pub combo: String,
     pub difficulty: String,
+    pub phira_mode: bool,
 
     // for compatibility
     pub hires: bool,
@@ -117,6 +118,7 @@ impl Default for Config {
             chinese: false,
             combo: "COMBO".to_string(),
             difficulty: "".to_string(),
+            phira_mode: false,
 
             hires: false,
             autoplay: None,
