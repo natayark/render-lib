@@ -1957,16 +1957,35 @@ dependencies = [
 [[package]]
 name = "macroquad"
 version = "0.3.25"
+source = "git+https://github.com/2278535805/prpr-macroquad#bbe11a075287acb065153a8964756d4b68584d74"
+dependencies = [
+ "bumpalo",
+ "fontdue",
+ "glam",
+ "image",
+ "macroquad_macro 0.1.7 (git+https://github.com/2278535805/prpr-macroquad)",
+ "miniquad",
+ "quad-rand",
+]
+
+[[package]]
+name = "macroquad"
+version = "0.3.25"
 source = "git+https://github.com/Mivik/prpr-macroquad#19119d6e3ec231502f6d64ff077114ffe1fcb04a"
 dependencies = [
  "bumpalo",
  "fontdue",
  "glam",
  "image",
- "macroquad_macro",
+ "macroquad_macro 0.1.7 (git+https://github.com/Mivik/prpr-macroquad)",
  "miniquad",
  "quad-rand",
 ]
+
+[[package]]
+name = "macroquad_macro"
+version = "0.1.7"
+source = "git+https://github.com/2278535805/prpr-macroquad#bbe11a075287acb065153a8964756d4b68584d74"
 
 [[package]]
 name = "macroquad_macro"
@@ -2632,7 +2651,7 @@ dependencies = [
  "logos",
  "lru",
  "lyon",
- "macroquad",
+ "macroquad 0.3.25 (git+https://github.com/2278535805/prpr-macroquad)",
  "md5",
  "nalgebra",
  "ndk-context",
@@ -2678,7 +2697,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "log",
- "macroquad",
+ "macroquad 0.3.25 (git+https://github.com/Mivik/prpr-macroquad)",
  "phira-mp-client",
  "phira-mp-common",
  "pretty_env_logger",
@@ -2848,7 +2867,7 @@ dependencies = [
  "libc",
  "lru",
  "lyon",
- "macroquad",
+ "macroquad 0.3.25 (git+https://github.com/2278535805/prpr-macroquad)",
  "miniquad",
  "miniz_oxide 0.7.4",
  "nalgebra",
