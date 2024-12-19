@@ -73,6 +73,7 @@ pub struct Config {
     pub difficulty: String,
 
     // for compatibility
+    pub hires: bool,
     pub autoplay: Option<bool>,
 }
 
@@ -117,6 +118,7 @@ impl Default for Config {
             combo: "COMBO".to_string(),
             difficulty: "".to_string(),
 
+            hires: false,
             autoplay: None,
         }
     }
