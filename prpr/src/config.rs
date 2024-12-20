@@ -72,6 +72,7 @@ pub struct Config {
     pub combo: String,
     pub difficulty: String,
     pub phira_mode: bool,
+    pub disable_loading: bool,
 
     // for compatibility
     pub hires: bool,
@@ -119,6 +120,7 @@ impl Default for Config {
             combo: "COMBO".to_string(),
             difficulty: "".to_string(),
             phira_mode: false,
+            disable_loading: false,
 
             hires: false,
             autoplay: None,

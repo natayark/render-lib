@@ -134,7 +134,7 @@ impl Scene for LoadingScene {
                         self.load_task = None;
                         self.next_scene =
                             Some(game_scene.map_or_else(|e| NextScene::PopWithResult(Box::new(e)), |it| NextScene::Replace(Box::new(it))));
-                        self.finish_time = tm.now() as f32 + BEFORE_TIME;
+                        self.finish_time = if self.config.disable_loading { 0. } else { tm.now() as f32 + BEFORE_TIME };
                         break;
                     }
                 }
@@ -263,7 +263,7 @@ impl Scene for LoadingScene {
         if matches!(self.next_scene, Some(NextScene::PopWithResult(_))) {
             return self.next_scene.take().unwrap();
         }
-        if tm.now() as f32 > self.finish_time + TRANSITION_TIME + WAIT_TIME {
+        if tm.now() as f32 > self.finish_time + TRANSITION_TIME + WAIT_TIME || self.config.disable_loading {
             if let Some(scene) = self.next_scene.take() {
                 return scene;
             }
