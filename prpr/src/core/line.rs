@@ -22,6 +22,7 @@ pub enum UIElement {
     Score,
     Name,
     Level,
+    Null,
 }
 
 impl UIElement {
