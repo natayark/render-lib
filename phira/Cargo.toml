@@ -55,10 +55,10 @@ logos = "0.13.0"
 [target.'cfg(target_os = "android")'.dependencies]
 ndk-sys = "0.2"
 ndk-context = "0.1"
-sasa = { git = "https://github.com/2278535805/sasa", branch = "f32-modify", default-features = false, features = ["oboe"] }
+sasa = { git = "https://github.com/2278535805/sasa", default-features = false, features = ["oboe"] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
-sasa = { git = "https://github.com/2278535805/sasa", branch = "f32-modify" }
+sasa = { git = "https://github.com/2278535805/sasa" }
 
 [target.'cfg(target_os = "ios")'.dependencies]
 objc = "*"
