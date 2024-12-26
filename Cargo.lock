@@ -2280,17 +2280,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-derive"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.90",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2394,20 +2383,20 @@ dependencies = [
  "jni",
  "ndk 0.6.0",
  "ndk-context",
- "num-derive 0.3.3",
+ "num-derive",
  "num-traits",
  "oboe-sys 0.4.5",
 ]
 
 [[package]]
 name = "oboe"
-version = "0.6.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8b61bebd49e5d43f5f8cc7ee2891c16e0f41ec7954d36bcb6c14c5e0de867fb"
+checksum = "8868cc237ee02e2d9618539a23a8d228b9bb3fc2e7a5b11eed3831de77c395d0"
 dependencies = [
- "num-derive 0.4.2",
+ "num-derive",
  "num-traits",
- "oboe-sys 0.6.1",
+ "oboe-sys 0.5.0",
 ]
 
 [[package]]
@@ -2421,9 +2410,9 @@ dependencies = [
 
 [[package]]
 name = "oboe-sys"
-version = "0.6.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8bb09a4a2b1d668170cfe0a7d5bc103f8999fb316c98099b6a9939c9f2e79d"
+checksum = "7f44155e7fb718d3cfddcf70690b2b51ac4412f347cd9e4fbe511abe9cd7b5f2"
 dependencies = [
  "cc",
 ]
@@ -3314,11 +3303,11 @@ dependencies = [
 [[package]]
 name = "sasa"
 version = "0.1.0"
-source = "git+https://github.com/2278535805/sasa#2e03e00cfdd43a15ab932bfe8d4ca85efca1e431"
+source = "git+https://github.com/2278535805/sasa?branch=f32-modify#1544076484e2b35631c040245904f2f33d9ce407"
 dependencies = [
  "anyhow",
  "cpal",
- "oboe 0.6.1",
+ "oboe 0.5.0",
  "ringbuf",
  "symphonia",
  "thiserror",

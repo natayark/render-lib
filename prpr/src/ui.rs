@@ -1160,7 +1160,8 @@ fn build_audio() -> AudioManager {
     {
         use sasa::backend::oboe::*;
         AudioManager::new(OboeBackend::new(OboeSettings {
-            performance_mode: PerformanceMode::PowerSaving,
+            //buffer_size: config.audio_buffer_size,
+            performance_mode: PerformanceMode::LowLatency,
             usage: Usage::Game,
             ..Default::default()
         }))
