@@ -26,7 +26,6 @@ item-music = Music volume
 item-sfx = Sound effect volume
 item-bgm = BGM volume
 item-cali = Adjust offset
-item-audio-buffer-size = Audio buffer size
 
 item-show-acc = Show real-time accuracy
 item-dc-pause = Double tap to pause

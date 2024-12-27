@@ -424,7 +424,7 @@ pub fn create_audio_manger(config: &Config) -> Result<AudioManager> {
     {
         use sasa::backend::oboe::*;
         AudioManager::new(OboeBackend::new(OboeSettings {
-            buffer_size: Some(config.audio_buffer_size as u32),
+            buffer_size: config.audio_buffer_size,
             performance_mode: PerformanceMode::LowLatency,
             usage: Usage::Game,
         }))
@@ -433,7 +433,7 @@ pub fn create_audio_manger(config: &Config) -> Result<AudioManager> {
     {
         use sasa::backend::cpal::*;
         Ok(AudioManager::new(CpalBackend::new(CpalSettings {
-            buffer_size: Some(config.audio_buffer_size as u32),
+            buffer_size: config.audio_buffer_size,
         }))
         .expect("Failed to play sound"))
     }
