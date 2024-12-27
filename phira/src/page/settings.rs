@@ -417,6 +417,7 @@ struct AudioList {
     sfx_slider: Slider,
     bgm_slider: Slider,
     cali_btn: DRectButton,
+    buffer_slider: Slider,
 
     cali_task: LocalTask<Result<OffsetPage>>,
     next_page: Option<NextPage>,
@@ -430,6 +431,7 @@ impl AudioList {
             sfx_slider: Slider::new(0.0..2.0, 0.05),
             bgm_slider: Slider::new(0.0..2.0, 0.05),
             cali_btn: DRectButton::new(),
+            buffer_slider: Slider::new(0.0..2048.0, 16.0),
 
             cali_task: None,
             next_page: None,
@@ -463,6 +465,9 @@ impl AudioList {
         if self.cali_btn.touch(touch, t) {
             self.cali_task = Some(Box::pin(OffsetPage::new()));
             return Ok(Some(false));
+        }
+        if let wt @ Some(_) = self.buffer_slider.touch(touch, t, &mut config.audio_buffer_size) {
+            return Ok(wt);
         }
         Ok(None)
     }
@@ -515,6 +520,10 @@ impl AudioList {
         item! {
             render_title(ui, c, tl!("item-cali"), None);
             self.cali_btn.render_text(ui, rr, t, c.a, format!("{:.0}ms", config.offset * 1000.), 0.5, true);
+        }
+        item! {
+            render_title(ui, c, tl!("item-audio-buffer-size"), None);
+            self.buffer_slider.render(ui, rr, t,c, config.audio_buffer_size, format!("{}", config.audio_buffer_size as u32));
         }
         (w, h)
     }

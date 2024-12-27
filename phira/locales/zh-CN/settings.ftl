@@ -26,6 +26,7 @@ item-music = 音乐音量
 item-sfx = 音效音量
 item-bgm = BGM 音量
 item-cali = 调整延迟
+item-audio-buffer-size = 音频缓冲区
 
 item-show-acc = 显示实时准度
 item-dc-pause = 双击暂停
