@@ -238,7 +238,7 @@ impl Note {
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
-        let cover_base = if res.config.phira_mode {
+        let cover_base = if res.config.phira_mode || self.format {
             height - line_height
         } else {
             match self.kind {
