@@ -521,7 +521,7 @@ impl Judge {
             if let (Some((line_id, id)), _, dt, _) = closest {
                 let unattr_drag = &chart.lines.iter().any(|line| { // Check drag in good range & not flag
                     line.notes.iter().any(|note| {
-                        matches!(note.kind, NoteKind::Drag) && matches!(note.fake, false) && !note.attr && (note.time - t).abs() <= LIMIT_GOOD
+                        matches!(note.kind, NoteKind::Drag | NoteKind::Flick) && matches!(note.fake, false) && !note.attr && (note.time - t).abs() <= LIMIT_GOOD
                     })
                 });
                 let line = &mut chart.lines[line_id];
@@ -533,7 +533,7 @@ impl Judge {
                     if *unattr_drag && dt > LIMIT_PERFECT { // flag drag
                         for line in &mut chart.lines {
                             for note in &mut line.notes {
-                                if matches!(note.kind, NoteKind::Drag) && matches!(note.fake, false) && !note.attr && (note.time - t).abs() <= LIMIT_PERFECT * 0.25 {
+                                if matches!(note.kind, NoteKind::Drag | NoteKind::Flick) && matches!(note.fake, false) && !note.attr && (note.time - t).abs() <= LIMIT_PERFECT * 0.25 {
                                     note.attr = true;
                                     debug!("flag drag");
                                 }
