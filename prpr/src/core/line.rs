@@ -207,7 +207,8 @@ impl JudgeLine {
                         if res.config.chart_debug {
                             color.a = 0.10 + 0.90 * color.a;
                         }
-                        let hf = vec2(texture.width() / res.aspect_ratio, texture.height() / res.aspect_ratio);
+                        // let hf = vec2(texture.width() / res.aspect_ratio, texture.height() / res.aspect_ratio);
+                        let hf = vec2(texture.width(), texture.height()); // Sync RPE
                         draw_texture_ex(
                             **texture,
                             -hf.x / 2.,
