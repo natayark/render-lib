@@ -50,6 +50,10 @@ impl<'a, 's, 'ui> DrawText<'a, 's, 'ui> {
         self
     }
 
+    pub fn center(&self) -> Vec2 {
+        vec2(self.pos.0 + self.pos.0 * 0.5f32, self.pos.1 + self.pos.1 * 0.5f32)
+    }
+
     pub fn pos(mut self, x: f32, y: f32) -> Self {
         self.pos = (x, y);
         self

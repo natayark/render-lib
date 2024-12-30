@@ -478,7 +478,9 @@ impl GameScene {
         else {
             format!("{:07}", self.judge.score())
         };
-        self.chart.with_element(ui, res, UIElement::Score, |ui, color, scale| {
+        let score_top = top + eps * 2.2 - (1. - p) * 0.4;
+        let ct = ui.text(&score).size(0.8).center();
+        self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + 1. - margin, ct.y + score_top)), |ui, color| {
             let mut text_size = 0.70867;
             let mut text = ui.text(&score).size(text_size);
             let max_width = 0.55;
@@ -492,7 +494,6 @@ impl GameScene {
                 .anchor(1., 0.)
                 .size(text_size)
                 .color(Color { a: color.a * c.a, ..color })
-                .scale(scale)
                 .draw();
         });
         if res.config.show_acc {
@@ -503,16 +504,18 @@ impl GameScene {
                 .color(semi_white(0.7))
                 .draw();
         }
-        self.chart.with_element(ui, res, UIElement::Pause, |ui, color, scale| {
+        self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), |ui, color| {
             let mut r = Rect::new(pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2, pause_w, pause_h);
             let ct = pause_center.coords;
             let c = Color { a: color.a * c.a, ..color };
-            ui.with(scale.prepend_translation(&-ct).append_translation(&ct), |ui| {
-                ui.fill_rect(r, c);
-                r.x += pause_w * 2.;
-                ui.fill_rect(r, c);
-            });
+            
+            ui.fill_rect(r, c);
+            r.x += pause_w * 2.;
+            ui.fill_rect(r, c);
+            ;
         });
+        let unit_h = ui.text("0").measure().h;
+        let combo_top = top + eps * 2. - (1. - p) * 0.4;
         if self.judge.combo() >= 3 {
             let combo = if res.config.roman {
                 Self::int_to_roman(self.judge.combo())
@@ -522,14 +525,13 @@ impl GameScene {
             else {
                 self.judge.combo().to_string()
             };
-            let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, |ui, color, scale| {
+            let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_top + unit_h / 2.)), |ui, color| {
                 let mut text_size = 1.;
                 let max_width = 0.55;
                 let mut text = ui.text(&combo)
                     .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
-                    .color(Color::new(0., 0., 0., 0.))
-                    .scale(scale);
+                    .color(Color::new(0., 0., 0., 0.));
                 let text_width = text.measure().w;
                 let text_btm = text.draw().bottom();
                 if text_width > max_width {
@@ -540,24 +542,22 @@ impl GameScene {
                     .anchor(0.5, 0.)
                     .color(Color { a: color.a * c.a, ..color })
                     .size(text_size)
-                    .scale(scale)
                     .draw();
                 text_btm
             });
-            self.chart.with_element(ui, res, UIElement::Combo, |ui, color, scale| {
+            self.chart.with_element(ui, res, UIElement::Combo, Some((0., combo_top + unit_h * 0.2)), |ui, color| {
                 ui.text(&res.config.combo)
                     .pos(0., btm + 0.007777)
                     .anchor(0.5, 0.)
                     .size(0.325)
                     .color(Color { a: color.a * c.a, ..color })
-                    .scale(scale)
                     .draw();
             });
 
         }
         let lf = -1. + margin;
         let bt = -top - eps * 3.64;
-        self.chart.with_element(ui, res, UIElement::Name, |ui, color, scale| {
+        self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), |ui, color| {
             let mut text_size = 0.5;
             let mut text = ui.text(&res.info.name).size(text_size);
             let max_width = 0.9;
@@ -571,16 +571,14 @@ impl GameScene {
                 .anchor(0., 1.)
                 .size(text_size)
                 .color(Color { a: color.a * c.a, ..color })
-                .scale(scale)
                 .draw();
         });
-        self.chart.with_element(ui, res, UIElement::Level, |ui, color, scale| {
+        self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), |ui, color| {
             ui.text(&res.info.level)
                 .pos(-lf, bt + (1. - p) * 0.4)
                 .anchor(1., 1.)
                 .size(0.5)
                 .color(Color { a: color.a * c.a, ..color })
-                .scale(scale)
                 .draw();
 
             /*let watermark = if res.config.watermark == "AntiLeave" { 
@@ -589,14 +587,13 @@ impl GameScene {
                 format!("{}Phigros Recorder - Code by HLMC", res.config.watermark) 
             };*/
         });
-        self.chart.with_element(ui, res, UIElement::Null, |ui, color, scale| {
+        self.chart.with_element(ui, res, UIElement::Null, None, |ui, color| {
             let watermark = res.config.watermark.clone();
             ui.text(&watermark)
                 .pos(0., -top * 0.98 + (1. - p) * 0.4)
                 .anchor(0.5, 1.)
                 .size(0.2)
                 .color(Color::new(1., 1., 1., 0.5))
-                .scale(scale)
                 .draw();
             if res.config.chart_ratio <= 0.95 {
                 ui.text(&watermark)
@@ -604,23 +601,20 @@ impl GameScene {
                 .anchor(0.5, 1.)
                 .size(0.2 / res.config.chart_ratio)
                 .color(Color::new(1., 1., 1., 0.5))
-                .scale(scale)
                 .draw();
             }
         });
         let hw = 0.0015;
         let height = eps * 1.1;
         let dest = (2. * res.time / res.track_length).max(0.).min(2.);
-        self.chart.with_element(ui, res, UIElement::Bar, |ui, color, scale| {
+        self.chart.with_element(ui, res, UIElement::Bar, None, |ui, color| {
             let ct = Vector::new(0., top + height / 2.);
-            ui.with(scale.prepend_translation(&-ct).append_translation(&ct), |ui| {
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
                     //Color{ a: color.a * c.a * 0.6, ..color},
                     Color::new(0.565, 0.565, 0.565, 1.),
                 );
-                ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color { a: color.a * c.a, ..color });
-            });
+                ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color { a: color.a * c.a, ..color });;
         });
         Ok(())
     }
