@@ -310,11 +310,18 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                 kind: match note.kind {
                     1 => NoteKind::Click,
                     2 => {
+                        let start_time = r.time(&note.start_time);
                         let end_time = r.time(&note.end_time);
-                        height.set_time(end_time);
                         NoteKind::Hold {
                             end_time,
-                            end_height: height.now(),
+                            start_height: {
+                                height.set_time(start_time);
+                                height.now()
+                            },
+                            end_height: {
+                                height.set_time(end_time);
+                                height.now()
+                            },
                         }
                     }
                     3 => NoteKind::Flick,
@@ -325,10 +332,6 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                 height: note_height,
                 speed: note.speed,
                 end_speed: note.speed,
-                start_height: {
-                    height.set_time(r.time(&note.start_time));
-                    height.now()
-                },
 
                 above: note.above == 1,
                 multiple_hint: false,

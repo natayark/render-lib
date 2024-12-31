@@ -2,9 +2,7 @@ use super::{
     chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource
 };
 use crate::{
-    judge::JudgeStatus, 
-    parse::RPE_HEIGHT,
-    core::HEIGHT_RATIO,
+    core::HEIGHT_RATIO, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
 };
 
 
@@ -18,7 +16,7 @@ const BAD_TIME: f32 = 0.5;
 #[derive(Clone, Debug)]
 pub enum NoteKind {
     Click,
-    Hold { end_time: f32, end_height: f32 },
+    Hold { end_time: f32, start_height: f32, end_height: f32 },
     Flick,
     Drag,
 }
@@ -41,7 +39,6 @@ pub struct Note {
     pub height: f32,
     pub speed: f32,
     pub end_speed: f32,
-    pub start_height: f32,
 
     pub above: bool,
     pub multiple_hint: bool,
@@ -207,7 +204,7 @@ impl Note {
         self.object.now_rotation().append_nonuniform_scaling(&scale).append_translation(&tr)
     }
 
-    pub fn render(&self, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList) {
+    pub fn render(&self, ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList) {
         if matches!(self.judge, JudgeStatus::Judged) && !matches!(self.kind, NoteKind::Hold { .. }) {
             return;
         }
@@ -243,7 +240,7 @@ impl Note {
             height - line_height
         } else {
             match self.kind {
-                NoteKind::Hold { end_time: _, end_height } => {
+                NoteKind::Hold { end_time: _, start_height: _, end_height } => {
                     let end_height = end_height / res.aspect_ratio * end_spd;
                     end_height - line_height
                 }
@@ -290,7 +287,7 @@ impl Note {
                 if self.fake && res.time >= self.time {return};
                 draw(res, *style.click);
             }
-            NoteKind::Hold { end_time, end_height } => {
+            NoteKind::Hold { end_time, start_height, end_height } => {
                 if self.fake && res.time >= end_time {return};
                 res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                     let style = if res.config.double_hint && self.multiple_hint {
@@ -306,7 +303,7 @@ impl Note {
                         return;
                     }
                     let end_height = end_height / res.aspect_ratio * spd;
-                    let start_height = self.start_height / res.aspect_ratio * spd;
+                    let start_height = start_height / res.aspect_ratio * spd;
                     let hold_height = end_height - start_height;
                     let time = if res.time >= self.time {res.time} else {self.time};
                     let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
