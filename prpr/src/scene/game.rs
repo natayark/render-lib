@@ -515,7 +515,7 @@ impl GameScene {
             ;
         });
         let unit_h = ui.text("0").measure().h;
-        let combo_top = top + eps * 2. - (1. - p) * 0.4;
+        let combo_top = top + eps * 1.346 - (1. - p) * 0.4;
         if self.judge.combo() >= 3 {
             let combo = if res.config.roman {
                 Self::int_to_roman(self.judge.combo())
@@ -545,7 +545,7 @@ impl GameScene {
                     .draw();
                 text_btm
             });
-            self.chart.with_element(ui, res, UIElement::Combo, Some((0., combo_top + unit_h * 0.2)), |ui, color| {
+            self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
                 ui.text(&res.config.combo)
                     .pos(0., btm + 0.007777)
                     .anchor(0.5, 0.)
@@ -607,7 +607,7 @@ impl GameScene {
         let hw = 0.0015;
         let height = eps * 1.1;
         let dest = (2. * res.time / res.track_length).max(0.).min(2.);
-        self.chart.with_element(ui, res, UIElement::Bar, None, |ui, color| {
+        self.chart.with_element_noscale(ui, res, UIElement::Bar, Some((0., top - height / 2.)), |ui, color| {
             let ct = Vector::new(0., top + height / 2.);
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
