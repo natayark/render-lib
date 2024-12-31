@@ -26,12 +26,12 @@ pub struct Chart {
     pub extra: ChartExtra,
 
     pub order: Vec<usize>,
-    pub attach_ui: [Option<usize>; 8],
+    pub attach_ui: [Option<usize>; 7],
 }
 
 impl Chart {
     pub fn new(offset: f32, lines: Vec<JudgeLine>, bpm_list: BpmList, settings: ChartSettings, extra: ChartExtra) -> Self {
-        let mut attach_ui = [None; 8];
+        let mut attach_ui = [None; 7];
         let mut order = (0..lines.len())
             .filter(|it| {
                 if let Some(element) = lines[*it].attach_ui {

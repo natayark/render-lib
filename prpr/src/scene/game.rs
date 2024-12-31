@@ -587,7 +587,7 @@ impl GameScene {
                 format!("{}Phigros Recorder - Code by HLMC", res.config.watermark) 
             };*/
         });
-        self.chart.with_element(ui, res, UIElement::Null, None, |ui, color| {
+        { // self.chart.with_element(ui, res, UIElement::Null, None, |ui, color| ...)
             let watermark = res.config.watermark.clone();
             ui.text(&watermark)
                 .pos(0., -top * 0.98 + (1. - p) * 0.4)
@@ -603,7 +603,7 @@ impl GameScene {
                 .color(Color::new(1., 1., 1., 0.5))
                 .draw();
             }
-        });
+        };
         let hw = 0.0015;
         let height = eps * 1.1;
         let dest = (2. * res.time / res.track_length).max(0.).min(2.);
