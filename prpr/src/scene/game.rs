@@ -495,15 +495,15 @@ impl GameScene {
                 .size(text_size)
                 .color(Color { a: color.a * c.a, ..color })
                 .draw();
+            if res.config.show_acc {
+                ui.text(format!("{:05.2}%", self.judge.real_time_accuracy() * 100.))
+                    .pos(1. - margin, top + eps * 2.2 - (1. - p) * 0.4 + 0.07)
+                    .anchor(1., 0.)
+                    .size(0.4)
+                    .color(Color { a: color.a * c.a * 0.7, ..color })
+                    .draw();
+            }
         });
-        if res.config.show_acc {
-            ui.text(format!("{:05.2}%", self.judge.real_time_accuracy() * 100.))
-                .pos(1. - margin, top + eps * 2.2 - (1. - p) * 0.4 + 0.07)
-                .anchor(1., 0.)
-                .size(0.4)
-                .color(semi_white(0.7))
-                .draw();
-        }
         self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), |ui, color| {
             let mut r = Rect::new(pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2, pause_w, pause_h);
             let ct = pause_center.coords;
