@@ -332,31 +332,15 @@ impl JudgeLine {
             let height_above = p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) * res.aspect_ratio;
             let height_below = -p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) * res.aspect_ratio;
             let agg = res.config.aggressive;
-            for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| it.above) {
-                note.render(ui, res, &mut config, bpm_list);
-            }
-            for index in &self.cache.above_indices {
-                let speed = self.notes[*index].speed;
-                let limit = height_above / speed;
-                for note in self.notes[*index..].iter() {
-                    if !note.above || speed != note.speed {
-                        break;
-                    }
-                    if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
-                        break;
-                    }
+            if res.config.note_scale > 0.{
+                for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| it.above) {
                     note.render(ui, res, &mut config, bpm_list);
                 }
-            }
-            res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
-                for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| !it.above) {
-                    note.render(ui, res, &mut config, bpm_list);
-                }
-                for index in &self.cache.below_indices {
+                for index in &self.cache.above_indices {
                     let speed = self.notes[*index].speed;
-                    let limit = height_below / speed;
+                    let limit = height_above / speed;
                     for note in self.notes[*index..].iter() {
-                        if speed != note.speed {
+                        if !note.above || speed != note.speed {
                             break;
                         }
                         if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
@@ -365,7 +349,25 @@ impl JudgeLine {
                         note.render(ui, res, &mut config, bpm_list);
                     }
                 }
-            });
+                res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
+                    for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| !it.above) {
+                        note.render(ui, res, &mut config, bpm_list);
+                    }
+                    for index in &self.cache.below_indices {
+                        let speed = self.notes[*index].speed;
+                        let limit = height_below / speed;
+                        for note in self.notes[*index..].iter() {
+                            if speed != note.speed {
+                                break;
+                            }
+                            if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
+                                break;
+                            }
+                            note.render(ui, res, &mut config, bpm_list);
+                        }
+                    }
+                });
+            }
             if res.config.chart_debug {
                 res.apply_model(|_| {
                     ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).draw();
