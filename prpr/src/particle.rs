@@ -424,7 +424,7 @@ pub struct Emitter {
 
 impl Emitter {
     #[cfg(target_os = "windows")]
-    const MAX_PARTICLES: usize = 1200000;
+    const MAX_PARTICLES: usize = 600000;
     #[cfg(not(target_os = "windows"))]
     const MAX_PARTICLES: usize = 12000;
 
