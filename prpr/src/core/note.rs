@@ -16,7 +16,7 @@ const BAD_TIME: f32 = 0.5;
 #[derive(Clone, Debug)]
 pub enum NoteKind {
     Click,
-    Hold { end_time: f32, end_height: f32 },
+    Hold { end_time: f32, end_height: f32, end_speed: f32 },
     Flick,
     Drag,
 }
@@ -38,7 +38,6 @@ pub struct Note {
     pub time: f32,
     pub height: f32,
     pub speed: f32,
-    pub end_speed: f32,
 
     pub above: bool,
     pub multiple_hint: bool,
@@ -231,7 +230,6 @@ impl Note {
         let mut color = self.object.now_color();
         color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
         let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-        let end_spd = self.end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
 
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
@@ -240,7 +238,8 @@ impl Note {
             height - line_height
         } else {
             match self.kind {
-                NoteKind::Hold { end_time: _,  end_height } => {
+                NoteKind::Hold { end_time: _,  end_height, end_speed } => {
+                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     let end_height = end_height / res.aspect_ratio * end_spd;
                     end_height - line_height
                 }
@@ -283,7 +282,7 @@ impl Note {
                 if self.fake && res.time >= self.time {return};
                 draw(res, *style.click);
             }
-            NoteKind::Hold { end_time, end_height } => {
+            NoteKind::Hold { end_time, end_height, end_speed } => {
                 if self.fake && res.time >= end_time {return};
                 res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                     let style = if res.config.double_hint && self.multiple_hint {
@@ -305,6 +304,7 @@ impl Note {
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
+                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     let top = if self.format {
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;

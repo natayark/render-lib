@@ -281,8 +281,6 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
     rpe.into_iter()
         .map(|note| {
             let time = r.time(&note.start_time);
-            height.set_time(time);
-            let note_height = height.now();
             let y_offset = note.y_offset * 2. / RPE_HEIGHT * note.speed;
             Ok(Note {
                 object: Object {
@@ -310,7 +308,6 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                 kind: match note.kind {
                     1 => NoteKind::Click,
                     2 => {
-                        let start_time = r.time(&note.start_time);
                         let end_time = r.time(&note.end_time);
                         NoteKind::Hold {
                             end_time,
@@ -318,6 +315,7 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                                 height.set_time(end_time);
                                 height.now()
                             },
+                            end_speed: note.speed
                         }
                     }
                     3 => NoteKind::Flick,
@@ -325,9 +323,11 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                     _ => ptl!(bail "unknown-note-type", "type" => note.kind),
                 },
                 time,
-                height: note_height,
+                height: {
+                    height.set_time(time);
+                    height.now()
+                },
                 speed: note.speed,
-                end_speed: note.speed,
 
                 above: note.above == 1,
                 multiple_hint: false,

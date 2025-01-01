@@ -310,6 +310,7 @@ impl BinaryData for Note {
                 1 => NoteKind::Hold {
                     end_time: r.read()?,
                     end_height: r.read()?,
+                    end_speed: if r.read()? { r.read::<f32>()? } else { 1. },
                 },
                 2 => NoteKind::Flick,
                 3 => NoteKind::Drag,
@@ -318,7 +319,6 @@ impl BinaryData for Note {
             time: r.time()?,
             height: r.read()?,
             speed: if r.read()? { r.read::<f32>()? } else { 1. },
-            end_speed: if r.read()? { r.read::<f32>()? } else { 1. },
             above: r.read()?,
             multiple_hint: false,
             fake: r.read()?,
@@ -334,10 +334,11 @@ impl BinaryData for Note {
             NoteKind::Click => {
                 w.write_val(0_u8)?;
             }
-            NoteKind::Hold { end_time, end_height } => {
+            NoteKind::Hold { end_time, end_height, end_speed } => {
                 w.write_val(1_u8)?;
                 w.write_val(end_time)?;
                 w.write_val(end_height)?;
+                w.write_val(end_speed)?;
             }
             NoteKind::Flick => w.write_val(2_u8)?,
             NoteKind::Drag => w.write_val(3_u8)?,

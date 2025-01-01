@@ -184,21 +184,19 @@ fn parse_move_events_fv1(r: f32, mut pgr: Vec<PgrEvent>) -> Result<AnimVector> {
     kf2.pop();
     for kf in &mut kf1 {
         kf.value = (-880. + kf.value * 2.) / 880.;
-        //println!("x:{}", kf.value);
     }
     for kf in &mut kf2 {
         kf.value = (-520. + kf.value * 2.) / 520.;
-        //println!("y:{}", kf.value);
     }
     Ok(AnimVector(AnimFloat::new(kf1), AnimFloat::new(kf2)))
 }
 
-fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mut AnimFloat, above: bool) -> Result<Vec<Note>> {
+fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, _speed: &mut AnimFloat, height: &mut AnimFloat, above: bool) -> Result<Vec<Note>> {
     // is_sorted is unstable...
     if pgr.is_empty() {
         return Ok(Vec::new());
     }
-    pgr.sort_by_key(|it| it.time as usize); //.not_nan()
+    pgr.sort_by_key(|it| it.time as usize);
     pgr.into_iter()
         .map(|pgr| {
             let time = pgr.time * r;
@@ -217,23 +215,19 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, speed: &mut AnimFloat, height: &mu
                     3 => {
                         let end_time = (pgr.time + pgr.hold_time) * r;
                         let end_height = height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
-                        //println!("Time:{:.6}\tHoldTime:{:.6}\tSpeed:{:.3}\tend_time:{:.5}\tstart_height:{:.5}\tend_height:{}\t{}\t{}", time, pgr.hold_time * r, pgr.speed, end_time, start_height, end_height, pgr.speed, pgr.hold_time * pgr.speed * r /HEIGHT_RATIO );
-                        NoteKind::Hold { end_time, end_height }
+                        let end_speed = pgr.speed;
+                        NoteKind::Hold { end_time, end_height, end_speed }
                     }
                     4 => NoteKind::Flick,
                     _ => ptl!(bail "unknown-note-type", "type" => pgr.kind),
                 },
                 time,
                 speed: if pgr.kind == 3 {
-                    speed.set_time(time);
-                    //println!("Time:{:.6}\tpgrTime:{}\tNoteSpeed:{}\tSpeed:{}", time, pgr.time, pgr.speed, speed.now());
                     1.
                 } else {
                     pgr.speed
                 },
-                end_speed: pgr.speed,
-                //height: pgr.floor_position / HEIGHT_RATIO,
-                height,
+                height, //pgr.floor_position / HEIGHT_RATIO
 
                 above,
                 multiple_hint: false,
