@@ -143,7 +143,7 @@ fn parse_judge_line(mut pec: PECJudgeLine, id: usize, max_time: f32) -> Result<J
         for note in notes {
             height.set_time(note.time);
             note.height = height.now();
-            if let NoteKind::Hold { end_time, start_height: _, end_height } = &mut note.kind {
+            if let NoteKind::Hold { end_time, end_height } = &mut note.kind {
                 height.set_time(*end_time);
                 *end_height = height.now();
             }
@@ -243,7 +243,6 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         '1' => NoteKind::Click,
                         '2' => NoteKind::Hold {
                             end_time: it.take_time(r)?,
-                            start_height: 0.0,
                             end_height: 0.0,
                         },
                         '3' => NoteKind::Flick,

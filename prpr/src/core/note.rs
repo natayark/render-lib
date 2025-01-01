@@ -16,7 +16,7 @@ const BAD_TIME: f32 = 0.5;
 #[derive(Clone, Debug)]
 pub enum NoteKind {
     Click,
-    Hold { end_time: f32, start_height: f32, end_height: f32 },
+    Hold { end_time: f32, end_height: f32 },
     Flick,
     Drag,
 }
@@ -240,7 +240,7 @@ impl Note {
             height - line_height
         } else {
             match self.kind {
-                NoteKind::Hold { end_time: _, start_height: _, end_height } => {
+                NoteKind::Hold { end_time: _,  end_height } => {
                     let end_height = end_height / res.aspect_ratio * end_spd;
                     end_height - line_height
                 }
@@ -252,17 +252,13 @@ impl Note {
         if res.config.aggressive && base > 2.0 {
             return;
         }
-        //let base = (self.height - config.line_height) / res.aspect_ratio * spd;
-
-        // show_below的判断
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
-            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.0075))
+            && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.001))
             // && self.speed != 0.
         {
             if res.config.chart_debug{
                 color.a *= 0.2;
-                //println!("{}", base);
             } else {
                 return;
             }
@@ -287,7 +283,7 @@ impl Note {
                 if self.fake && res.time >= self.time {return};
                 draw(res, *style.click);
             }
-            NoteKind::Hold { end_time, start_height, end_height } => {
+            NoteKind::Hold { end_time, end_height } => {
                 if self.fake && res.time >= end_time {return};
                 res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                     let style = if res.config.double_hint && self.multiple_hint {
@@ -303,17 +299,15 @@ impl Note {
                         return;
                     }
                     let end_height = end_height / res.aspect_ratio * spd;
-                    let start_height = start_height / res.aspect_ratio * spd;
-                    let hold_height = end_height - start_height;
                     let time = if res.time >= self.time {res.time} else {self.time};
-                    let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
 
                     let clip = !config.draw_below && config.settings.hold_partial_cover;
-
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
                     let top = if self.format {
+                        let hold_height = end_height - height;
+                        let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
                         bottom + hold_height - hold_line_height
                     } else {
                         end_height - line_height

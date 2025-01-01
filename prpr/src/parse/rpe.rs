@@ -314,10 +314,6 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                         let end_time = r.time(&note.end_time);
                         NoteKind::Hold {
                             end_time,
-                            start_height: {
-                                height.set_time(start_time);
-                                height.now()
-                            },
                             end_height: {
                                 height.set_time(end_time);
                                 height.now()

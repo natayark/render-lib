@@ -309,7 +309,6 @@ impl BinaryData for Note {
                 0 => NoteKind::Click,
                 1 => NoteKind::Hold {
                     end_time: r.read()?,
-                    start_height: r.read()?,
                     end_height: r.read()?,
                 },
                 2 => NoteKind::Flick,
@@ -335,10 +334,9 @@ impl BinaryData for Note {
             NoteKind::Click => {
                 w.write_val(0_u8)?;
             }
-            NoteKind::Hold { end_time, start_height, end_height } => {
+            NoteKind::Hold { end_time, end_height } => {
                 w.write_val(1_u8)?;
                 w.write_val(end_time)?;
-                w.write_val(start_height)?;
                 w.write_val(end_height)?;
             }
             NoteKind::Flick => w.write_val(2_u8)?,
