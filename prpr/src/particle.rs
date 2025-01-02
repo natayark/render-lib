@@ -423,9 +423,9 @@ pub struct Emitter {
 }
 
 impl Emitter {
-    #[cfg(target_os = "windows")]
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     const MAX_PARTICLES: usize = 600000;
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
     const MAX_PARTICLES: usize = 12000;
 
     pub fn new(config: EmitterConfig) -> Emitter {
