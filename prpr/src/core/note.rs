@@ -156,7 +156,7 @@ impl Note {
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
                 //_immediate_particle = true;
-                let beat = if self.format { 30. / bpm_list.now_bpm(index as f32) } else { 30. / bpm_list.now_bpm(self.time) };
+                let beat = 30. / bpm_list.now_bpm(if self.format { index as f32 } else { self.time });
                 //println!("{} {} {}", index, bpm_list.now_bpm(index as f32), beat);
                 *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
                 Some(if perfect && !res.config.all_good {
