@@ -331,8 +331,7 @@ impl JudgeLine {
                     _ => {}
                 }
             }
-            //let (vw, vh) = (1.1 / res.config.chart_ratio, 1. / res.config.chart_ratio);
-            let (vw, vh) = (1.1, 1.);
+            let (vw, vh) = (1.1 / res.config.chart_ratio, 1. / res.config.chart_ratio);
             let p = [
                 res.screen_to_world(Point::new(-vw, -vh)),
                 res.screen_to_world(Point::new(-vw, vh)),
