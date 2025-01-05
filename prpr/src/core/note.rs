@@ -237,7 +237,6 @@ impl Note {
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
         let cover_base = if res.config.phira_mode || !matches!(self.format, ChartFormat::Rpe) {
-            info!("!rpe");
             height - line_height
         } else {
             match self.kind {
@@ -309,7 +308,6 @@ impl Note {
                     let bottom = h - line_height; //StartY
                     let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     let top = if matches!(self.format, ChartFormat::Pgr) {
-                        info!("1");
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
                         bottom + hold_height - hold_line_height
