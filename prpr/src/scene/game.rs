@@ -480,6 +480,7 @@ impl GameScene {
         };
         let score_top = top + eps * 2.2 - (1. - p) * 0.4;
         let ct = ui.text(&score).size(0.8).center();
+        ui.text("AA").color(Color::new(0., 0., 0., 0.)).draw(); //Fix first text disappear
         self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + 1. - margin, ct.y + score_top)), |ui, color| {
             let mut text_size = 0.70867;
             let mut text = ui.text(&score).size(text_size);
@@ -555,7 +556,6 @@ impl GameScene {
             });
 
         }
-        ui.text("");
         let lf = -1. + margin;
         let bt = -top - eps * 3.64;
         self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), |ui, color| {
