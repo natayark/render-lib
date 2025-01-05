@@ -8,6 +8,7 @@ use crate::{
     },
     ext::NotNanExt,
     fs::FileSystem,
+    info::ChartFormat,
     judge::JudgeStatus,
 };
 use anyhow::{Context, Result};
@@ -334,7 +335,7 @@ fn parse_notes(r: &mut BpmList, rpe: Vec<RPENote>, height: &mut AnimFloat) -> Re
                 fake: note.is_fake != 0,
                 judge: JudgeStatus::NotJudged,
                 attr: false,
-                format: false,
+                format: ChartFormat::Rpe,
             })
         })
         .collect()

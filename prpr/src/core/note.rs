@@ -2,7 +2,7 @@ use super::{
     chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource
 };
 use crate::{
-    core::HEIGHT_RATIO, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
+    core::HEIGHT_RATIO, info::ChartFormat, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
 };
 
 
@@ -44,7 +44,7 @@ pub struct Note {
     pub fake: bool,
     pub judge: JudgeStatus,
     pub attr: bool,
-    pub format: bool,
+    pub format: ChartFormat,
 }
 
 pub struct RenderConfig<'a> {
@@ -156,7 +156,9 @@ impl Note {
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
             if res.time >= *at {
                 //_immediate_particle = true;
-                let beat = 30. / bpm_list.now_bpm(if self.format { index as f32 } else { self.time });
+                let beat = 30. / bpm_list.now_bpm(
+                    if matches!(self.format, ChartFormat::Pgr) { index as f32 } else { self.time }
+                );
                 //println!("{} {} {}", index, bpm_list.now_bpm(index as f32), beat);
                 *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
                 Some(if perfect && !res.config.all_good {
@@ -234,7 +236,8 @@ impl Note {
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
-        let cover_base = if res.config.phira_mode || self.format {
+        let cover_base = if res.config.phira_mode || !matches!(self.format, ChartFormat::Rpe) {
+            info!("!rpe");
             height - line_height
         } else {
             match self.kind {
@@ -305,7 +308,8 @@ impl Note {
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
                     let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-                    let top = if self.format {
+                    let top = if matches!(self.format, ChartFormat::Pgr) {
+                        info!("1");
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
                         bottom + hold_height - hold_line_height
@@ -316,7 +320,7 @@ impl Note {
                     //let max_hold_height = 3. / res.config.chart_ratio / res.aspect_ratio;
                     //let top = if res.config.aggressive && hold_height - hold_line_height >= max_hold_height { bottom + max_hold_height } else { top };
 
-                    if self.format && end_spd == 0. {
+                    if matches!(self.format, ChartFormat::Pgr) && end_spd == 0. {
                         if res.config.chart_debug {
                             color.a *= 0.2;
                         } else {
@@ -326,7 +330,7 @@ impl Note {
                     
 
                     //println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
-                    if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !self.format) {
+                    if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !matches!(self.format, ChartFormat::Pgr)) {
                         return;
                     }
                     let tex = &style.hold;

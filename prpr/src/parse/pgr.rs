@@ -7,6 +7,7 @@ use crate::{
         Object, HEIGHT_RATIO,
     },
     ext::NotNanExt,
+    info::ChartFormat,
     judge::JudgeStatus,
 };
 use anyhow::{Context, Result};
@@ -234,7 +235,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, _speed: &mut AnimFloat, height: &m
                 fake: false,
                 judge: JudgeStatus::NotJudged,
                 attr: false,
-                format: true,
+                format: ChartFormat::Pgr,
             })
         })
         .collect()

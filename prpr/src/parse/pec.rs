@@ -7,6 +7,7 @@ use crate::{
         Object, TweenId, EPS,
     },
     ext::NotNanExt,
+    info::ChartFormat,
     judge::JudgeStatus,
 };
 use anyhow::{bail, Context, Result};
@@ -273,7 +274,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         fake,
                         judge: JudgeStatus::NotJudged,
                         attr: false,
-                        format: false,
+                        format: ChartFormat::Pec,
                     });
                     if it.next() == Some("#") {
                         last_note!().speed = it.take_f32()?;
