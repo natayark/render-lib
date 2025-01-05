@@ -203,7 +203,7 @@ impl Note {
         self.object.now_rotation().append_nonuniform_scaling(&scale).append_translation(&tr)
     }
 
-    pub fn render(&self, _ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList) {
+    pub fn render(&self, _ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList, line_set_debug_alpha: bool) {
         if matches!(self.judge, JudgeStatus::Judged) && !matches!(self.kind, NoteKind::Hold { .. }) {
             return;
         }
@@ -261,6 +261,9 @@ impl Note {
             } else {
                 return;
             }
+        }
+        if line_set_debug_alpha {
+            color.a *= 0.4;
         }
         let order = self.kind.order();
         let style = if res.config.double_hint && self.multiple_hint {

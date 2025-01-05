@@ -301,14 +301,23 @@ impl JudgeLine {
             if res.config.has_mod(Mods::FADE_OUT) {
                 config.invisible_time = LIMIT_BAD;
             }
+            let mut line_set_debug_alpha = false;
             if alpha < 0.0 {
                 if !settings.pe_alpha_extension {
-                    return;
+                    if res.config.chart_debug {
+                        line_set_debug_alpha = true;
+                    } else {
+                        return;
+                    }
                 }
                 let w = (-alpha).floor() as u32;
                 match w {
                     1 => {
-                        return;
+                        if res.config.chart_debug {
+                            line_set_debug_alpha = true;
+                        } else {
+                            return;
+                        }
                     }
                     2 => {
                         config.draw_below = false;
@@ -334,7 +343,7 @@ impl JudgeLine {
             let agg = res.config.aggressive;
             if res.config.note_scale > 0.{
                 for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| it.above) {
-                    note.render(ui, res, &mut config, bpm_list);
+                    note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                 }
                 for index in &self.cache.above_indices {
                     let speed = self.notes[*index].speed;
@@ -346,12 +355,12 @@ impl JudgeLine {
                         if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
                             break;
                         }
-                        note.render(ui, res, &mut config, bpm_list);
+                        note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                     }
                 }
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| !it.above) {
-                        note.render(ui, res, &mut config, bpm_list);
+                        note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                     }
                     for index in &self.cache.below_indices {
                         let speed = self.notes[*index].speed;
@@ -363,7 +372,7 @@ impl JudgeLine {
                             if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
                                 break;
                             }
-                            note.render(ui, res, &mut config, bpm_list);
+                            note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                         }
                     }
                 });
