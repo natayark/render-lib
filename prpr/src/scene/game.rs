@@ -555,6 +555,7 @@ impl GameScene {
             });
 
         }
+        ui.text("");
         let lf = -1. + margin;
         let bt = -top - eps * 3.64;
         self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), |ui, color| {
