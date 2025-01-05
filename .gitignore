@@ -1,6 +1,7 @@
 inner.rs
 
 /.env
+/.idea
 /http-cacache
 /prpr/build.rs
 /target
