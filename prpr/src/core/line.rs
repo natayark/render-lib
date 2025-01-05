@@ -331,7 +331,7 @@ impl JudgeLine {
                     _ => {}
                 }
             }
-            let (vw, vh) = (1.1, 1.);
+            let (vw, vh) = (1.1 / res.config.chart_ratio, 1. / res.config.chart_ratio);
             let p = [
                 res.screen_to_world(Point::new(-vw, -vh)),
                 res.screen_to_world(Point::new(-vw, vh)),
@@ -343,6 +343,9 @@ impl JudgeLine {
             let agg = res.config.aggressive;
             if res.config.note_scale > 0.{
                 for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| it.above) {
+                    if agg && note.height - config.line_height + note.object.translation.1.now() > height_above {
+                        break;
+                    }
                     note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                 }
                 for index in &self.cache.above_indices {
@@ -360,6 +363,9 @@ impl JudgeLine {
                 }
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| !it.above) {
+                        if agg && note.height - config.line_height + note.object.translation.1.now() > height_above {
+                            break;
+                        }
                         note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                     }
                     for index in &self.cache.below_indices {
