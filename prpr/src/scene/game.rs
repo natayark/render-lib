@@ -162,6 +162,21 @@ macro_rules! reset {
     }};
 }
 
+macro_rules! reset_speed {
+    ($self:ident, $res:expr, $tm:ident) => {{
+        $self.bad_notes.clear();
+        $self.judge.reset();
+        $self.chart.reset();
+        $res.judge_line_color = Color::from_hex($res.res_pack.info.color_perfect_line);
+        $self.music.pause();
+        $self.music.seek_to(0.);
+        $tm.speed = $res.config.speed as _;
+        $tm.reset();
+        $self.last_update_time = $tm.now();
+        $self.state = State::Starting;
+    }};
+}
+
 impl GameScene {
     pub const BEFORE_TIME: f32 = 0.7;
     pub const FADEOUT_TIME: f32 = WAIT_TIME + AFTER_TIME + 0.3;
@@ -866,16 +881,16 @@ impl GameScene {
         self.chart.offset + self.res.config.offset + self.info_offset
     }
 
-    fn tweak_offset(&mut self, ui: &mut Ui, ita: bool) {
+    fn tweak_offset(&mut self, ui: &mut Ui, ita: bool, tm: &mut TimeManager) {
+        let width = 0.55;
+        let height = 0.4;
         ui.scope(|ui| {
-            let width = 0.55;
-            let height = 0.4;
             ui.dx(1. - width - 0.02);
             ui.dy(ui.top - height - 0.02);
             ui.fill_rect(Rect::new(0., 0., width, height), Color { r: 0.13, g: 0.13, b: 0.13, a: 0.5 });
             ui.dy(0.02);
             ui.text(tl!("adjust-offset")).pos(width / 2., 0.).anchor(0.5, 0.).size(0.7).draw();
-            ui.dy(0.16);
+            ui.dy(0.20);
             let r = ui
                 .text(format!("{}ms", (self.info_offset * 1000.).round() as i32))
                 .pos(width / 2., 0.)
@@ -904,7 +919,7 @@ impl GameScene {
             if ui.button("ti_add", Rect::new(width - d, r.center().y, 0., 0.).feather(0.017), "+") && ita {
                 self.info_offset += 0.001;
             }
-            ui.dy(0.14);
+            ui.dy(0.10);
             let pad = 0.02;
             let spacing = 0.01;
             let mut r = Rect::new(pad, 0., (width - pad * 2. - spacing * 2.) / 3., 0.06);
@@ -919,6 +934,23 @@ impl GameScene {
             if ui.button("save", r, tl!("offset-save")) {
                 //self.res.info.offset = self.info_offset;
                 self.next_scene = Some(NextScene::PopWithResult(Box::new(Some(self.info_offset))));
+            }
+        });
+        ui.scope(|ui| {
+            ui.dx(1. - width * 0.97);
+            ui.dy(ui.top - height * 0.8);
+            ui.slider(tl!("speed"), 0.1..2.0, 0.05, &mut self.res.config.speed, Some(0.3));
+            if ui.button("save-speed", Rect::new(0.44, 0.033, 0.05, 0.05), "=") && (tm.speed - self.res.config.speed as f64).abs() > 0.01 {
+                debug!("recreating music");
+                self.music = self.res.audio.create_music(
+                    self.res.music.clone(),
+                    MusicParams {
+                        amplifier: self.res.config.volume_music as _,
+                        playback_rate: self.res.config.speed as _,
+                        ..Default::default()
+                    },
+                ).expect("failed to create music");
+                reset_speed!(self, self.res, tm);
             }
         });
     }
@@ -1235,7 +1267,7 @@ impl Scene for GameScene {
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
-            self.tweak_offset(ui, Self::interactive(&self.res, &self.state));
+            self.tweak_offset(ui, Self::interactive(&self.res, &self.state), tm);
             pop_camera_state();
         }
 
