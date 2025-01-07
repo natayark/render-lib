@@ -125,7 +125,7 @@ impl Default for Config {
 
             hires: false,
             autoplay: None,
-            disable_audio: true,
+            disable_audio: false,
         }
     }
 }
