@@ -839,7 +839,9 @@ impl Judge {
                     break;
                 }
                 note.judge = if matches!(note.kind, NoteKind::Hold { .. }) {
-                    play_sfx(&mut res.sfx_click, &res.config);
+                    if !res.config.disable_audio{
+                        play_sfx(&mut res.sfx_click, &res.config);
+                    }
                     self.judgements.borrow_mut().push((t, line_id as _, *id, Err(true)));
                     //println!("{}\t{}\t{}", t, note.time, t - note.time);
                     // 都是AutoPlay了为什么还要输出判定时间差
@@ -892,7 +894,9 @@ impl Judge {
                 NoteKind::Flick => Some(&mut res.sfx_flick),
                 _ => None,
             } {
-                play_sfx(sfx, &res.config);
+                if !res.config.disable_audio {
+                    play_sfx(sfx, &res.config);
+                }
             }
         }
     }

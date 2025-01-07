@@ -77,6 +77,7 @@ pub struct Config {
     // for compatibility
     pub hires: bool,
     pub autoplay: Option<bool>,
+    pub disable_audio: bool,
 }
 
 impl Default for Config {
@@ -124,6 +125,7 @@ impl Default for Config {
 
             hires: false,
             autoplay: None,
+            disable_audio: false,
         }
     }
 }

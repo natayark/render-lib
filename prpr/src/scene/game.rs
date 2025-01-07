@@ -681,7 +681,7 @@ impl GameScene {
                     clicked = None;
                 }
                 let mut pos = self.music.position();
-                if clicked.map_or(false, |it| it != -1) && (tm.speed - res.config.speed as f64).abs() > 0.01 {
+                if clicked.map_or(false, |it| it != -1) && (tm.speed - res.config.speed as f64).abs() > 0.01 && !res.config.disable_audio {
                     debug!("recreating music");
                     self.music = res.audio.create_music(
                         res.music.clone(),
@@ -926,7 +926,9 @@ impl Scene for GameScene {
     fn enter(&mut self, tm: &mut TimeManager, target: Option<RenderTarget>) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         on_game_start();
-        self.music = Self::new_music(&mut self.res)?;
+        if !self.res.config.disable_audio{
+            self.music = Self::new_music(&mut self.res)?;
+        }
         self.res.camera.render_target = target;
         tm.speed = self.res.config.speed as _;
         tm.adjust_time = self.res.config.adjust_time;
