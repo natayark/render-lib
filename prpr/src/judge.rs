@@ -812,7 +812,7 @@ impl Judge {
     }
 
     fn auto_play_update(&mut self, res: &mut Resource, chart: &mut Chart) {
-        let t = res.time + res.config.judge_offset;
+        let t = res.time - res.config.judge_offset;
         let (judge_type, judge_time, fx_color) = if res.config.all_good {
             (Judgement::Good, LIMIT_GOOD, res.res_pack.info.fx_good())
         } else {
