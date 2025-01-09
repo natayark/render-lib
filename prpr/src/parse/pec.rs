@@ -8,10 +8,10 @@ use crate::{
     },
     ext::NotNanExt,
     info::ChartFormat,
-    judge::JudgeStatus,
+    judge::{HitSound, JudgeStatus},
 };
 use anyhow::{bail, Context, Result};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap};
 use tracing::warn;
 
 trait Take {
@@ -251,6 +251,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         '4' => NoteKind::Drag,
                         _ => unreachable!(),
                     };
+                    let hitsound = HitSound::default_from_kind(&kind);
                     let position_x = it.take_f32()? / 1024.;
                     // TODO we don't understand..
                     let above = it.take_usize()? == 1;
@@ -265,6 +266,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                             ..Default::default()
                         },
                         kind,
+                        hitsound,
                         time,
                         height: 0.0,
                         speed: 1.0,
@@ -379,5 +381,6 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
             ..Default::default()
         },
         extra,
+        HashMap::new(),
     ))
 }

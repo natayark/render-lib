@@ -8,6 +8,9 @@ use crate::{
 
 use macroquad::prelude::*;
 use ::rand::{thread_rng, Rng};
+pub use crate::{
+    judge::HitSound,
+};
 
 //const HOLD_PARTICLE_INTERVAL: f32 = 0.15;
 const FADEOUT_TIME: f32 = 0.16;
@@ -35,6 +38,7 @@ impl NoteKind {
 pub struct Note {
     pub object: Object,
     pub kind: NoteKind,
+    pub hitsound: HitSound,
     pub time: f32,
     pub height: f32,
     pub speed: f32,
