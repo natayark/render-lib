@@ -840,10 +840,12 @@ impl Judge {
 
     fn auto_play_update(&mut self, res: &mut Resource, chart: &mut Chart) {
         let t = res.time - res.config.judge_offset;
-        let (judge_type, judge_time, fx_color) = if res.config.all_good {
-            (Judgement::Good, LIMIT_GOOD, res.res_pack.info.fx_good())
+        let (judge_type, judge_type_hold, judge_time, fx_color) = if res.config.all_bad {
+            (Judgement::Bad, Judgement::Good, LIMIT_BAD, Color::new(0., 0., 0., 0.))
+        } else if res.config.all_good {
+            (Judgement::Good, Judgement::Good, LIMIT_GOOD, res.res_pack.info.fx_good())
         } else {
-            (Judgement::Perfect, 0., res.res_pack.info.fx_perfect())
+            (Judgement::Perfect, Judgement::Perfect, 0., res.res_pack.info.fx_perfect())
         };
         //let spd = res.config.speed;
         let mut judgements = Vec::new();
@@ -866,7 +868,7 @@ impl Judge {
                     break;
                 }
                 note.judge = if matches!(note.kind, NoteKind::Hold { .. }) {
-                    if !res.config.disable_audio{
+                    if !res.config.disable_audio && !res.config.all_bad {
                         note.hitsound.play(res);
                     }
                     self.judgements.borrow_mut().push((t, line_id as _, *id, Err(true)));
@@ -905,7 +907,7 @@ impl Judge {
                     });
                 }
                 NoteKind::Hold { .. } => {
-                    self.commit(t, judge_type, line_id as _, id, 0.);
+                    self.commit(t, judge_type_hold, line_id as _, id, 0.);
                 }
                 _ => {
                     self.commit(t, Judgement::Perfect, line_id as _, id, 0.);
@@ -917,7 +919,11 @@ impl Judge {
             };
 
             if !res.config.disable_audio {
-                note_hitsound.play(res);
+                match note_kind {
+                    NoteKind::Click => if !res.config.all_bad {note_hitsound.play(res)},
+                    NoteKind::Hold { .. } => (),
+                    _ => note_hitsound.play(res),
+                }
             }
 
         }
