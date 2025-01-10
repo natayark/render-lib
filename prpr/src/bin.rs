@@ -123,6 +123,18 @@ impl BinaryData for u8 {
     }
 }
 
+impl BinaryData for [f32; 2] {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        Ok([r.read()?, r.read()?])
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        w.write_val(self[0])?;
+        w.write_val(self[1])?;
+        Ok(())
+    }
+}
+
 impl BinaryData for i32 {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         Ok(r.0.read_i32::<LE>()?)
@@ -406,6 +418,7 @@ impl BinaryData for JudgeLine {
             0 => None,
             x => Some(x as usize - 1),
         };
+        let anchor = r.read()?;
         let show_below = r.read()?;
         let cache = JudgeLineCache::new(&mut notes);
         let attach_ui = UIElement::from_u8(r.read()?);
@@ -419,6 +432,7 @@ impl BinaryData for JudgeLine {
             notes,
             color,
             parent,
+            anchor,
             show_below,
 
             attach_ui,

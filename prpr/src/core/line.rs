@@ -148,6 +148,7 @@ pub struct JudgeLine {
     pub attach_ui: Option<UIElement>,
 
     pub cache: JudgeLineCache,
+    pub anchor: [f32; 2],
 }
 
 impl JudgeLine {
@@ -255,6 +256,7 @@ impl JudgeLine {
                             DrawTextureParams {
                                 dest_size: Some(hf),
                                 flip_y: true,
+                                pivot: Some(Vec2::new(self.anchor[0], -self.anchor[1] + 1.)),
                                 ..Default::default()
                             },
                         );
@@ -273,6 +275,7 @@ impl JudgeLine {
                             DrawTextureParams {
                                 dest_size: Some(hf),
                                 flip_y: true,
+                                pivot: Some(Vec2::new(self.anchor[0], -self.anchor[1] + 1.)),
                                 ..Default::default()
                             },
                         );
@@ -285,7 +288,7 @@ impl JudgeLine {
                         }
                         let now = anim.now();
                         res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(1., -1.)), |_| {
-                            ui.text(&now).pos(0., 0.).anchor(0.5, 0.5).size(1.).color(color).multiline().draw();
+                            ui.text(&now).pos(0., 0.).anchor(self.anchor[0], -self.anchor[1] + 1.).size(1.).color(color).multiline().draw();
                         });
                     }
                     JudgeLineKind::Paint(anim, state) => {
