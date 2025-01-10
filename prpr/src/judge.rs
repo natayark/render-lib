@@ -868,7 +868,7 @@ impl Judge {
                     break;
                 }
                 note.judge = if matches!(note.kind, NoteKind::Hold { .. }) {
-                    if !res.config.disable_audio && !res.config.all_bad {
+                    if !res.config.disable_audio {
                         note.hitsound.play(res);
                     }
                     self.judgements.borrow_mut().push((t, line_id as _, *id, Err(true)));
