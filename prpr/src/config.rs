@@ -18,7 +18,7 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum ChallengeModeColor {
     White,
@@ -26,6 +26,7 @@ pub enum ChallengeModeColor {
     Blue,
     Red,
     Golden,
+    #[default] 
     Rainbow,
 }
 
