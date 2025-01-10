@@ -134,6 +134,8 @@ impl Chart {
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource) {
+        let asp = ui.viewport.2 as f32 / ui.viewport.3 as f32;
+        let vec2_asp2 = vec2(1., asp);
         for video in &self.extra.videos {
             video.render(res);
         }
@@ -152,7 +154,13 @@ impl Chart {
             }
             if !res.no_effect {
                 for effect in &self.extra.effects {
+                    push_camera_state();
+                    set_camera(&Camera2D {
+                        zoom: vec2_asp2,
+                        ..Default::default()
+                    });
                     effect.render(res);
+                    pop_camera_state();
                 }
             }
         });

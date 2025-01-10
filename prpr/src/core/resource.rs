@@ -470,7 +470,7 @@ impl Resource {
         let res_pack = ResourcePack::from_path(config.res_pack_path.as_ref())
             .await
             .context("Failed to load resource pack")?;
-            let vec2_ratio = vec2(1. * config.chart_ratio,-config.aspect_ratio.unwrap_or(info.aspect_ratio) * config.chart_ratio);
+        let vec2_ratio = vec2(1. * config.chart_ratio,-config.aspect_ratio.unwrap_or(info.aspect_ratio) * config.chart_ratio);
         let camera = Camera2D {
             target: vec2(0., 0.),
             zoom: vec2_ratio,
