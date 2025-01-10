@@ -153,15 +153,15 @@ impl Chart {
                 }
             }
             if !res.no_effect {
-                for effect in &self.extra.effects {
-                    push_camera_state();
+                push_camera_state();
                     set_camera(&Camera2D {
                         zoom: vec2_asp2,
                         ..Default::default()
                     });
+                for effect in &self.extra.effects {
                     effect.render(res);
-                    pop_camera_state();
                 }
+                pop_camera_state();
             }
         });
     }
