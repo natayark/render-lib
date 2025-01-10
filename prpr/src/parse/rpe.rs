@@ -136,7 +136,7 @@ struct RPEJudgeLine {
     texture: String,
     #[serde(rename = "father")]
     parent: Option<isize>,
-    anchor: [f32; 2],
+    anchor: Option<[f32; 2]>,
     event_layers: Vec<Option<RPEEventLayer>>,
     extended: Option<RPEExtendedEvents>,
     notes: Option<Vec<RPENote>>,
@@ -588,7 +588,7 @@ async fn parse_judge_line(
                 Some(parent as usize)
             }
         },
-        anchor: rpe.anchor,
+        anchor: rpe.anchor.unwrap_or([0.5, 0.5]),
         z_index: rpe.z_order,
         show_below: rpe.is_cover != 1,
         attach_ui: rpe.attach_ui,
