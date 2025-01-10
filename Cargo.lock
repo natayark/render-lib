@@ -1964,7 +1964,7 @@ dependencies = [
  "glam",
  "image",
  "macroquad_macro 0.1.7 (git+https://github.com/2278535805/prpr-macroquad)",
- "miniquad",
+ "miniquad 0.3.15 (git+https://github.com/Mivik/prpr-miniquad)",
  "quad-rand",
 ]
 
@@ -1978,7 +1978,7 @@ dependencies = [
  "glam",
  "image",
  "macroquad_macro 0.1.7 (git+https://github.com/Mivik/prpr-macroquad)",
- "miniquad",
+ "miniquad 0.3.15 (git+https://github.com/Mivik/prpr-miniquad)",
  "quad-rand",
 ]
 
@@ -2066,6 +2066,18 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "miniquad"
+version = "0.3.15"
+source = "git+https://github.com/2278535805/prpr-miniquad#6605e13f2d0a49f1b9725d89ae35afa922f7eff9"
+dependencies = [
+ "libc",
+ "ndk-context",
+ "ndk-sys 0.2.2",
+ "objc",
+ "winapi",
+]
 
 [[package]]
 name = "miniquad"
@@ -2857,7 +2869,7 @@ dependencies = [
  "lru",
  "lyon",
  "macroquad 0.3.25 (git+https://github.com/2278535805/prpr-macroquad)",
- "miniquad",
+ "miniquad 0.3.15 (git+https://github.com/2278535805/prpr-miniquad)",
  "miniz_oxide 0.7.4",
  "nalgebra",
  "ndk-context",
