@@ -1957,40 +1957,21 @@ dependencies = [
 [[package]]
 name = "macroquad"
 version = "0.3.25"
-source = "git+https://github.com/2278535805/prpr-macroquad#bbe11a075287acb065153a8964756d4b68584d74"
+source = "git+https://github.com/2278535805/prpr-macroquad#37c247d662cd015b90ffe08f0ca80c01c72e702a"
 dependencies = [
  "bumpalo",
  "fontdue",
  "glam",
  "image",
- "macroquad_macro 0.1.7 (git+https://github.com/2278535805/prpr-macroquad)",
- "miniquad 0.3.15 (git+https://github.com/Mivik/prpr-miniquad)",
- "quad-rand",
-]
-
-[[package]]
-name = "macroquad"
-version = "0.3.25"
-source = "git+https://github.com/Mivik/prpr-macroquad#19119d6e3ec231502f6d64ff077114ffe1fcb04a"
-dependencies = [
- "bumpalo",
- "fontdue",
- "glam",
- "image",
- "macroquad_macro 0.1.7 (git+https://github.com/Mivik/prpr-macroquad)",
- "miniquad 0.3.15 (git+https://github.com/Mivik/prpr-miniquad)",
+ "macroquad_macro",
+ "miniquad",
  "quad-rand",
 ]
 
 [[package]]
 name = "macroquad_macro"
 version = "0.1.7"
-source = "git+https://github.com/2278535805/prpr-macroquad#bbe11a075287acb065153a8964756d4b68584d74"
-
-[[package]]
-name = "macroquad_macro"
-version = "0.1.7"
-source = "git+https://github.com/Mivik/prpr-macroquad#19119d6e3ec231502f6d64ff077114ffe1fcb04a"
+source = "git+https://github.com/2278535805/prpr-macroquad#37c247d662cd015b90ffe08f0ca80c01c72e702a"
 
 [[package]]
 name = "malloc_buf"
@@ -2071,18 +2052,6 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 name = "miniquad"
 version = "0.3.15"
 source = "git+https://github.com/2278535805/prpr-miniquad#6605e13f2d0a49f1b9725d89ae35afa922f7eff9"
-dependencies = [
- "libc",
- "ndk-context",
- "ndk-sys 0.2.2",
- "objc",
- "winapi",
-]
-
-[[package]]
-name = "miniquad"
-version = "0.3.15"
-source = "git+https://github.com/Mivik/prpr-miniquad#e8deff64a4e1211c6fd650bbb690165ba110f791"
 dependencies = [
  "libc",
  "ndk-context",
@@ -2652,7 +2621,7 @@ dependencies = [
  "logos",
  "lru",
  "lyon",
- "macroquad 0.3.25 (git+https://github.com/2278535805/prpr-macroquad)",
+ "macroquad",
  "md5",
  "nalgebra",
  "ndk-context",
@@ -2698,7 +2667,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "log",
- "macroquad 0.3.25 (git+https://github.com/Mivik/prpr-macroquad)",
+ "macroquad",
  "phira-mp-client",
  "phira-mp-common",
  "pretty_env_logger",
@@ -2868,8 +2837,8 @@ dependencies = [
  "libc",
  "lru",
  "lyon",
- "macroquad 0.3.25 (git+https://github.com/2278535805/prpr-macroquad)",
- "miniquad 0.3.15 (git+https://github.com/2278535805/prpr-miniquad)",
+ "macroquad",
+ "miniquad",
  "miniz_oxide 0.7.4",
  "nalgebra",
  "ndk-context",
