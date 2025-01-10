@@ -165,7 +165,7 @@ impl Note {
                 );
                 //println!("{} {} {}", index, bpm_list.now_bpm(index as f32), beat);
                 *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
-                Some(if perfect && !res.config.all_good {
+                Some(if perfect && !res.config.all_good && !res.config.all_bad {
                     res.res_pack.info.fx_perfect()
                 } else {
                     res.res_pack.info.fx_good()
