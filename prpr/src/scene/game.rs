@@ -1280,7 +1280,7 @@ impl Scene for GameScene {
         {
             push_camera_state();
             set_camera(&Camera2D {
-                zoom: vec2_asp2,
+                zoom: vec2(1., -asp),
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
