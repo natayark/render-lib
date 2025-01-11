@@ -160,7 +160,7 @@ impl Chart {
                 set_camera(&Camera2D {
                     zoom: vec2_asp2,
                     render_target: res.camera.render_target,
-                    viewport: Some(ui.viewport),
+                    viewport: res.camera.viewport,
                     ..Default::default()
                 });
                 for effect in &self.extra.effects {
