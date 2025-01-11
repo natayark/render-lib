@@ -1268,19 +1268,6 @@ impl Scene for GameScene {
             res.emitter.draw(dt);
         }
         self.ui(ui, tm)?;
-        self.overlay_ui(ui, tm)?;
-
-        if self.mode == GameMode::TweakOffset {
-            push_camera_state();
-            self.gl.quad_gl.viewport(None);
-            set_camera(&Camera2D {
-                zoom: vec2(1., -screen_aspect()),
-                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
-                ..Default::default()
-            });
-            self.tweak_offset(ui, Self::interactive(&self.res, &self.state), tm);
-            pop_camera_state();
-        }
 
         if !self.res.no_effect && !self.effects.is_empty() {
             push_camera_state();
@@ -1293,6 +1280,30 @@ impl Scene for GameScene {
             }
             pop_camera_state();
         }
+        
+        {
+            push_camera_state();
+            set_camera(&Camera2D {
+                zoom: vec2_asp2,
+                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
+                ..Default::default()
+            });
+            self.overlay_ui(ui, tm)?;
+            pop_camera_state();
+        }
+
+        if self.mode == GameMode::TweakOffset {
+            push_camera_state();
+            self.gl.quad_gl.viewport(None);
+            set_camera(&Camera2D {
+                zoom: vec2_asp2,
+                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
+                ..Default::default()
+            });
+            self.tweak_offset(ui, Self::interactive(&self.res, &self.state), tm);
+            pop_camera_state();
+        }
+
         if msaa || !self.res.no_effect {
             // render the texture onto screen
             if let Some(target) = &self.res.chart_target {
