@@ -652,7 +652,8 @@ impl GameScene {
         if tm.paused() {
             let h = 1. / res.aspect_ratio;
             draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., 0.6));
-            let o = if self.mode == GameMode::Exercise { -0.3 } else { 0. };
+            //let o = if self.mode == GameMode::Exercise { -0.3 } else { 0. };
+            let o = -0.3;
             let s = 0.06;
             let w = 0.05;
             let no_retry = self.mode == GameMode::NoRetry;
@@ -726,7 +727,7 @@ impl GameScene {
                         reset!(self, res, tm);
                     }
                     Some(1) => {
-                        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 {
+                        if tm.now() > self.exercise_range.end as f64 { //self.mode == GameMode::Exercise && 
                             tm.seek_to(self.exercise_range.start as f64);
                             self.music.seek_to(self.exercise_range.start)?;
                             pos = self.exercise_range.start;
@@ -734,8 +735,8 @@ impl GameScene {
                         if !res.config.disable_audio {
                             self.music.play()?;
                         }
-                        res.time -= 3.;
-                        let dst = pos - 3.;
+                        res.time -= 1.;
+                        let dst = pos - 1.;
                         if dst < 0. {
                             self.music.pause()?;
                             self.state = State::BeforeMusic;
@@ -745,36 +746,39 @@ impl GameScene {
                         let now = tm.now();
                         tm.speed = res.config.speed as _;
                         tm.resume();
-                        tm.seek_to(now - 3.);
+                        tm.seek_to(now - 1.);
+                        self.music.seek_to(now as f32 - 1.);
                         self.pause_rewind = Some(tm.now() - 0.2);
                     }
                     _ => {}
                 }
             }
-            if self.mode == GameMode::Exercise {
+            { //if self.mode == GameMode::Exercise
                 let asp = self.touch_scale();
                 for touch in ui.ensure_touches() {
                     touch.position *= asp;
                 }
-                ui.scope(|ui| {
-                    ui.dx(0.3);
-                    ui.dy(-0.3);
-                    ui.slider(tl!("speed"), 0.5..2.0, 0.05, &mut self.res.config.speed, Some(0.5));
-                });
+                if self.mode == GameMode::Exercise {
+                    ui.scope(|ui| {
+                        ui.dx(0.3);
+                        ui.dy(-0.3);
+                        ui.slider(tl!("speed"), 0.5..2.0, 0.05, &mut self.res.config.speed, Some(0.5));
+                    });
+                }
                 ui.dy(0.06);
                 let hw = 0.7;
                 let h = 0.06;
                 let eh = 0.12;
                 let rad = 0.03;
                 let sp = self.offset().min(0.);
-                ui.fill_rect(Rect::new(-hw, -h, hw * 2., h * 2.), GRAY);
+                ui.fill_rect(Rect::new(-hw, -h, hw * 2., h * 2.), Color::new(0.4, 0.4, 0.4, 1.));
                 let st = -hw + (self.exercise_range.start - sp) / (self.res.track_length - sp) * hw * 2.;
                 let en = -hw + (self.exercise_range.end - sp) / (self.res.track_length - sp) * hw * 2.;
                 let t = tm.now() as f32;
                 let cur = -hw + (t - sp) / (self.res.track_length - sp) * hw * 2.;
-                ui.fill_rect(Rect::new(st, -h, en - st, h * 2.), WHITE);
-                ui.fill_rect(Rect::new(st, -eh, 0., eh + h).feather(0.005), BLUE);
-                ui.fill_circle(st, -eh, rad, BLUE);
+                ui.fill_rect(Rect::new(st, -h, en - st, h * 2.), Color::new(0.6, 0.6, 0.6, 1.));
+                ui.fill_rect(Rect::new(st, -eh, 0., eh + h).feather(0.005), Color::new(0.66, 0.78, 0.98, 1.));
+                ui.fill_circle(st, -eh, rad, Color::new(0.66, 0.78, 0.98, 1.));
                 if self.exercise_press.is_none() {
                     let r = ui.rect_to_global(Rect::new(st, -eh, 0., 0.).feather(rad));
                     self.exercise_press = Judge::get_touches()
@@ -782,8 +786,8 @@ impl GameScene {
                         .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
                         .map(|it| (-1, it.id));
                 }
-                ui.fill_rect(Rect::new(en, -h, 0., eh + h).feather(0.005), RED);
-                ui.fill_circle(en, eh, rad, RED);
+                ui.fill_rect(Rect::new(en, -h, 0., eh + h).feather(0.005), Color::new(1., 0.34, 0.54, 1.));
+                ui.fill_circle(en, eh, rad, Color::new(1., 0.34, 0.54, 1.));
                 if self.exercise_press.is_none() {
                     let r = ui.rect_to_global(Rect::new(en, eh, 0., 0.).feather(rad));
                     self.exercise_press = Judge::get_touches()
@@ -791,8 +795,8 @@ impl GameScene {
                         .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
                         .map(|it| (1, it.id));
                 }
-                ui.fill_rect(Rect::new(cur, -h, 0., h * 2.).feather(0.005), GREEN);
-                ui.fill_circle(cur, 0., rad, GREEN);
+                ui.fill_rect(Rect::new(cur, -h, 0., h * 2.).feather(0.005), Color::new(0.9, 0.9, 0.9, 1.));
+                ui.fill_circle(cur, 0., rad, Color::new(0.95, 0.95, 0.95, 1.));
                 if self.exercise_press.is_none() {
                     let r = ui.rect_to_global(Rect::new(cur, 0., 0., 0.).feather(rad));
                     self.exercise_press = Judge::get_touches()
@@ -863,11 +867,11 @@ impl GameScene {
         }
         if let Some(time) = self.pause_rewind {
             let dt = tm.now() - time;
-            let t = 3 - dt.floor() as i32;
+            let t = 1 - dt.floor() as i32;
             if t <= 0 {
                 self.pause_rewind = None;
             } else {
-                let a = (1. - dt as f32 / 3.) * 1.;
+                let a = (1. - dt as f32 / 1.) * 1.;
                 let h = 1. / self.res.aspect_ratio;
                 draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., a));
                 ui.text(t.to_string()).anchor(0.5, 0.5).size(1.).color(c).draw();
@@ -1002,7 +1006,7 @@ impl Scene for GameScene {
         if matches!(self.state, State::Playing) {
             tm.update(self.music.position() as f64);
         }
-        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && !tm.paused() {
+        if tm.now() > self.exercise_range.end as f64 && !tm.paused() { //self.mode == GameMode::Exercise
             let state = self.state.clone();
             reset!(self, self.res, tm);
             self.state = state;
@@ -1013,29 +1017,21 @@ impl Scene for GameScene {
         let offset = self.offset();
         let time = tm.now() as f32;
         let time = match self.state {
-            State::Starting => {
-                if time >= Self::BEFORE_TIME {
-                    self.res.alpha = 1.;
-                    self.state = State::BeforeMusic;
-                    tm.reset();
-                    tm.seek_to(if self.mode == GameMode::Exercise {
-                        self.exercise_range.start as f64
-                    } else {
-                        offset.min(0.) as f64
-                    });
-                    self.last_update_time = tm.real_time();
-                    if self.first_in && self.mode == GameMode::Exercise {
-                        tm.pause();
-                        self.first_in = false;
-                    }
-                    tm.now() as f32
+        State::Starting => {
+            if time >= Self::BEFORE_TIME {
+                self.res.alpha = 1.;
+                self.state = State::BeforeMusic;
+                tm.reset();
+                tm.seek_to(self.exercise_range.start as f64);
+                self.last_update_time = tm.real_time();
+                if self.first_in && self.mode == GameMode::Exercise {
+                    tm.pause();
+                    self.first_in = false;
+                }
+                tm.now() as f32
                 } else {
                     self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).powi(3);
-                    if self.mode == GameMode::Exercise {
-                        self.exercise_range.start
-                    } else {
-                        offset
-                    }
+                    self.exercise_range.start
                 }
             }
             State::BeforeMusic => {
@@ -1143,8 +1139,8 @@ impl Scene for GameScene {
         }
         if Self::interactive(res, &self.state) {
             if is_key_pressed(KeyCode::Left) {
-                res.time -= 1.;
-                let dst = (self.music.position() - 1.).max(0.);
+                res.time -= 2.;
+                let dst = (self.music.position() - 2.).max(0.);
                 self.music.seek_to(dst)?;
                 tm.seek_to(dst as f64);
             }
