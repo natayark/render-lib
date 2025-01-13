@@ -81,6 +81,10 @@ pub struct Config {
     pub autoplay: Option<bool>,
     pub disable_audio: bool,
     pub judge_offset: f32,
+
+    pub render_chart: bool,
+    pub render_ui: bool,
+    pub render_bg: bool,
 }
 
 impl Default for Config {
@@ -131,6 +135,10 @@ impl Default for Config {
             autoplay: None,
             disable_audio: false,
             judge_offset: 0.,
+
+            render_chart: true,
+            render_ui: true,
+            render_bg: true,
         }
     }
 }

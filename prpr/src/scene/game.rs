@@ -1232,8 +1232,11 @@ impl Scene for GameScene {
             render_target: chart_onto,
             ..Default::default()
         });
-        clear_background(BLACK);
-        draw_background(*res.background);
+        clear_background(Color::new(0., 0., 0., 0.));
+        if res.config.render_bg {
+            draw_background(*res.background);
+        }
+        // 在这里绘制屏幕外半透明矩形
         pop_camera_state();
 
         let chart_target_vp = if res.chart_target.is_some() {
@@ -1248,7 +1251,9 @@ impl Scene for GameScene {
         let h = 1. / res.aspect_ratio;
         draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
 
-        self.chart.render(ui, res);
+        if res.config.render_chart {
+            self.chart.render(ui, res);
+        }
 
         self.gl.quad_gl.render_pass(
             res.chart_target
@@ -1263,7 +1268,10 @@ impl Scene for GameScene {
         if res.config.particle {
             res.emitter.draw(dt);
         }
-        self.ui(ui, tm)?;
+        
+        if res.config.render_ui {
+            self.ui(ui, tm)?;
+        }
 
         if !self.res.no_effect && !self.effects.is_empty() {
             push_camera_state();
