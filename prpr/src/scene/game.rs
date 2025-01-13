@@ -1232,7 +1232,7 @@ impl Scene for GameScene {
             render_target: chart_onto,
             ..Default::default()
         });
-        clear_background(Color::new(0., 0., 0., 0.));
+        clear_background(BLACK);
         if res.config.render_bg {
             draw_background(*res.background);
         }
