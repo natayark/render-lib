@@ -641,13 +641,15 @@ impl GameScene {
         let height = eps * 1.1;
         let dest = (2. * res.time / res.track_length).max(0.).min(2.);
         self.chart.with_element_noscale(ui, res, UIElement::Bar, Some((0., top - height / 2.)), |ui, color| {
-            let ct = Vector::new(0., top + height / 2.);
+            if res.config.render_ui_bar {
+                let ct = Vector::new(0., top + height / 2.);
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
                     //Color{ a: color.a * c.a * 0.6, ..color},
                     Color::new(0.565, 0.565, 0.565, 1.),
                 );
-                ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color { a: color.a * c.a, ..color });;
+                ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color { a: color.a * c.a, ..color });
+            }
         });
         Ok(())
     }

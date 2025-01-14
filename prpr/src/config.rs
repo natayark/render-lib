@@ -88,6 +88,7 @@ pub struct Config {
     pub render_ui_pause: bool,
     pub render_ui_score: bool,
     pub render_ui_combo: bool,
+    pub render_ui_bar: bool,
     pub render_bg: bool,
 }
 
@@ -146,6 +147,7 @@ impl Default for Config {
             render_ui_pause: true,
             render_ui_score: true,
             render_ui_combo: true,
+            render_ui_bar: true,
             render_bg: true,
         }
     }
