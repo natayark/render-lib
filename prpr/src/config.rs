@@ -82,8 +82,12 @@ pub struct Config {
     pub disable_audio: bool,
     pub judge_offset: f32,
 
-    pub render_chart: bool,
-    pub render_ui: bool,
+    pub render_line: bool,
+    pub render_line_extra: bool,
+    pub render_note: bool,
+    pub render_ui_pause: bool,
+    pub render_ui_score: bool,
+    pub render_ui_combo: bool,
     pub render_bg: bool,
 }
 
@@ -136,8 +140,12 @@ impl Default for Config {
             disable_audio: false,
             judge_offset: 0.,
 
-            render_chart: true,
-            render_ui: true,
+            render_line: true,
+            render_line_extra: true,
+            render_note: true,
+            render_ui_pause: true,
+            render_ui_score: true,
+            render_ui_combo: true,
             render_bg: true,
         }
     }

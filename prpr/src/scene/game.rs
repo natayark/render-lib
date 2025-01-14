@@ -516,12 +516,14 @@ impl GameScene {
                 text_size *= max_width / text_width
             }
             drop(text);
-            ui.text(score)
-                .pos(1. - margin + 0.001, top + eps * 2.8125 - (1. - p) * 0.4)
-                .anchor(1., 0.)
-                .size(text_size)
-                .color(Color { a: color.a * c.a, ..color })
-                .draw();
+            if res.config.render_ui_score {
+                ui.text(score)
+                    .pos(1. - margin + 0.001, top + eps * 2.8125 - (1. - p) * 0.4)
+                    .anchor(1., 0.)
+                    .size(text_size)
+                    .color(Color { a: color.a * c.a, ..color })
+                    .draw();
+            }
             if res.config.show_acc {
                 ui.text(format!("{:05.2}%", self.judge.real_time_accuracy() * 100.))
                     .pos(1. - margin, top + eps * 2.2 - (1. - p) * 0.4 + 0.07)
@@ -532,14 +534,16 @@ impl GameScene {
             }
         });
         self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), |ui, color| {
-            let mut r = Rect::new(pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2, pause_w, pause_h);
-            let ct = pause_center.coords;
-            let c = Color { a: color.a * c.a, ..color };
-            
-            ui.fill_rect(r, c);
-            r.x += pause_w * 2.;
-            ui.fill_rect(r, c);
-            ;
+            if res.config.render_ui_pause {
+                let mut r = Rect::new(pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2, pause_w, pause_h);
+                let ct = pause_center.coords;
+                let c = Color { a: color.a * c.a, ..color };
+                
+                ui.fill_rect(r, c);
+                r.x += pause_w * 2.;
+                ui.fill_rect(r, c);
+                ;
+        }
         });
         let unit_h = ui.text("0").measure().h;
         let combo_top = top + eps * 1.346 - (1. - p) * 0.4;
@@ -564,12 +568,14 @@ impl GameScene {
                 if text_width > max_width {
                     text_size *= max_width / text_width
                 }
-                ui.text(&combo)
+                if res.config.render_ui_combo {
+                    ui.text(&combo)
                     .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
                     .color(Color { a: color.a * c.a, ..color })
                     .size(text_size)
                     .draw();
+                }
                 text_btm
             });
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
@@ -1251,9 +1257,7 @@ impl Scene for GameScene {
         let h = 1. / res.aspect_ratio;
         draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
 
-        if res.config.render_chart {
-            self.chart.render(ui, res);
-        }
+        self.chart.render(ui, res);
 
         self.gl.quad_gl.render_pass(
             res.chart_target
@@ -1269,9 +1273,7 @@ impl Scene for GameScene {
             res.emitter.draw(dt);
         }
         
-        if res.config.render_ui {
-            self.ui(ui, tm)?;
-        }
+        self.ui(ui, tm)?;
 
         if !self.res.no_effect && !self.effects.is_empty() {
             push_camera_state();
