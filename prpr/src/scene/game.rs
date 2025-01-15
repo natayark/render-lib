@@ -1234,6 +1234,8 @@ impl Scene for GameScene {
             .as_ref()
             .map(|it| if msaa { it.input() } else { it.output() })
             .or(res.camera.render_target);
+
+        let h = 1. / res.aspect_ratio;
         //push_camera_state();
         set_camera(&Camera2D {
             zoom: vec2(1., -asp),
@@ -1245,16 +1247,22 @@ impl Scene for GameScene {
         if res.config.render_bg {
             draw_background(*res.background);
         }
-        // 在这里绘制屏幕外半透明矩形
 
+        let vp = res.camera.viewport.unwrap();
         let chart_target_vp = if res.chart_target.is_some() {
-            let vp = res.camera.viewport.unwrap();
             Some((vp.0 - ui.viewport.0, vp.1 - ui.viewport.1, vp.2, vp.3))
         } else {
             res.camera.viewport
         };
 
-        let h = 1. / res.aspect_ratio;
+        if res.config.chart_ratio >= 1. {
+            let dim = Color::new(0., 0., 0., 0.5);
+            let x_range = vp.0 as f32 / ui.viewport.2 as f32;
+            draw_rectangle(-1., -h,x_range * 2., h * 2., dim);
+            draw_rectangle(1., -h,-x_range * 2., h * 2., dim);
+            draw_rectangle(x_range * 2. - 1., -h, (1. - x_range * 2.) * 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
+        }
+
         set_camera( &Camera2D {
             zoom: vec2_asp,
             viewport: chart_target_vp,
@@ -1263,7 +1271,9 @@ impl Scene for GameScene {
         
         self.gl.quad_gl.render_pass(chart_onto.map(|it| it.render_pass));
         //self.gl.quad_gl.viewport(chart_target_vp);
-        draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
+        if res.config.chart_ratio < 1. {
+            draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
+        }
         self.chart.render(ui, res);
 
         set_camera( &Camera2D {
