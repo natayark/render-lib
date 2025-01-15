@@ -137,8 +137,9 @@ impl Chart {
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource) {
-        let asp = ui.viewport.2 as f32 / ui.viewport.3 as f32;
-        let vec2_asp2 = vec2(1., -asp);
+        let vp = res.camera.viewport.unwrap_or(ui.viewport);
+        let asp2 = vp.2 as f32 / vp.3 as f32;
+        let vec2_asp2 = vec2(1., -asp2);
         for video in &self.extra.videos {
             video.render(res);
         }
@@ -156,17 +157,17 @@ impl Chart {
                 }
             }
             if !res.no_effect {
-                push_camera_state();
+                //push_camera_state();
                 set_camera(&Camera2D {
                     zoom: vec2_asp2,
-                    render_target: res.camera.render_target,
-                    viewport: res.camera.viewport,
+                    //render_target: res.camera.render_target,
+                    //viewport: Some(ui.viewport),
                     ..Default::default()
                 });
                 for effect in &self.extra.effects {
                     effect.render(res);
                 }
-                pop_camera_state();
+                //pop_camera_state();
             }
         });
     }
