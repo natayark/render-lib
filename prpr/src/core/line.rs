@@ -151,6 +151,9 @@ pub struct JudgeLine {
     pub anchor: [f32; 2],
 }
 
+unsafe impl Sync for JudgeLine {}
+unsafe impl Send for JudgeLine {}
+
 impl JudgeLine {
     pub fn update(&mut self, res: &mut Resource, tr: Matrix, bpm_list: &mut BpmList, index: usize) {
         // self.object.set_time(res.time); // this is done by chart, chart has to calculate transform for us

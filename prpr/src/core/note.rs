@@ -51,6 +51,9 @@ pub struct Note {
     pub format: ChartFormat,
 }
 
+unsafe impl Sync for Note {}
+unsafe impl Send for Note {}
+
 pub struct RenderConfig<'a> {
     pub settings: &'a ChartSettings,
     pub ctrl_obj: &'a mut CtrlObject,
