@@ -240,6 +240,8 @@ impl JudgeLine {
                             color.a *= alpha.max(0.0);
                             if res.config.chart_debug {
                                 color.a = 0.10 + 0.90 * color.a;
+                            } else if color.a == 0.0 {
+                                return;
                             }
                             let len = res.info.line_length;
                             draw_line(-len, 0., len, 0., 0.0075, color);
@@ -251,6 +253,8 @@ impl JudgeLine {
                             color.a = alpha.max(0.0);
                             if res.config.chart_debug {
                                 color.a = 0.10 + 0.90 * color.a;
+                            } else if color.a == 0.0 {
+                                return;
                             }
                             // let hf = vec2(texture.width() / res.aspect_ratio, texture.height() / res.aspect_ratio);
                             let hf = vec2(texture.width(), texture.height()); // Sync RPE
@@ -274,6 +278,11 @@ impl JudgeLine {
                             let frame = frames.get_prog_frame(t);
                             let mut color = color.unwrap_or(WHITE);
                             color.a = alpha.max(0.0);
+                            if res.config.chart_debug {
+                                color.a = 0.10 + 0.90 * color.a;
+                            } else if color.a == 0.0 {
+                                return;
+                            }
                             let hf = vec2(frame.width(), frame.height());
                             draw_texture_ex(
                                 **frame,
@@ -295,6 +304,8 @@ impl JudgeLine {
                             color.a = alpha.max(0.0);
                             if res.config.chart_debug {
                                 color.a = 0.10 + 0.90 * color.a;
+                            } else if color.a == 0.0 {
+                                return;
                             }
                             let now = anim.now();
                             res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(1., -1.)), |_| {
