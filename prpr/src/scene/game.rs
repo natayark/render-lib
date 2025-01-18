@@ -179,7 +179,7 @@ macro_rules! reset_speed {
 }
 
 impl GameScene {
-    pub const BEFORE_TIME: f32 = 0.7;
+    pub const BEFORE_TIME: f32 = 1.2; // 0.7 Change for camera animation
     pub const FADEOUT_TIME: f32 = WAIT_TIME + AFTER_TIME + 0.3;
 
     pub async fn load_chart_bytes(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<Vec<u8>> {
@@ -646,7 +646,7 @@ impl GameScene {
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
                     //Color{ a: color.a * c.a * 0.6, ..color},
-                    Color::new(0.565, 0.565, 0.565, 1.),
+                    Color::new(0.565, 0.565, 0.565, p),
                 );
                 ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color { a: color.a * c.a, ..color });
             }
@@ -1222,7 +1222,26 @@ impl Scene for GameScene {
         
         let vp = res.camera.viewport.unwrap_or(ui.viewport);
         let asp2 = vp.2 as f32 / vp.3 as f32;
-        let vec2_asp = vec2(1. * &res.config.chart_ratio, -asp2 * &res.config.chart_ratio);
+
+        let time = tm.now() as f32;
+        let p = match self.state {
+            State::Starting => {
+                if time < Self::BEFORE_TIME {
+                    1. - (1. - time / Self::BEFORE_TIME).powi(5)
+                } else {
+                    1.
+                }
+            }
+            State::BeforeMusic => 1.,
+            State::Playing => 1.,
+            State::Ending => {
+                let t = time - res.track_length - WAIT_TIME;
+                1. - (t / 1.).max(0.).min(1.).powi(5)
+            }
+        };
+        let ratio = 1. + (res.config.chart_ratio - 1.) * p;
+        let vec2_asp = vec2(1. * ratio, -asp2 * ratio);
+
         if res.update_size(ui.viewport) || self.mode == GameMode::View {
             set_camera(&res.camera);
         }
