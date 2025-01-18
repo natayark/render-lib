@@ -13,7 +13,7 @@ use crate::{
     bin::{BinaryReader, BinaryWriter},
     config::{Config, Mods},
     core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, Vector},
-    ext::{parse_time, screen_aspect, semi_white, RectExt, SafeTexture},
+    ext::{ease_in_out_quartic, parse_time, screen_aspect, semi_white, RectExt, SafeTexture},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
     judge::Judge,
@@ -1236,19 +1236,18 @@ impl Scene for GameScene {
         let p = match self.state {
             State::Starting => {
                 if time < Self::BEFORE_TIME {
-                    1. - (1. - time / Self::BEFORE_TIME).powi(5)
+                    1. - (1. - time / Self::BEFORE_TIME)
                 } else {
                     1.
                 }
             }
             State::BeforeMusic => 1.,
-            State::Playing => 1.,
-            State::Ending => {
-                let t = time - res.track_length - WAIT_TIME;
-                1. - (t / 1.).max(0.).min(1.).powi(5)
+            State::Ending | State::Playing => {
+                let t = time - res.track_length;
+                1. - (t / Self::BEFORE_TIME).clamp(0., 1.)
             }
         };
-        let ratio = 1. + (res.config.chart_ratio - 1.) * p;
+        let ratio = 1. + (res.config.chart_ratio - 1.) * ease_in_out_quartic(p);
         let vec2_asp = vec2(1. * ratio, -asp2 * ratio);
 
         if res.update_size(ui.viewport) || self.mode == GameMode::View {
