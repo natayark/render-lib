@@ -507,7 +507,7 @@ impl GameScene {
         let score_top = top + eps * 2.2 - (1. - p) * 0.4;
         let ct = ui.text(&score).size(0.8).center();
         ui.text("AA").color(Color::new(0., 0., 0., 0.)).draw(); //Fix first text disappear
-        self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + 1. - margin, ct.y + score_top)), |ui, color| {
+        self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + 1. - margin, ct.y + score_top)), Some((1. - margin + 0.001, top + eps * 2.8125)), |ui, color| {
             let mut text_size = 0.70867;
             let mut text = ui.text(&score).size(text_size);
             let max_width = 0.55;
@@ -533,10 +533,10 @@ impl GameScene {
                     .draw();
             }
         });
-        self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), |ui, color| {
+        self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), Some((pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2)), |ui, color| {
             if res.config.render_ui_pause {
                 let mut r = Rect::new(pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2, pause_w, pause_h);
-                let ct = pause_center.coords;
+                //let ct = pause_center.coords;
                 let c = Color { a: color.a * c.a, ..color };
                 
                 ui.fill_rect(r, c);
@@ -556,7 +556,7 @@ impl GameScene {
             else {
                 self.judge.combo().to_string()
             };
-            let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_top + unit_h / 2.)), |ui, color| {
+            let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_top + unit_h / 2.)), Some((0., combo_top + unit_h / 2.)), |ui, color| {
                 let mut text_size = 1.;
                 let max_width = 0.55;
                 let mut text = ui.text(&combo)
@@ -578,7 +578,7 @@ impl GameScene {
                 }
                 text_btm
             });
-            self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
+            self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
                 ui.text(&res.config.combo)
                     .pos(0., btm + 0.007777)
                     .anchor(0.5, 0.)
@@ -590,7 +590,7 @@ impl GameScene {
         }
         let lf = -1. + margin;
         let bt = -top - eps * 3.64;
-        self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), |ui, color| {
+        self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((-1. + margin * 0.7, -top - eps * 2.)), |ui, color| {
             let mut text_size = 0.5;
             let mut text = ui.text(&res.info.name).size(text_size);
             let max_width = 0.9;
@@ -606,7 +606,7 @@ impl GameScene {
                 .color(Color { a: color.a * c.a, ..color })
                 .draw();
         });
-        self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), |ui, color| {
+        self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((1. - margin * 0.7, -top - eps * 2.)), |ui, color| {
             ui.text(&res.info.level)
                 .pos(-lf, bt + (1. - p) * 0.4)
                 .anchor(1., 1.)
@@ -640,9 +640,9 @@ impl GameScene {
         let hw = 0.0015;
         let height = eps * 1.1;
         let dest = (2. * res.time / res.track_length).max(0.).min(2.);
-        self.chart.with_element_noscale(ui, res, UIElement::Bar, Some((0., top - height / 2.)), |ui, color| {
-            if res.config.render_ui_bar {
-                let ct = Vector::new(0., top + height / 2.);
+        self.chart.with_element(ui, res, UIElement::Bar, Some((-1., top)), Some((-1., top + height / 2.)), |ui, color| {
+            if res.config.render_ui_bar {//进度条缩放锚点在左上角
+                //let ct = Vector::new(0., top + height / 2.);
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
                     //Color{ a: color.a * c.a * 0.6, ..color},
