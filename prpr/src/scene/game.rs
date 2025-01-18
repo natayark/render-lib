@@ -181,6 +181,7 @@ macro_rules! reset_speed {
 impl GameScene {
     pub const BEFORE_TIME: f32 = 0.7;
     pub const BEFORE_DURATION: f32 = 1.2;
+    pub const WAIT_AFTER_TIME: f32 = AFTER_TIME + 0.3;
     pub const FADEOUT_TIME: f32 = WAIT_TIME + AFTER_TIME + 0.3;
 
     pub async fn load_chart_bytes(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<Vec<u8>> {
