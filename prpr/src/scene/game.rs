@@ -1349,7 +1349,7 @@ impl Scene for GameScene {
             //push_camera_state();
             self.gl.quad_gl.viewport(None);
             set_camera(&Camera2D {
-                zoom: vec2(1., asp),
+                zoom: vec2(1., -asp),
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
