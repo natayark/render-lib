@@ -179,7 +179,8 @@ macro_rules! reset_speed {
 }
 
 impl GameScene {
-    pub const BEFORE_TIME: f32 = 1.2; // 0.7 Change for camera animation
+    pub const BEFORE_TIME: f32 = 0.7;
+    pub const BEFORE_DURATION: f32 = 1.2;
     pub const FADEOUT_TIME: f32 = WAIT_TIME + AFTER_TIME + 0.3;
 
     pub async fn load_chart_bytes(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<Vec<u8>> {
@@ -449,7 +450,7 @@ impl GameScene {
         let p = match self.state {
             State::Starting => {
                 if time <= Self::BEFORE_TIME {
-                    1. - (1. - time / Self::BEFORE_TIME).powi(3)
+                    1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3)
                 } else {
                     1.
                 }
@@ -458,7 +459,7 @@ impl GameScene {
             State::Playing => 1.,
             State::Ending => {
                 let t = time - self.res.track_length - WAIT_TIME;
-                1. - (t / (AFTER_TIME + 0.3)).min(1.).powi(2)
+                1. - (t / (AFTER_TIME + 0.3)).clamp(0., 1.).powi(2)
             }
         };
         let c = Color::new(1., 1., 1., self.res.alpha);
@@ -1035,7 +1036,7 @@ impl Scene for GameScene {
         let time = tm.now() as f32;
         let time = match self.state {
         State::Starting => {
-            if time >= Self::BEFORE_TIME {
+            if time >= Self::BEFORE_DURATION { // wait for animation
                 self.res.alpha = 1.;
                 self.state = State::BeforeMusic;
                 tm.reset();
@@ -1047,7 +1048,7 @@ impl Scene for GameScene {
                 }
                 tm.now() as f32
                 } else {
-                    self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).powi(3);
+                    self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
                     self.exercise_range.start
                 }
             }
@@ -1114,7 +1115,7 @@ impl Scene for GameScene {
                         GameMode::Exercise => None,
                     };
                 }
-                self.res.alpha = 1. - (t / AFTER_TIME).min(1.).powi(2);
+                self.res.alpha = 1. - (t / AFTER_TIME).clamp(0., 1.).powi(2);
                 self.res.track_length
             }
         };
@@ -1235,8 +1236,8 @@ impl Scene for GameScene {
         let time = tm.now() as f32;
         let p = match self.state {
             State::Starting => {
-                if time < Self::BEFORE_TIME {
-                    1. - (1. - time / Self::BEFORE_TIME)
+                if time < Self::BEFORE_DURATION {
+                    1. - (1. - time / Self::BEFORE_DURATION)
                 } else {
                     1.
                 }
@@ -1244,7 +1245,7 @@ impl Scene for GameScene {
             State::BeforeMusic => 1.,
             State::Ending | State::Playing => {
                 let t = time - res.track_length;
-                1. - (t / Self::BEFORE_TIME).clamp(0., 1.)
+                1. - (t / Self::BEFORE_DURATION).clamp(0., 1.)
             }
         };
         let ratio = 1. + (res.config.chart_ratio - 1.) * ease_in_out_quartic(p);
