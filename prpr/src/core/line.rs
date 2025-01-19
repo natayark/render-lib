@@ -425,10 +425,10 @@ impl JudgeLine {
             let height_above = p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) * res.aspect_ratio;
             let height_below = -p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) * res.aspect_ratio;
             let agg = res.config.aggressive;
+            let mut height = self.height.clone();
             if res.config.note_scale > 0. && res.config.render_note {
                 for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| it.above) {
                     let line_height = {
-                        let mut height = self.height.clone();
                         height.set_time(note.time.min(res.time));
                         height.now()
                     };
@@ -453,7 +453,6 @@ impl JudgeLine {
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| !it.above) {
                         let line_height = {
-                            let mut height = self.height.clone();
                             height.set_time(note.time.min(res.time));
                             height.now()
                         };

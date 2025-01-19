@@ -231,8 +231,6 @@ impl Note {
         }
         let ctrl_obj = &mut config.ctrl_obj;
         self.init_ctrl_obj(ctrl_obj, config.line_height);
-        let mut color = self.object.now_color();
-        color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
         let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
 
         let line_height = config.line_height / res.aspect_ratio * spd;
@@ -261,6 +259,10 @@ impl Note {
                 }
             }
         };
+        
+        let mut color = self.object.now_color();
+        color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
+
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
             && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.001))
@@ -303,11 +305,6 @@ impl Note {
             NoteKind::Hold { end_time, end_height, end_speed } => {
                 if self.fake && res.time >= end_time {return};
                 res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
-                    let style = if res.config.double_hint && self.multiple_hint {
-                        &res.res_pack.note_style_mh
-                    } else {
-                        &res.res_pack.note_style
-                    };
                     if matches!(self.judge, JudgeStatus::Judged) {
                         // miss
                         color.a *= 0.5;
@@ -315,6 +312,15 @@ impl Note {
                     if res.time >= end_time {
                         return;
                     }
+                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
+                    if matches!(self.format, ChartFormat::Pgr) && end_spd == 0. {
+                        if res.config.chart_debug {
+                            color.a *= 0.2;
+                        } else {
+                            return;
+                        }
+                    }
+
                     let end_height = end_height / res.aspect_ratio * spd;
                     let time = if res.time >= self.time {res.time} else {self.time};
 
@@ -322,7 +328,6 @@ impl Note {
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
-                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     let top = if matches!(self.format, ChartFormat::Pgr) {
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
@@ -334,19 +339,17 @@ impl Note {
                     //let max_hold_height = 3. / res.config.chart_ratio / res.aspect_ratio;
                     //let top = if res.config.aggressive && hold_height - hold_line_height >= max_hold_height { bottom + max_hold_height } else { top };
 
-                    if matches!(self.format, ChartFormat::Pgr) && end_spd == 0. {
-                        if res.config.chart_debug {
-                            color.a *= 0.2;
-                        } else {
-                            return;
-                        }
-                    }
-                    
-
                     //println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
                     if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !matches!(self.format, ChartFormat::Pgr)) {
                         return;
                     }
+
+                    let style = if res.config.double_hint && self.multiple_hint {
+                        &res.res_pack.note_style_mh
+                    } else {
+                        &res.res_pack.note_style
+                    };
+
                     let tex = &style.hold;
                     let ratio = style.hold_ratio();
                     // body
