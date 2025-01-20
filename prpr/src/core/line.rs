@@ -250,6 +250,9 @@ impl JudgeLine {
                     JudgeLineKind::Texture(texture, _) => {
                         if res.config.render_line_extra {
                             let mut color = color.unwrap_or(WHITE);
+                            if res.time <= 0. && matches!(color, WHITE) { // some image show pure white before play
+                                color = BLACK;
+                            }
                             color.a = alpha.max(0.0);
                             if res.config.chart_debug {
                                 color.a = 0.10 + 0.90 * color.a;
