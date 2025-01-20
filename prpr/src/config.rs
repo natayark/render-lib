@@ -90,6 +90,8 @@ pub struct Config {
     pub render_ui_combo: bool,
     pub render_ui_bar: bool,
     pub render_bg: bool,
+
+    pub max_particles: usize,
 }
 
 impl Default for Config {
@@ -149,6 +151,8 @@ impl Default for Config {
             render_ui_combo: true,
             render_ui_bar: true,
             render_bg: true,
+
+            max_particles: 600000,
         }
     }
 }

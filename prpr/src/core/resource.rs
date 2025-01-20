@@ -267,12 +267,14 @@ impl ResourcePack {
 pub struct ParticleEmitter {
     scale: f32,
     emitter: Emitter,
+    emitter_config: EmitterConfig,
     emitter_square: Emitter,
+    emitter_square_config: EmitterConfig,
     hide_particles: bool,
 }
 
 impl ParticleEmitter {
-    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool) -> Result<Self> {
+    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool, config: Option<Config>) -> Result<Self> {
         let colors_curve = {
             let start = WHITE;
             let mut mid = start;
@@ -281,34 +283,42 @@ impl ParticleEmitter {
             end.a = 0.;
             ColorCurve { start, mid, end }
         };
+        let config_default = Config::default();
+        let config = config.unwrap_or(config_default);
+        let emitter_config = EmitterConfig {
+            max_particles: config.max_particles,
+            local_coords: false,
+            texture: Some(*res_pack.hit_fx),
+            lifetime: res_pack.info.hit_fx_duration,
+            lifetime_randomness: 0.0,
+            initial_rotation_randomness: 0.0,
+            initial_direction_spread: 0.0,
+            initial_velocity: 0.0,
+            atlas: Some(AtlasConfig::new(res_pack.info.hit_fx.0 as _, res_pack.info.hit_fx.1 as _, ..)),
+            emitting: false,
+            colors_curve,
+            ..Default::default()
+        };
+        let emitter_square_config = EmitterConfig {
+            max_particles: config.max_particles,
+            local_coords: false,
+            lifetime: res_pack.info.hit_fx_duration,
+            lifetime_randomness: 0.0,
+            initial_direction_spread: 2. * std::f32::consts::PI,
+            size_randomness: 0.3,
+            emitting: false,
+            initial_velocity: 2.5 * scale,
+            initial_velocity_randomness: 1. / 10.,
+            linear_accel: -6. / 1.,
+            colors_curve,
+            ..Default::default()
+        };
         let mut res = Self {
             scale: res_pack.info.hit_fx_scale,
-            emitter: Emitter::new(EmitterConfig {
-                local_coords: false,
-                texture: Some(*res_pack.hit_fx),
-                lifetime: res_pack.info.hit_fx_duration,
-                lifetime_randomness: 0.0,
-                initial_rotation_randomness: 0.0,
-                initial_direction_spread: 0.0,
-                initial_velocity: 0.0,
-                atlas: Some(AtlasConfig::new(res_pack.info.hit_fx.0 as _, res_pack.info.hit_fx.1 as _, ..)),
-                emitting: false,
-                colors_curve,
-                ..Default::default()
-            }),
-            emitter_square: Emitter::new(EmitterConfig {
-                local_coords: false,
-                lifetime: res_pack.info.hit_fx_duration,
-                lifetime_randomness: 0.0,
-                initial_direction_spread: 2. * std::f32::consts::PI,
-                size_randomness: 0.3,
-                emitting: false,
-                initial_velocity: 2.5 * scale,
-                initial_velocity_randomness: 1. / 10.,
-                linear_accel: -6. / 1.,
-                colors_curve,
-                ..Default::default()
-            }),
+            emitter: Emitter::new(emitter_config.clone()),
+            emitter_config,
+            emitter_square: Emitter::new(emitter_square_config.clone()),
+            emitter_square_config,
             hide_particles,
         };
         res.set_scale(scale);
@@ -318,16 +328,16 @@ impl ParticleEmitter {
     pub fn emit_at(&mut self, pt: Vec2, rotation: f32, color: Color) {
         self.emitter.config.initial_rotation = rotation;
         self.emitter.config.base_color = color;
-        self.emitter.emit(pt, 1);
+        self.emitter.emit(&self.emitter_config, pt, 1);
         if !self.hide_particles {
             self.emitter_square.config.base_color = color;
-            self.emitter_square.emit(pt, 4);
+            self.emitter_square.emit(&self.emitter_square_config, pt, 4);
         }
     }
 
     pub fn draw(&mut self, dt: f32) {
-        self.emitter.draw(vec2(0., 0.), dt);
-        self.emitter_square.draw(vec2(0., 0.), dt);
+        self.emitter.draw(&self.emitter_config, vec2(0., 0.), dt);
+        self.emitter_square.draw(&self.emitter_config, vec2(0., 0.), dt);
     }
 
     pub fn set_scale(&mut self, scale: f32) {
@@ -489,9 +499,9 @@ impl Resource {
         let note_width = config.note_scale * NOTE_WIDTH_RATIO_BASE;
         let note_scale = config.note_scale;
 
-        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles)?;
-
         let no_effect = config.disable_effect || has_no_effect;
+
+        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()))?;
 
         macroquad::window::gl_set_drawcall_buffer_capacity(MAX_SIZE * 4, MAX_SIZE * 6);
         Ok(Self {
