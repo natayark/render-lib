@@ -1249,7 +1249,11 @@ impl Scene for GameScene {
                 1. - (t / Self::BEFORE_DURATION).clamp(0., 1.)
             }
         };
-        let ratio = 1. + (res.config.chart_ratio - 1.) * ease_in_out_quartic(p);
+        let ratio = if res.config.chart_ratio == 1. || res.config.disable_loading {
+            res.config.chart_ratio
+        } else {
+            1. + (res.config.chart_ratio - 1.) * ease_in_out_quartic(p)
+        };
         let vec2_asp = vec2(1. * ratio, -asp2 * ratio);
 
         if res.update_size(ui.viewport) || self.mode == GameMode::View {
