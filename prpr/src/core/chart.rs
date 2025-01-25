@@ -64,7 +64,7 @@ impl Chart {
     pub fn with_element<R>(&self, ui: &mut Ui, res: &Resource, element: UIElement, ct: Option<(f32, f32)>, pt: Option<(f32, f32)>, f: impl FnOnce(&mut Ui, Color) -> R) -> R {
         if let Some(id) = self.attach_ui[element as usize - 1] {
             let obj = &self.lines[id].object;
-            let mut tr = obj.now_translation(res);
+            let mut tr = JudgeLine::fetch_pos(&self.lines[id], res, &self.lines);
             tr.y = -tr.y;
             let mut color = self.lines[id].color.now_opt().unwrap_or(WHITE);
             color.a *= obj.now_alpha().max(0.); 
