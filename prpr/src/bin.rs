@@ -367,7 +367,6 @@ impl BinaryData for Note {
             fake: r.read()?,
             judge: JudgeStatus::NotJudged,
             attr: false,
-            format: r.read()?,
         })
     }
 

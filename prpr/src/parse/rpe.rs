@@ -405,7 +405,6 @@ async fn parse_notes(
             fake: note.is_fake != 0,
             judge: JudgeStatus::NotJudged,
             attr: false,
-            format: ChartFormat::Pec,
         })
     }
     Ok(notes)

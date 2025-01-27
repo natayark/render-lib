@@ -48,7 +48,6 @@ pub struct Note {
     pub fake: bool,
     pub judge: JudgeStatus,
     pub attr: bool,
-    pub format: ChartFormat,
 }
 
 unsafe impl Sync for Note {}
@@ -164,7 +163,7 @@ impl Note {
             if res.time >= *at {
                 //_immediate_particle = true;
                 let beat = 30. / bpm_list.now_bpm(
-                    if matches!(self.format, ChartFormat::Pgr) { index as f32 } else { self.time }
+                    if matches!(res.chart_format, ChartFormat::Pgr) { index as f32 } else { self.time }
                 );
                 //println!("{} {} {}", index, bpm_list.now_bpm(index as f32), beat);
                 *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
@@ -237,7 +236,7 @@ impl Note {
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
 
-        if res.config.aggressive && matches!(self.format, ChartFormat::Pec) && matches!(self.kind, NoteKind::Hold { .. }) {
+        if res.config.aggressive && matches!(res.chart_format, ChartFormat::Pec) && matches!(self.kind, NoteKind::Hold { .. }) {
             let h = if self.time <= res.time { line_height } else { height };
             let bottom = h - line_height;
             if bottom - line_height > 2. / res.config.chart_ratio {
@@ -245,7 +244,7 @@ impl Note {
             }
         }
 
-        let cover_base = if res.config.phira_mode || !matches!(self.format, ChartFormat::Rpe) {
+        let cover_base = if res.config.phira_mode || !matches!(res.chart_format, ChartFormat::Rpe) {
             height - line_height
         } else {
             match self.kind {
@@ -313,7 +312,7 @@ impl Note {
                         return;
                     }
                     let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-                    if matches!(self.format, ChartFormat::Pgr) && end_spd == 0. {
+                    if matches!(res.chart_format, ChartFormat::Pgr) && end_spd == 0. {
                         if res.config.chart_debug {
                             color.a *= 0.2;
                         } else {
@@ -328,7 +327,7 @@ impl Note {
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
-                    let top = if matches!(self.format, ChartFormat::Pgr) {
+                    let top = if matches!(res.chart_format, ChartFormat::Pgr) {
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
                         bottom + hold_height - hold_line_height
@@ -340,7 +339,7 @@ impl Note {
                     //let top = if res.config.aggressive && hold_height - hold_line_height >= max_hold_height { bottom + max_hold_height } else { top };
 
                     //println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
-                    if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !matches!(self.format, ChartFormat::Pgr)) {
+                    if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !matches!(res.chart_format, ChartFormat::Pgr)) {
                         return;
                     }
 

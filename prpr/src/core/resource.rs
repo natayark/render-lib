@@ -3,7 +3,7 @@ use crate::{
     config::Config,
     ext::{create_audio_manger, nalgebra_to_glm, SafeTexture},
     fs::FileSystem,
-    info::ChartInfo,
+    info::{ChartFormat, ChartInfo},
     particle::{AtlasConfig, ColorCurve, Emitter, EmitterConfig},
 };
 use anyhow::{bail, Context, Result};
@@ -378,6 +378,7 @@ impl NoteBuffer {
 
 pub struct Resource {
     pub config: Config,
+    pub chart_format: ChartFormat,
     pub info: ChartInfo,
     pub aspect_ratio: f32,
     pub dpi: u32,
@@ -465,6 +466,7 @@ impl Resource {
 
     pub async fn new(
         config: Config,
+        chart_format: ChartFormat,
         info: ChartInfo,
         mut fs: Box<dyn FileSystem>,
         player: Option<SafeTexture>,
@@ -506,6 +508,7 @@ impl Resource {
         macroquad::window::gl_set_drawcall_buffer_capacity(MAX_SIZE * 4, MAX_SIZE * 6);
         Ok(Self {
             config,
+            chart_format,
             info,
             aspect_ratio,
             dpi: DPI_VALUE.load(std::sync::atomic::Ordering::SeqCst),

@@ -238,7 +238,6 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, _speed: &mut AnimFloat, height: &m
                 fake: false,
                 judge: JudgeStatus::NotJudged,
                 attr: false,
-                format: ChartFormat::Pgr,
             })
         })
         .collect()
