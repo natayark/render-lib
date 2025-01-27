@@ -7,7 +7,6 @@ use crate::{
         Object, HEIGHT_RATIO,
     },
     ext::NotNanExt,
-    info::ChartFormat,
     judge::{HitSound, JudgeStatus},
 };
 use anyhow::{Context, Result};

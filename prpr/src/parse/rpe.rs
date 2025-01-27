@@ -10,7 +10,6 @@ use crate::{
     ext::{NotNanExt, SafeTexture},
     fs::FileSystem,
     judge::{HitSound, JudgeStatus},
-    info::ChartFormat,
 };
 use anyhow::{Context, Result};
 use image::{codecs::gif, AnimationDecoder, DynamicImage, ImageError};
