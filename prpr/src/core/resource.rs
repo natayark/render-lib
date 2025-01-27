@@ -29,12 +29,12 @@ fn default_duration() -> f32 {
 
 #[inline]
 fn default_perfect() -> u32 {
-    0xe1ffeca0
+    0xffffeca0
 }
 
 #[inline]
 fn default_good() -> u32 {
-    0xebb4e1ff
+    0xffb4e1ff
 }
 
 #[inline]
