@@ -66,12 +66,9 @@ impl LoadingScene {
             let mut blurred = Vec::with_capacity(size * 4);
             for input in blurred_rgb.chunks_exact(3) {
                 //blurred.extend_from_slice(input);
-                let r = (input[0] as f32 * 0.77) as u8;
-                let g = (input[1] as f32 * 0.77) as u8;
-                let b = (input[2] as f32 * 0.77) as u8;
-                blurred.push(r);
-                blurred.push(g);
-                blurred.push(b);
+                blurred.push(input[0]);
+                blurred.push(input[1]);
+                blurred.push(input[2]);
                 blurred.push(255);
             }
             Ok((

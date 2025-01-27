@@ -526,7 +526,7 @@ fn draw_background(tex: Texture2D) {
     let asp = screen_aspect();
     let top = 1. / asp;
     draw_image(tex, Rect::new(-1., -top, 2., top * 2.), ScaleType::CropCenter);
-    draw_rectangle(-1., -top, 2., top * 2., Color::new(0., 0., 0., 0.3));
+    draw_rectangle(-1., -top, 2., top * 2., Color::new(0., 0., 0., 0.5));
 }
 
 pub type LocalSceneTask = LocalTask<Result<NextScene>>;
