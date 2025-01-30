@@ -309,6 +309,20 @@ pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnPause(_: *mut std::
     }
 }
 
+#[cfg(all(target_os = "android", not(feature = "closed")))]
+#[no_mangle]
+pub extern "C" fn Java_quad_1native_QuadNative_preprocessInput(
+    _: *mut std::ffi::c_void, 
+    _: *const std::ffi::c_void,
+    _: ndk_sys::AInputEvent,
+    _: ndk_sys::jfloat,
+    _: ndk_sys::jfloat,
+    _: ndk_sys::jboolean,
+    _: ndk_sys::jboolean,
+) {
+
+}
+
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
