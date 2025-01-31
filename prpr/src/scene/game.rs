@@ -641,8 +641,8 @@ impl GameScene {
         let hw = 0.0015;
         let height = eps * 1.1;
         let dest = (2. * res.time / res.track_length).max(0.).min(2.);
-        self.chart.with_element(ui, res, UIElement::Bar, Some((-1., top)), Some((-1., top + height / 2.)), |ui, color| {
-            if res.config.render_ui_bar {//进度条缩放锚点在左上角
+        self.chart.with_element(ui, res, UIElement::Bar, Some((-1., top + height / 2.)), Some((-1., top + height / 2.)), |ui, color| {
+            if res.config.render_ui_bar {
                 //let ct = Vector::new(0., top + height / 2.);
                 ui.fill_rect(
                     Rect::new(-1., top, dest, height),
