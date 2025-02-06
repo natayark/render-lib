@@ -1310,12 +1310,6 @@ impl Scene for GameScene {
         }
         self.chart.render(ui, res);
 
-        set_camera( &Camera2D {
-            zoom: vec2_asp,
-            viewport: chart_target_vp,
-            ..Default::default()
-        });
-
         self.gl.quad_gl.render_pass(
             res.chart_target
                 .as_ref()
@@ -1329,8 +1323,26 @@ impl Scene for GameScene {
         if res.config.particle {
             res.emitter.draw(dt);
         }
+
+        if !res.no_effect {
+            set_camera(&Camera2D {
+                zoom: vec2(1., asp2),
+                ..Default::default()
+            });
+            for effect in &self.chart.extra.effects {
+                effect.render(res);
+            }
+        }
         
-        self.ui(ui, tm)?;
+        {
+            set_camera(&Camera2D {
+                zoom: vec2_asp,
+                viewport: chart_target_vp,
+                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
+                ..Default::default()
+            });
+            self.ui(ui, tm)?;
+        }
 
         //pop_camera_state();
 
