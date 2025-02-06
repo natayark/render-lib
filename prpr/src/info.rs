@@ -8,8 +8,7 @@ pub enum ChartFormat {
     Rpe = 0,
     Pec = 1,
     Pgr = 2,
-    Pgr1 = 3,
-    Pbc = 4,
+    Pbc = 3,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

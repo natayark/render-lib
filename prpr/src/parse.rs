@@ -6,7 +6,6 @@ pub use pec::parse_pec;
 
 mod pgr;
 pub use pgr::parse_phigros;
-pub use pgr::parse_phigros_fv1;
 
 mod rpe;
 pub use rpe::{parse_rpe, RPE_HEIGHT, RPE_WIDTH};
