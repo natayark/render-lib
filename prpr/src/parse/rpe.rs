@@ -23,7 +23,7 @@ pub const RPE_WIDTH: f32 = 1350.;
 pub const RPE_HEIGHT: f32 = 900.;
 const SPEED_RATIO: f32 = 10. / 45. / HEIGHT_RATIO;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct RPEBpmItem {
     bpm: f32,
@@ -128,7 +128,6 @@ struct RPENote {
 #[serde(rename_all = "camelCase")]
 struct RPEJudgeLine {
     // TODO group
-    // TODO bpmfactor
     #[serde(rename = "Name")]
     name: String,
     #[serde(rename = "Texture")]
@@ -136,6 +135,7 @@ struct RPEJudgeLine {
     #[serde(rename = "father")]
     parent: Option<isize>,
     anchor: Option<[f32; 2]>,
+    bpmfactor: f32,
     event_layers: Vec<Option<RPEEventLayer>>,
     extended: Option<RPEExtendedEvents>,
     notes: Option<Vec<RPENote>>,
@@ -423,7 +423,7 @@ fn parse_ctrl_events(rpe: &[RPECtrlEvent], key: &str) -> AnimFloat {
 }
 
 async fn parse_judge_line(
-    r: &mut BpmList,
+    bpm_list: Vec<RPEBpmItem>,
     rpe: RPEJudgeLine,
     max_time: f32,
     fs: &mut dyn FileSystem,
@@ -431,6 +431,8 @@ async fn parse_judge_line(
     hitsounds: &mut HitSoundMap,
 ) -> Result<JudgeLine> {
     let event_layers: Vec<_> = rpe.event_layers.into_iter().flatten().collect();
+    let r = &mut BpmList::new(bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm / rpe.bpmfactor)).collect());
+
     fn events_with_factor(
         r: &mut BpmList,
         event_layers: &[RPEEventLayer],
@@ -626,7 +628,8 @@ fn get_bezier_map(rpe: &RPEChart) -> BezierMap {
 pub async fn parse_rpe(source: &str, fs: &mut dyn FileSystem, extra: ChartExtra) -> Result<Chart> {
     let rpe: RPEChart = serde_json::from_str(source).with_context(|| ptl!("json-parse-failed"))?;
     let bezier_map = get_bezier_map(&rpe);
-    let mut r = BpmList::new(rpe.bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm)).collect());
+    let bpm_list = rpe.bpm_list;
+    let mut r = BpmList::new(bpm_list.clone().into_iter().map(|it| (it.start_time.beats(), it.bpm)).collect());
     fn vec<T>(v: &Option<Vec<T>>) -> impl Iterator<Item = &T> {
         v.iter().flat_map(|it| it.iter())
     }
@@ -664,10 +667,10 @@ pub async fn parse_rpe(source: &str, fs: &mut dyn FileSystem, extra: ChartExtra)
         .max().unwrap_or_default() + 1.;
     // don't want to add a whole crate for a mere join_all...
     let mut lines = Vec::new();
-    for (id, rpe) in rpe.judge_line_list.into_iter().enumerate() {
-        let name = rpe.name.clone();
+    for (id, line) in rpe.judge_line_list.into_iter().enumerate() {
+        let name = line.name.clone();
         lines.push(
-            parse_judge_line(&mut r, rpe, max_time, fs, &bezier_map, &mut hitsounds)
+            parse_judge_line(bpm_list.clone(), line, max_time, fs, &bezier_map, &mut hitsounds)
                 .await
                 .with_context(move || ptl!("judge-line-location-name", "jlid" => id, "name" => name))?,
         );

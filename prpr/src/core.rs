@@ -55,7 +55,7 @@ pub fn init_assets() {
     set_pc_assets_folder("assets");
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct Triple(i32, u32, u32);
 impl Default for Triple {
     fn default() -> Self {
@@ -69,7 +69,7 @@ impl Triple {
     }
 }
 
-#[derive(Default)] // the default is a dummy
+#[derive(Default, Clone)] // the default is a dummy
 pub struct BpmList {
     elements: Vec<(f32, f32, f32)>, // (beats, time, bpm)
     cursor: usize,
