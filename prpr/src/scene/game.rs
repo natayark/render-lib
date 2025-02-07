@@ -621,15 +621,15 @@ impl GameScene {
             ui.text(&watermark)
                 .pos(0., -top * 0.98 + (1. - p) * 0.4)
                 .anchor(0.5, 1.)
-                .size(0.2)
-                .color(Color::new(1., 1., 1., 0.5))
+                .size(0.25)
+                .color(Color::new(1., 1., 1., 0.5 * c.a))
                 .draw();
             if res.config.chart_ratio <= 0.95 {
                 ui.text(&watermark)
                 .pos(0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio)
                 .anchor(0.5, 1.)
-                .size(0.2 / res.config.chart_ratio)
-                .color(Color::new(1., 1., 1., 0.5))
+                .size(0.25 / res.config.chart_ratio)
+                .color(Color::new(1., 1., 1., 0.5 * c.a))
                 .draw();
             }
         };
