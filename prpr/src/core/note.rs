@@ -244,7 +244,7 @@ impl Note {
             }
         }
 
-        let cover_base = if res.config.phira_mode || !matches!(res.chart_format, ChartFormat::Rpe) {
+        let cover_base = if !config.settings.hold_partial_cover {
             height - line_height
         } else {
             match self.kind {
@@ -323,7 +323,8 @@ impl Note {
                     let end_height = end_height / res.aspect_ratio * spd;
                     let time = if res.time >= self.time {res.time} else {self.time};
 
-                    let clip = !config.draw_below && config.settings.hold_partial_cover;
+                    //let clip = !config.draw_below && config.settings.hold_partial_cover;
+                    let clip = false;
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
@@ -339,9 +340,10 @@ impl Note {
                     //let top = if res.config.aggressive && hold_height - hold_line_height >= max_hold_height { bottom + max_hold_height } else { top };
 
                     //println!("res.time:{:.6}\tend_height:{:.7}\tspd:{}\tend_spd:{:.7}\tline_height:{:.6}\th:{}\tbottom:{:.6}\ttop:{:.6}\thold_height:{} {}", res.time, end_height, spd, end_spd, line_height, h, bottom, top, hold_height, height - h);
-                    if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !matches!(res.chart_format, ChartFormat::Pgr)) {
-                        return;
-                    }
+
+                    //if res.time < self.time && bottom < -1e-6 && (!config.settings.hold_partial_cover && !matches!(res.chart_format, ChartFormat::Pgr)) {
+                    //    return;
+                    //}
 
                     let style = if res.config.double_hint && self.multiple_hint {
                         &res.res_pack.note_style_mh
