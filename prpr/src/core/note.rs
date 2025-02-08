@@ -276,6 +276,24 @@ impl Note {
         if line_set_debug_alpha {
             color.a *= 0.4;
         }
+        if res.config.fade > 0. {
+            let over = res.config.fade * 0.8;
+            if base > res.config.fade {
+                return;
+            } else if base > over {
+                color.a *= (res.config.fade - base) / (res.config.fade - over);
+            }
+        } else if res.config.fade < 0. {
+            let fade_out = res.config.fade.abs();
+            let over = fade_out * 0.8;
+            if base < over {
+                return;
+            } else if base < fade_out {
+                //color.a *= (fade_out - base) / (fade_out - over);
+                color.a *= (base - over) / (fade_out - over);
+            }
+        }
+
         let scale = (if self.multiple_hint {
             res.res_pack.note_style_mh.click.width() / res.res_pack.note_style.click.width()
         } else {

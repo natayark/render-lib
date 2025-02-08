@@ -91,6 +91,8 @@ pub struct Config {
     pub render_bg: bool,
 
     pub max_particles: usize,
+
+    pub fade: f32,
 }
 
 impl Default for Config {
@@ -151,6 +153,8 @@ impl Default for Config {
             render_bg: true,
 
             max_particles: 600000,
+
+            fade: 0.,
         }
     }
 }
