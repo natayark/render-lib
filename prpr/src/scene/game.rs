@@ -1042,10 +1042,10 @@ impl Scene for GameScene {
                     self.first_in = false;
                 }
                 tm.now() as f32
-                } else {
-                    self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
-                    self.exercise_range.start
-                }
+            } else {
+                self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
+                self.exercise_range.start
+            }
             }
             State::BeforeMusic => {
                 if time >= 0.0 {
