@@ -228,8 +228,16 @@ impl JudgeLine {
             self.object.now_rotation().append_translation(&Self::fetch_pos(self, res, lines))
     }
 
+    pub fn parse_alpha(a: f32, alpha: f32, chart_debug: bool) -> f32 {
+        if chart_debug {
+            (0.10 + 0.90 * a) * alpha
+        } else {
+            a * alpha
+        }
+    }
+
     pub fn render(&self, ui: &mut Ui, res: &mut Resource, lines: &[JudgeLine], bpm_list: &mut BpmList, settings: &ChartSettings, id: usize) {
-        let alpha = self.object.alpha.now_opt().unwrap_or(1.0) * res.alpha;
+        let alpha = self.object.alpha.now_opt().unwrap_or(1.0);
         let color = self.color.now_opt();
         res.with_model(self.now_transform(res, lines), |res| {
             res.with_model(self.object.now_scale(), |res| {
@@ -237,11 +245,8 @@ impl JudgeLine {
                     JudgeLineKind::Normal => {
                         if res.config.render_line {
                             let mut color = color.unwrap_or(res.judge_line_color);
-                            // 判定线透明度
-                            color.a *= alpha.max(0.0);
-                            if res.config.chart_debug {
-                                color.a = 0.10 + 0.90 * color.a;
-                            } else if color.a == 0.0 {
+                            color.a = Self::parse_alpha(color.a * alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            if color.a == 0.0 {
                                 return;
                             }
                             let len = res.info.line_length;
@@ -254,10 +259,8 @@ impl JudgeLine {
                             if res.time <= 0. && matches!(color, WHITE) { // some image show pure white before play
                                 color = BLACK;
                             }
-                            color.a = alpha.max(0.0);
-                            if res.config.chart_debug {
-                                color.a = 0.10 + 0.90 * color.a;
-                            } else if color.a == 0.0 {
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            if color.a == 0.0 {
                                 return;
                             }
                             // let hf = vec2(texture.width() / res.aspect_ratio, texture.height() / res.aspect_ratio);
@@ -281,10 +284,8 @@ impl JudgeLine {
                             let t = anim.now_opt().unwrap_or(0.0);
                             let frame = frames.get_prog_frame(t);
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = alpha.max(0.0);
-                            if res.config.chart_debug {
-                                color.a = 0.10 + 0.90 * color.a;
-                            } else if color.a == 0.0 {
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            if color.a == 0.0 {
                                 return;
                             }
                             let hf = vec2(frame.width(), frame.height());
@@ -305,10 +306,8 @@ impl JudgeLine {
                     JudgeLineKind::Text(anim) => {
                         if res.config.render_line_extra {
                                 let mut color = color.unwrap_or(WHITE);
-                            color.a = alpha.max(0.0);
-                            if res.config.chart_debug {
-                                color.a = 0.10 + 0.90 * color.a;
-                            } else if color.a == 0.0 {
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            if color.a == 0.0 {
                                 return;
                             }
                             let now = anim.now();
@@ -320,7 +319,10 @@ impl JudgeLine {
                     JudgeLineKind::Paint(anim, state) => {
                         {
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = alpha.max(0.0) * 2.55;
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug) * 2.55;
+                            if color.a == 0.0 {
+                                return;
+                            }
                             let mut gl = unsafe { get_internal_gl() };
                             let mut guard = state.borrow_mut();
                             let vp = get_viewport();
@@ -427,7 +429,7 @@ impl JudgeLine {
                 res.screen_to_world(Point::new(vw, vh)),
             ];
             let height_above = p[0].y.max(p[1].y.max(p[2].y.max(p[3].y))) * res.aspect_ratio;
-            let height_below = -p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) * res.aspect_ratio;
+            let height_below = p[0].y.min(p[1].y.min(p[2].y.min(p[3].y))) * res.aspect_ratio;
             let agg = res.config.aggressive;
             let mut height = self.height.clone();
             if res.config.note_scale > 0. && res.config.render_note {
@@ -436,43 +438,59 @@ impl JudgeLine {
                         height.set_time(note.time.min(res.time));
                         height.now()
                     };
-                    if agg && note.height - line_height + note.object.translation.1.now() > height_above / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
+                    let note_height = note.height - line_height + note.object.translation.1.now();
+                    if agg && note_height < height_below / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
+                        continue;
+                    }
+                    if agg && note_height > height_above / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
                         break;
                     }
                     note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                 }
                 for index in &self.cache.above_indices {
                     let speed = self.notes[*index].speed;
-                    let limit = height_above / speed;
                     for note in self.notes[*index..].iter() {
                         if !note.above || speed != note.speed {
                             break;
                         }
-                        if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
+                        let note_height = note.height - config.line_height + note.object.translation.1.now();
+                        if agg && note_height < height_below / speed {
+                            continue;
+                        }
+                        if agg && note_height > height_above / speed {
                             break;
                         }
                         note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                     }
                 }
+
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     for note in self.notes.iter().take(self.cache.not_plain_count).filter(|it| !it.above) {
                         let line_height = {
                             height.set_time(note.time.min(res.time));
                             height.now()
                         };
-                        if agg && note.height - line_height + note.object.translation.1.now() > height_below / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
+                        let note_height = note.height - line_height + note.object.translation.1.now();
+                        if agg && note_height < -height_above / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
+                            println!("note_height: {}, above: {}, below: {}", note_height, height_above, height_below);
+                            continue;
+                        }
+                        if agg && note_height > -height_below / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
                             break;
                         }
                         note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
                     }
                     for index in &self.cache.below_indices {
                         let speed = self.notes[*index].speed;
-                        let limit = height_below / speed;
                         for note in self.notes[*index..].iter() {
                             if speed != note.speed {
                                 break;
                             }
-                            if agg && note.height - config.line_height + note.object.translation.1.now() > limit {
+                            let note_height = note.height - config.line_height + note.object.translation.1.now();
+                            if agg && note_height < -height_above / speed {
+                                continue;
+                            }
+                            if agg && note_height > -height_below / speed {
                                 break;
                             }
                             note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
