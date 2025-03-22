@@ -459,18 +459,20 @@ impl GameScene {
         };
         let c = Color::new(1., 1., 1., self.res.alpha);
         let res = &mut self.res;
-        let eps = 2e-2 / res.aspect_ratio;
-        let top = -1. / res.aspect_ratio;
-        let pause_w = 0.011;
-        let pause_h = pause_w * 3.4;
-        let pause_center = Point::new(pause_w * 4.4 - 1., top + eps * 3.6454 - (1. - p) * 0.4 + pause_h / 2.);
+        let aspect_ratio = res.aspect_ratio;
+        let scale_ratio = 1.777777777777777;
+        let top = -1.;
+        let eps = 2e-2;
+        let pause_w = 0.011 * scale_ratio;
+        let pause_h = pause_w * 3.5;
+        let pause_center = Point::new(-aspect_ratio + 0.040 * scale_ratio, top + eps * 3.6454 - (1. - p) * 0.4 + pause_h / 2.);
         if res.config.interactive
             && !tm.paused()
             && self.pause_rewind.is_none()
             && Judge::get_touches().iter().any(|touch| {
                 touch.phase == TouchPhase::Started && {
                     let p = touch.position;
-                    let p = Point::new(p.x, p.y);
+                    let p = Point::new(p.x * aspect_ratio, p.y * aspect_ratio);
                     (pause_center - p).norm() < 0.05
                 }
             })
@@ -487,10 +489,10 @@ impl GameScene {
             }
         }
         if tm.now() as f32 - self.pause_first_time <= PAUSE_CLICK_INTERVAL {
-            ui.fill_circle(pause_center.x, pause_center.y, 0.05, Color::new(1., 1., 1., 0.5));
+            ui.fill_circle(pause_center.x, pause_center.y, 0.05 * scale_ratio, Color::new(1., 1., 1., 0.5));
         }
 
-        let margin = 0.046;
+        let margin = 0.0425 * aspect_ratio;
 
         let score = if res.config.roman {
             Self::int_to_roman(self.judge.score())
@@ -501,10 +503,10 @@ impl GameScene {
             format!("{:07}", self.judge.score())
         };
         let score_top = top + eps * 2.2 - (1. - p) * 0.4;
-        let ct = ui.text(&score).size(0.8).center();
+        let ct = ui.text(&score).size(0.8 * aspect_ratio).center();
         ui.text("AA").color(Color::new(0., 0., 0., 0.)).draw(); //Fix first text disappear
-        self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + 1. - margin, ct.y + score_top)), Some((1. - margin + 0.001, top + eps * 2.8125)), |ui, color| {
-            let mut text_size = 0.70867;
+        self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + aspect_ratio - margin, ct.y + score_top)), Some((aspect_ratio - margin + 0.001, top + eps * 2.8125)), |ui, color| {
+            let mut text_size = 0.71 * scale_ratio;
             let mut text = ui.text(&score).size(text_size);
             let max_width = 0.55;
             let text_width = text.measure().w;
@@ -514,7 +516,7 @@ impl GameScene {
             drop(text);
             if res.config.render_ui_score {
                 ui.text(score)
-                    .pos(1. - margin + 0.001, top + eps * 2.8125 - (1. - p) * 0.4)
+                    .pos(aspect_ratio - margin + 0.001, top + eps * 2.8125 - (1. - p) * 0.4)
                     .anchor(1., 0.)
                     .size(text_size)
                     .color(Color { a: color.a * c.a, ..color })
@@ -522,16 +524,16 @@ impl GameScene {
             }
             if res.config.show_acc {
                 ui.text(format!("{:05.2}%", self.judge.real_time_accuracy() * 100.))
-                    .pos(1. - margin, top + eps * 2.2 - (1. - p) * 0.4 + 0.07)
+                    .pos(aspect_ratio - margin, top + eps * 2.2 - (1. - p) * 0.4 + 0.07 + 0.05)
                     .anchor(1., 0.)
-                    .size(0.4)
+                    .size(0.4 * scale_ratio)
                     .color(Color { a: color.a * c.a * 0.7, ..color })
                     .draw();
             }
         });
         self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), Some((pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2)), |ui, color| {
             if res.config.render_ui_pause {
-                let mut r = Rect::new(pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2, pause_w, pause_h);
+                let mut r = Rect::new(pause_center.x - pause_w / 2., pause_center.y - pause_h / 2., pause_w, pause_h);
                 //let ct = pause_center.coords;
                 let c = Color { a: color.a * c.a, ..color };
                 
@@ -553,12 +555,13 @@ impl GameScene {
                 self.judge.combo().to_string()
             };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_top + unit_h / 2.)), Some((0., combo_top + unit_h / 2.)), |ui, color| {
-                let mut text_size = 1.;
+                let mut text_size = 0.98 * scale_ratio;
                 let max_width = 0.55;
                 let mut text = ui.text(&combo)
-                    .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
-                    .anchor(0.5, 0.)
-                    .color(Color::new(0., 0., 0., 0.));
+                    .size(text_size)
+                    .color(Color::new(0., 0., 0., 0.))
+                    .pos(0., top + eps * 1.55 - (1. - p) * 0.4)
+                    .anchor(0.5, 0.);
                 let text_width = text.measure().w;
                 let text_btm = text.draw().bottom();
                 if text_width > max_width {
@@ -566,7 +569,7 @@ impl GameScene {
                 }
                 if res.config.render_ui_combo {
                     ui.text(&combo)
-                    .pos(0., top + eps * 1.346 - (1. - p) * 0.4)
+                    .pos(0., top + eps * 1.30 - (1. - p) * 0.4)
                     .anchor(0.5, 0.)
                     .color(Color { a: color.a * c.a, ..color })
                     .size(text_size)
@@ -576,18 +579,18 @@ impl GameScene {
             });
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
                 ui.text(&res.config.combo)
-                    .pos(0., btm + 0.007777)
+                    .pos(0., btm + 0.01)
                     .anchor(0.5, 0.)
-                    .size(0.325)
+                    .size(0.34 * scale_ratio)
                     .color(Color { a: color.a * c.a, ..color })
                     .draw();
             });
 
         }
-        let lf = -1. + margin;
-        let bt = -top - eps * 3.64;
-        self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((-1. + margin * 0.7, -top - eps * 2.)), |ui, color| {
-            let mut text_size = 0.5;
+        let lf = -aspect_ratio + margin;
+        let bt = -top - eps * 3.5;
+        self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
+            let mut text_size = 0.505 * scale_ratio;
             let mut text = ui.text(&res.info.name).size(text_size);
             let max_width = 0.9;
             let text_width = text.measure().w;
@@ -602,11 +605,11 @@ impl GameScene {
                 .color(Color { a: color.a * c.a, ..color })
                 .draw();
         });
-        self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((1. - margin * 0.7, -top - eps * 2.)), |ui, color| {
+        self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((-lf, -top - eps * 2.)), |ui, color| {
             ui.text(&res.info.level)
                 .pos(-lf, bt + (1. - p) * 0.4)
                 .anchor(1., 1.)
-                .size(0.5)
+                .size(0.505 * scale_ratio)
                 .color(Color { a: color.a * c.a, ..color })
                 .draw();
 
@@ -621,30 +624,30 @@ impl GameScene {
             ui.text(&watermark)
                 .pos(0., -top * 0.98 + (1. - p) * 0.4)
                 .anchor(0.5, 1.)
-                .size(0.25)
+                .size(0.25 * scale_ratio)
                 .color(Color::new(1., 1., 1., 0.5 * c.a))
                 .draw();
             if res.config.chart_ratio <= 0.95 {
                 ui.text(&watermark)
                 .pos(0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio)
                 .anchor(0.5, 1.)
-                .size(0.25 / res.config.chart_ratio)
+                .size(0.25 * scale_ratio / res.config.chart_ratio)
                 .color(Color::new(1., 1., 1., 0.5 * c.a))
                 .draw();
             }
         };
-        let hw = 0.0015;
-        let height = eps * 1.1;
-        let dest = (2. * res.time / res.track_length).max(0.).min(2.);
-        self.chart.with_element(ui, res, UIElement::Bar, Some((-1., top + height / 2.)), Some((-1., top + height / 2.)), |ui, color| {
+        let hw = 0.003;
+        let height = eps * 1.0;
+        let dest = (aspect_ratio * 2. * res.time / res.track_length).max(0.).min(aspect_ratio * 2.);
+        self.chart.with_element(ui, res, UIElement::Bar, Some((-aspect_ratio, top + height / 2.)), Some((-aspect_ratio, top + height / 2.)), |ui, color| {
             if res.config.render_ui_bar {
                 //let ct = Vector::new(0., top + height / 2.);
                 ui.fill_rect(
-                    Rect::new(-1., top, dest, height),
+                    Rect::new(-aspect_ratio, top, dest, height),
                     //Color{ a: color.a * c.a * 0.6, ..color},
                     Color::new(0.565, 0.565, 0.565, color.a * c.a),
                 );
-                ui.fill_rect(Rect::new(-1. + dest - hw, top, hw * 2., height), Color::new(1., 1., 1., color.a * c.a));
+                ui.fill_rect(Rect::new(-aspect_ratio + dest - hw, top, hw * 2., height), Color::new(1., 1., 1., color.a * c.a));
             }
         });
         Ok(())
@@ -1223,10 +1226,11 @@ impl Scene for GameScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
         let res = &mut self.res;
-        let asp = ui.viewport.2 as f32 / ui.viewport.3 as f32;
+        let asp2_window = ui.viewport.2 as f32 / ui.viewport.3 as f32;
         
         let vp = res.camera.viewport.unwrap_or(ui.viewport);
-        let asp2 = vp.2 as f32 / vp.3 as f32;
+        let asp2_chart = vp.2 as f32 / vp.3 as f32;
+        let asp2_ui = vp.3 as f32 / vp.2 as f32;
 
         let time = tm.now() as f32;
         let p = match self.state {
@@ -1248,7 +1252,6 @@ impl Scene for GameScene {
         } else {
             1. + (res.config.chart_ratio - 1.) * ease_in_out_quartic(p)
         };
-        let vec2_asp = vec2(1. * ratio, -asp2 * ratio);
 
         if res.update_size(ui.viewport) || self.mode == GameMode::View {
             set_camera(&res.camera);
@@ -1265,7 +1268,7 @@ impl Scene for GameScene {
         let h = 1. / res.aspect_ratio;
         //push_camera_state();
         set_camera(&Camera2D {
-            zoom: vec2(1., -asp),
+            zoom: vec2(1., -asp2_window),
             viewport: if res.chart_target.is_some() { None } else { Some(ui.viewport) },
             render_target: chart_onto,
             ..Default::default()
@@ -1276,7 +1279,7 @@ impl Scene for GameScene {
         }
 
         let vp = res.camera.viewport.unwrap();
-        let chart_target_vp = if res.chart_target.is_some() {
+        let viewport_chart = if res.chart_target.is_some() {
             Some((vp.0 - ui.viewport.0, vp.1 - ui.viewport.1, vp.2, vp.3))
         } else {
             res.camera.viewport
@@ -1293,8 +1296,8 @@ impl Scene for GameScene {
         }
 
         set_camera( &Camera2D {
-            zoom: vec2_asp,
-            viewport: chart_target_vp,
+            zoom: vec2(1. * ratio, -asp2_chart * ratio),
+            viewport: viewport_chart,
             ..Default::default()
         });
         
@@ -1321,7 +1324,7 @@ impl Scene for GameScene {
 
         if !res.no_effect {
             set_camera(&Camera2D {
-                zoom: vec2(1., asp2),
+                zoom: vec2(asp2_ui, 1.),
                 ..Default::default()
             });
             for effect in &self.chart.extra.effects {
@@ -1331,8 +1334,8 @@ impl Scene for GameScene {
         
         {
             set_camera(&Camera2D {
-                zoom: vec2_asp,
-                viewport: chart_target_vp,
+                zoom: vec2(asp2_ui * ratio, -1. * ratio),
+                viewport: viewport_chart,
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
@@ -1344,7 +1347,7 @@ impl Scene for GameScene {
         if !self.res.no_effect && !self.effects.is_empty() {
             //push_camera_state();
             set_camera(&Camera2D {
-                zoom: vec2(1., asp),
+                zoom: vec2(1., asp2_window),
                 ..Default::default()
             });
             for e in &self.effects {
@@ -1356,8 +1359,8 @@ impl Scene for GameScene {
         {
             //push_camera_state();
             set_camera(&Camera2D {
-                zoom: vec2(1., -asp2),
-                viewport: chart_target_vp,
+                zoom: vec2(1., -asp2_chart),
+                viewport: viewport_chart,
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
@@ -1368,7 +1371,7 @@ impl Scene for GameScene {
         if self.mode == GameMode::TweakOffset {
             //push_camera_state();
             set_camera(&Camera2D {
-                zoom: vec2(1., -asp),
+                zoom: vec2(1., -asp2_window),
                 viewport: None,
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
@@ -1384,7 +1387,7 @@ impl Scene for GameScene {
                 //push_camera_state();
                 self.gl.quad_gl.viewport(None);
                 set_camera(&Camera2D {
-                    zoom: vec2(1., asp),
+                    zoom: vec2(1., asp2_window),
                     render_target: self.res.camera.render_target,
                     viewport: Some(ui.viewport),
                     ..Default::default()

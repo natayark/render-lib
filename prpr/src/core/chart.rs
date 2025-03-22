@@ -67,7 +67,8 @@ impl Chart {
             let line = &lines[id];
             let obj = &line.object;
             let mut tr = JudgeLine::fetch_pos(line, res, lines);
-            tr.y = -tr.y;
+            tr.y *= -res.aspect_ratio;
+            tr.x *= res.aspect_ratio;
             let mut color = self.lines[id].color.now_opt().unwrap_or(WHITE);
             color.a *= obj.now_alpha().max(0.); 
             let scale = obj.now_scale_fix(ct.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
