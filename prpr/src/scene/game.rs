@@ -1226,11 +1226,6 @@ impl Scene for GameScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
         let res = &mut self.res;
-        let vp = res.camera.viewport.unwrap_or(ui.viewport);
-        let asp2_window = ui.viewport.2 as f32 / ui.viewport.3 as f32;
-        let asp2_chart = vp.2 as f32 / vp.3 as f32;
-        let asp2_ui = vp.3 as f32 / vp.2 as f32;
-        let asp2_ui_window = ui.viewport.3 as f32 / ui.viewport.2 as f32;
 
         let time = tm.now() as f32;
         let p = match self.state {
@@ -1259,6 +1254,20 @@ impl Scene for GameScene {
 
         let msaa = res.config.sample_count > 1;
 
+        // camera setup
+        let vp = res.camera.viewport.unwrap_or(ui.viewport);
+        let asp2_window = ui.viewport.2 as f32 / ui.viewport.3 as f32;
+        let asp2_chart = vp.2 as f32 / vp.3 as f32;
+        let asp2_ui = vp.3 as f32 / vp.2 as f32;
+        let asp2_ui_window = ui.viewport.3 as f32 / ui.viewport.2 as f32;
+
+        let viewport_chart = if res.chart_target.is_some() {
+            Some((vp.0 - ui.viewport.0, vp.1 - ui.viewport.1, vp.2, vp.3))
+        } else {
+            res.camera.viewport
+        };
+        let viewport_window = Some(ui.viewport);
+
         let chart_onto = res
             .chart_target
             .as_ref()
@@ -1269,7 +1278,7 @@ impl Scene for GameScene {
         //push_camera_state();
         set_camera(&Camera2D {
             zoom: vec2(1., -asp2_window),
-            viewport: if res.chart_target.is_some() { None } else { Some(ui.viewport) },
+            viewport: if res.chart_target.is_some() { None } else { viewport_window },
             render_target: chart_onto,
             ..Default::default()
         });
@@ -1277,13 +1286,6 @@ impl Scene for GameScene {
             clear_background(BLACK);
             draw_background(*res.background);
         }
-
-        let vp = res.camera.viewport.unwrap();
-        let viewport_chart = if res.chart_target.is_some() {
-            Some((vp.0 - ui.viewport.0, vp.1 - ui.viewport.1, vp.2, vp.3))
-        } else {
-            res.camera.viewport
-        };
 
         if res.config.chart_ratio >= 1. {
             let dim_alpha = 0.7;
@@ -1297,7 +1299,7 @@ impl Scene for GameScene {
 
         set_camera( &Camera2D {
             zoom: if res.config.chart_ratio < 1. { vec2(asp2_chart / asp2_window * ratio, -asp2_chart * ratio) } else { vec2(1. * ratio, -asp2_chart * ratio) },
-            viewport: if res.config.chart_ratio < 1. { Some(ui.viewport) } else { viewport_chart },
+            viewport: if res.config.chart_ratio < 1. { viewport_window } else { viewport_chart },
             ..Default::default()
         });
         
@@ -1335,7 +1337,7 @@ impl Scene for GameScene {
         {
             set_camera(&Camera2D {
                 zoom: if res.config.chart_ratio < 1. { vec2(asp2_ui_window * ratio, -1. * ratio) } else { vec2(asp2_ui * ratio, -1. * ratio) },
-                viewport: if res.config.chart_ratio < 1. { Some(ui.viewport) } else { viewport_chart },
+                viewport: if res.config.chart_ratio < 1. { viewport_window } else { viewport_chart },
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
@@ -1389,7 +1391,7 @@ impl Scene for GameScene {
                 set_camera(&Camera2D {
                     zoom: vec2(1., asp2_window),
                     render_target: self.res.camera.render_target,
-                    viewport: Some(ui.viewport),
+                    viewport: viewport_window,
                     ..Default::default()
                 });
                 draw_texture_ex(
