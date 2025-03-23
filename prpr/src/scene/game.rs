@@ -1226,11 +1226,11 @@ impl Scene for GameScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
         let res = &mut self.res;
-        let asp2_window = ui.viewport.2 as f32 / ui.viewport.3 as f32;
-        
         let vp = res.camera.viewport.unwrap_or(ui.viewport);
+        let asp2_window = ui.viewport.2 as f32 / ui.viewport.3 as f32;
         let asp2_chart = vp.2 as f32 / vp.3 as f32;
         let asp2_ui = vp.3 as f32 / vp.2 as f32;
+        let asp2_ui_window = ui.viewport.3 as f32 / ui.viewport.2 as f32;
 
         let time = tm.now() as f32;
         let p = match self.state {
@@ -1296,8 +1296,8 @@ impl Scene for GameScene {
         }
 
         set_camera( &Camera2D {
-            zoom: vec2(1. * ratio, -asp2_chart * ratio),
-            viewport: viewport_chart,
+            zoom: if res.config.chart_ratio < 1. { vec2(asp2_chart / asp2_window * ratio, -asp2_chart * ratio) } else { vec2(1. * ratio, -asp2_chart * ratio) },
+            viewport: if res.config.chart_ratio < 1. { Some(ui.viewport) } else { viewport_chart },
             ..Default::default()
         });
         
@@ -1334,8 +1334,8 @@ impl Scene for GameScene {
         
         {
             set_camera(&Camera2D {
-                zoom: vec2(asp2_ui * ratio, -1. * ratio),
-                viewport: viewport_chart,
+                zoom: if res.config.chart_ratio < 1. { vec2(asp2_ui_window * ratio, -1. * ratio) } else { vec2(asp2_ui * ratio, -1. * ratio) },
+                viewport: if res.config.chart_ratio < 1. { Some(ui.viewport) } else { viewport_chart },
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });
