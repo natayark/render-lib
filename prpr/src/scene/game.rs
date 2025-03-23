@@ -656,9 +656,10 @@ impl GameScene {
     fn overlay_ui(&mut self, ui: &mut Ui, tm: &mut TimeManager) -> Result<()> {
         let c = semi_white(self.res.alpha);
         let res = &mut self.res;
+        for pos in &self.touch_points {
+            ui.fill_circle(pos.0, pos.1, 0.04, Color { a: 0.4, ..BLUE });
+        }
         if tm.paused() {
-            let h = 1. / res.aspect_ratio;
-            draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., 0.6));
             //let o = if self.mode == GameMode::Exercise { -0.3 } else { 0. };
             let o = -0.3;
             let s = 0.06;
@@ -884,14 +885,6 @@ impl GameScene {
                 ui.text(t.to_string()).anchor(0.5, 0.5).size(1.).color(c).draw();
             }
         }
-        if self.res.config.touch_debug {
-            for touch in Judge::get_touches() {
-                ui.fill_circle(touch.position.x, touch.position.y, 0.04, Color { a: 0.4, ..RED });
-            }
-        }
-        for pos in &self.touch_points {
-            ui.fill_circle(pos.0, pos.1, 0.04, Color { a: 0.4, ..BLUE });
-        }
         Ok(())
     }
 
@@ -915,7 +908,7 @@ impl GameScene {
 
             ui.dx(width / 1.22);
             if ui.button("cancel", Rect::new(0.02, 0., 0.06, 0.06), "×") {
-                self.next_scene = Some(NextScene::PopWithResult(Box::new(None::<f32>)));
+                self.next_scene = Some(NextScene::PopWithResult(Box::new(Some(self.info_offset))));
             }
             ui.dx(-width / 1.22);
 
@@ -1275,7 +1268,6 @@ impl Scene for GameScene {
             .or(res.camera.render_target);
 
         let h = 1. / res.aspect_ratio;
-        //push_camera_state();
         set_camera(&Camera2D {
             zoom: vec2(1., -asp2_window),
             viewport: if res.chart_target.is_some() { None } else { viewport_window },
@@ -1344,10 +1336,7 @@ impl Scene for GameScene {
             self.ui(ui, tm)?;
         }
 
-        //pop_camera_state();
-
         if !self.res.no_effect && !self.effects.is_empty() {
-            //push_camera_state();
             set_camera(&Camera2D {
                 zoom: vec2(1., asp2_window),
                 ..Default::default()
@@ -1355,11 +1344,38 @@ impl Scene for GameScene {
             for e in &self.effects {
                 e.render(&mut self.res);
             }
-            //pop_camera_state();
+        }
+
+        {
+            set_camera(&Camera2D {
+                zoom: vec2(1., 1.),
+                viewport: viewport_window,
+                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
+                ..Default::default()
+            });
+            if tm.paused() {
+                draw_rectangle(-1., -1., 2., 2., Color::new(0., 0., 0., 0.6));
+            }
+        }
+
+        {
+            set_camera(&Camera2D {
+                zoom: vec2(1., -asp2_window),
+                viewport: viewport_window,
+                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
+                ..Default::default()
+            });
+            if self.mode == GameMode::TweakOffset {
+                self.tweak_offset(ui, Self::interactive(&self.res, &self.state), tm);
+            }
+            if self.res.config.touch_debug {
+                for touch in Judge::get_touches() {
+                    ui.fill_circle(touch.position.x, touch.position.y, 0.04, Color { a: 0.4, ..RED });
+                }
+            }
         }
         
         {
-            //push_camera_state();
             set_camera(&Camera2D {
                 zoom: vec2(1., -asp2_chart),
                 viewport: viewport_chart,
@@ -1367,26 +1383,12 @@ impl Scene for GameScene {
                 ..Default::default()
             });
             self.overlay_ui(ui, tm)?;
-            //pop_camera_state();
-        }
-
-        if self.mode == GameMode::TweakOffset {
-            //push_camera_state();
-            set_camera(&Camera2D {
-                zoom: vec2(1., -asp2_window),
-                viewport: None,
-                render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
-                ..Default::default()
-            });
-            self.tweak_offset(ui, Self::interactive(&self.res, &self.state), tm);
-            //pop_camera_state();
         }
 
         if msaa || !self.res.no_effect {
             // render the texture onto screen
             if let Some(target) = &self.res.chart_target {
                 self.gl.flush();
-                //push_camera_state();
                 self.gl.quad_gl.viewport(None);
                 set_camera(&Camera2D {
                     zoom: vec2(1., asp2_window),
@@ -1404,7 +1406,6 @@ impl Scene for GameScene {
                         ..Default::default()
                     },
                 );
-                //pop_camera_state();
             }
         } else {
             self.gl.flush();
