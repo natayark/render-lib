@@ -1324,7 +1324,7 @@ impl Scene for GameScene {
 
         if !res.no_effect {
             set_camera(&Camera2D {
-                zoom: vec2(asp2_ui, 1.),
+                zoom: vec2(1., asp2_chart),
                 ..Default::default()
             });
             for effect in &self.chart.extra.effects {
