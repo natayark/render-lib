@@ -508,7 +508,7 @@ impl GameScene {
         self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + aspect_ratio - margin, ct.y + score_top)), Some((aspect_ratio - margin + 0.001, top + eps * 2.8125)), |ui, color| {
             let mut text_size = 0.71 * scale_ratio;
             let mut text = ui.text(&score).size(text_size);
-            let max_width = 0.55;
+            let max_width = 0.55 * aspect_ratio;
             let text_width = text.measure().w;
             if text_width > max_width {
                 text_size *= max_width / text_width
@@ -556,7 +556,7 @@ impl GameScene {
             };
             let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_top + unit_h / 2.)), Some((0., combo_top + unit_h / 2.)), |ui, color| {
                 let mut text_size = 0.98 * scale_ratio;
-                let max_width = 0.55;
+                let max_width = 0.55 * aspect_ratio;
                 let mut text = ui.text(&combo)
                     .size(text_size)
                     .color(Color::new(0., 0., 0., 0.))
@@ -592,7 +592,7 @@ impl GameScene {
         self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
             let mut text_size = 0.505 * scale_ratio;
             let mut text = ui.text(&res.info.name).size(text_size);
-            let max_width = 0.9;
+            let max_width = 0.9 * aspect_ratio;
             let text_width = text.measure().w;
             if text_width > max_width {
                 text_size *= max_width / text_width
