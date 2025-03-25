@@ -1341,8 +1341,8 @@ impl Scene for GameScene {
                 zoom: vec2(1., asp2_window),
                 ..Default::default()
             });
-            for e in &self.effects {
-                e.render(&mut self.res);
+            for effect in &self.effects {
+                effect.render(&mut self.res);
             }
         }
 
