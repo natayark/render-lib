@@ -3,6 +3,7 @@
 crate::tl_file!("game");
 
 use chinese_number::{ChineseCase, ChineseCountMethod, ChineseVariant, NumberToChinese, ChineseToNumber};
+use regex::Regex;
 use super::{
     draw_background,
     ending::RecordUpdateState,
@@ -440,6 +441,14 @@ impl GameScene {
         (screen_width() / screen_height()) / self.res.aspect_ratio
     }
 
+    fn validate_value(value: &String) -> bool {
+        let re_filter = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕ]"##).unwrap();
+        let filtered_value = re_filter.replace_all(value, "").trim().to_string();
+    
+        let re_validate = Regex::new(r"^[CС][OՕΟ0][MΜ][BΒ8][OՕΟ0]$").unwrap();
+        return re_validate.is_match(&filtered_value);
+    }
+
     fn ui(&mut self, ui: &mut Ui, tm: &mut TimeManager) -> Result<()> {
         let time = tm.now() as f32;
         let p = match self.state {
@@ -578,6 +587,15 @@ impl GameScene {
                 text_btm
             });
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
+                if Self::validate_value(&res.config.combo) || res.config.combo.len() > 50 {
+                    ui.text("AUTOPLAY")
+                    .pos(0., btm + 0.01)
+                    .anchor(0.5, 0.)
+                    .size(0.34 * scale_ratio)
+                    .color(Color { a: color.a * c.a, ..color })
+                    .draw();
+                    return;
+                }
                 ui.text(&res.config.combo)
                     .pos(0., btm + 0.01)
                     .anchor(0.5, 0.)
