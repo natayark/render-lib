@@ -472,7 +472,6 @@ impl JudgeLine {
                         };
                         let note_height = note.height - line_height + note.object.translation.1.now();
                         if agg && note_height < -height_above / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
-                            println!("note_height: {}, above: {}, below: {}", note_height, height_above, height_below);
                             continue;
                         }
                         if agg && note_height > -height_below / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
