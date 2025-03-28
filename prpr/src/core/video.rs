@@ -26,7 +26,7 @@ pub struct Video {
     dim: Anim<f32>,
     frame_delta: f64,
     pub next_frame: usize,
-    ended: bool,
+    pub ended: bool,
 }
 
 fn new_tex(w: u32, h: u32) -> Texture2D {

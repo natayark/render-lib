@@ -116,6 +116,7 @@ impl Chart {
         }
         for video in &mut self.extra.videos {
             video.next_frame = 0;
+            video.ended = false;
         }
     }
 
@@ -133,17 +134,14 @@ impl Chart {
         for effect in &mut self.extra.effects {
             effect.update(res);
         }
-        for video in &mut self.extra.videos {
-            if let Err(err) = video.update(res.time) {
-                warn!("video error: {err:?}");
-            }
-        }
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource) {
-        for video in &self.extra.videos {
-            video.render(res);
-        }
+        res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, 1.)), |res| {
+            for video in &self.extra.videos {
+                video.render(res);
+            }
+        });
         res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, -1.)), |res| {
             let mut guard = self.bpm_list.borrow_mut();
             for id in &self.order {
