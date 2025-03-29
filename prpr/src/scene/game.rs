@@ -1188,8 +1188,8 @@ impl Scene for GameScene {
                 self.should_exit = true;
             }
         }
-        for e in &mut self.effects {
-            e.update(&self.res);
+        for effect in &mut self.effects {
+            effect.update(&self.res);
         }
         if let Some((id, text)) = take_input() {
             let offset = self.offset().min(0.);
