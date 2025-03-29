@@ -940,7 +940,7 @@ impl GameScene {
                 .draw();
             let d = 0.14;
             let mut bpm_list = self.chart.bpm_list.borrow_mut();
-            let beat = 15. / bpm_list.now_bpm(tm.now() as f32);
+            let beat = (15. / bpm_list.now_bpm(tm.now() as f32)).clamp(0.020, 0.500);
             if ui.button("lg_sub", Rect::new(d, r.center().y, 0., 0.).feather(0.026), "-") && ita {
                 self.info_offset -= beat;
             }
