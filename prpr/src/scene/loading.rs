@@ -194,8 +194,8 @@ impl Scene for LoadingScene {
         ct.y += sub.h * 0.05;
         draw_parallelogram(sub, None, WHITE, true);
         //draw_text_aligned(ui, &(self.info.difficulty as u32).to_string(), ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.88, BLACK);
-        if !self.config.difficulty.is_none() {
-            draw_text_aligned_fix(ui, self.config.difficulty.as_ref().unwrap().as_str()
+        if self.config.difficulty.len() > 0 {
+            draw_text_aligned_fix(ui, &self.config.difficulty
                 , ct.x, ct.y + sub.h * 0.05, (0.5, 1.), 0.90, BLACK, main.w * 0.18
             );
         } else {
