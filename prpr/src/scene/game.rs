@@ -1305,7 +1305,7 @@ impl Scene for GameScene {
         });
         if res.config.render_bg {
             clear_background(BLACK);
-            draw_background(*res.background);
+            draw_background(*res.background, res.config.render_bg_dim);
         }
 
         if res.config.render_bg_dim && res.config.chart_ratio >= 1. {
