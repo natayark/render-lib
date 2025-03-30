@@ -92,6 +92,8 @@ pub struct Config {
     pub render_bg: bool,
     pub render_bg_dim: bool,
     pub bg_blurriness: f32,
+    pub render_name: bool,
+    pub render_level: bool,
 
     pub max_particles: usize,
 
@@ -157,6 +159,8 @@ impl Default for Config {
             render_bg: true,
             render_bg_dim: true,
             bg_blurriness: 80.,
+            render_name: true,
+            render_level: true,
 
             max_particles: 600000,
 

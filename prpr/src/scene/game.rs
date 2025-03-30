@@ -608,28 +608,32 @@ impl GameScene {
         let lf = -aspect_ratio + margin;
         let bt = -top - eps * 3.5;
         self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
-            let mut text_size = 0.505 * scale_ratio;
-            let mut text = ui.text(&res.info.name).size(text_size);
-            let max_width = 0.9 * aspect_ratio;
-            let text_width = text.measure().w;
-            if text_width > max_width {
-                text_size *= max_width / text_width
+            if res.config.render_name {
+                let mut text_size = 0.505 * scale_ratio;
+                let mut text = ui.text(&res.info.name).size(text_size);
+                let max_width = 0.9 * aspect_ratio;
+                let text_width = text.measure().w;
+                if text_width > max_width {
+                    text_size *= max_width / text_width
+                }
+                drop(text);
+                ui.text(&res.info.name)
+                    .pos(lf, bt + (1. - p) * 0.4)
+                    .anchor(0., 1.)
+                    .size(text_size)
+                    .color(Color { a: color.a * c.a, ..color })
+                    .draw();
             }
-            drop(text);
-            ui.text(&res.info.name)
-                .pos(lf, bt + (1. - p) * 0.4)
-                .anchor(0., 1.)
-                .size(text_size)
-                .color(Color { a: color.a * c.a, ..color })
-                .draw();
         });
         self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((-lf, -top - eps * 2.)), |ui, color| {
-            ui.text(&res.info.level)
-                .pos(-lf, bt + (1. - p) * 0.4)
-                .anchor(1., 1.)
-                .size(0.505 * scale_ratio)
-                .color(Color { a: color.a * c.a, ..color })
-                .draw();
+            if res.config.render_level {
+                ui.text(&res.info.level)
+                    .pos(-lf, bt + (1. - p) * 0.4)
+                    .anchor(1., 1.)
+                    .size(0.505 * scale_ratio)
+                    .color(Color { a: color.a * c.a, ..color })
+                    .draw();
+            }
 
             /*let watermark = if res.config.watermark == "AntiLeave" { 
                 "".to_string() 
