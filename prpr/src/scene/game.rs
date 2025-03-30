@@ -608,7 +608,7 @@ impl GameScene {
         let lf = -aspect_ratio + margin;
         let bt = -top - eps * 3.5;
         self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
-            if res.config.render_name {
+            if res.config.render_ui_name {
                 let mut text_size = 0.505 * scale_ratio;
                 let mut text = ui.text(&res.info.name).size(text_size);
                 let max_width = 0.9 * aspect_ratio;
@@ -626,7 +626,7 @@ impl GameScene {
             }
         });
         self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((-lf, -top - eps * 2.)), |ui, color| {
-            if res.config.render_level {
+            if res.config.render_ui_level {
                 ui.text(&res.info.level)
                     .pos(-lf, bt + (1. - p) * 0.4)
                     .anchor(1., 1.)
