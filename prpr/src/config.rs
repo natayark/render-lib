@@ -86,14 +86,14 @@ pub struct Config {
     pub render_line_extra: bool,
     pub render_note: bool,
     pub render_ui_pause: bool,
+    pub render_ui_name: bool,
+    pub render_ui_level: bool,
     pub render_ui_score: bool,
     pub render_ui_combo: bool,
     pub render_ui_bar: bool,
     pub render_bg: bool,
     pub render_bg_dim: bool,
     pub bg_blurriness: f32,
-    pub render_name: bool,
-    pub render_level: bool,
 
     pub max_particles: usize,
 
@@ -153,14 +153,15 @@ impl Default for Config {
             render_line_extra: true,
             render_note: true,
             render_ui_pause: true,
+            render_ui_name: true,
+            render_ui_level: true,
             render_ui_score: true,
             render_ui_combo: true,
             render_ui_bar: true,
             render_bg: true,
             render_bg_dim: true,
             bg_blurriness: 80.,
-            render_name: true,
-            render_level: true,
+        
 
             max_particles: 600000,
 
