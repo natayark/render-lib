@@ -54,14 +54,14 @@ impl LoadingScene {
         upload_fn: Option<UploadFn>,
         update_fn: Option<UpdateFn>,
     ) -> Result<Self> {
-        async fn load(fs: &mut Box<dyn FileSystem>, path: &str) -> Result<(Texture2D, Texture2D)> {
+        async fn load(fs: &mut Box<dyn FileSystem>, config: &Config, path: &str) -> Result<(Texture2D, Texture2D)> {
             let image = image::load_from_memory(&fs.load_file(path).await?).context("Failed to decode image")?;
             let (w, h) = (image.width(), image.height());
             let size = w as usize * h as usize;
 
             let mut blurred_rgb = image.to_rgb8();
             let mut vec = unsafe { Vec::from_raw_parts(std::mem::transmute(blurred_rgb.as_mut_ptr()), size, size) };
-            fastblur::gaussian_blur(&mut vec, w as _, h as _, 80.);
+            fastblur::gaussian_blur(&mut vec, w as _, h as _, config.bg_blurriness);
             std::mem::forget(vec);
             let mut blurred = Vec::with_capacity(size * 4);
             for input in blurred_rgb.chunks_exact(3) {
@@ -81,7 +81,7 @@ impl LoadingScene {
             ))
         }
 
-        let background = match load(&mut fs, &info.illustration).await {
+        let background = match load(&mut fs, config, &info.illustration).await {
             Ok((ill, bg)) => Some((ill, bg)),
             Err(err) => {
                 warn!("failed to load background: {err:?}");

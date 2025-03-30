@@ -1304,7 +1304,7 @@ impl Scene for GameScene {
             draw_background(*res.background);
         }
 
-        if res.config.chart_ratio >= 1. {
+        if res.config.render_bg_dim && res.config.chart_ratio >= 1. {
             let dim_alpha = 0.7;
             //let alpha = res.alpha * (1. - dim_alpha) + dim_alpha;    
             let dim = Color::new(0.1, 0.1, 0.1, dim_alpha * res.alpha);
@@ -1322,7 +1322,7 @@ impl Scene for GameScene {
         
         self.gl.quad_gl.render_pass(chart_onto.map(|it| it.render_pass));
         //self.gl.quad_gl.viewport(chart_target_vp);
-        if res.config.chart_ratio < 1. {
+        if res.config.render_bg_dim && res.config.chart_ratio < 1. {
             draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
         }
         self.chart.render(ui, res);

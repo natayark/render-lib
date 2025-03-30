@@ -76,8 +76,9 @@ pub struct Config {
     pub disable_loading: bool,
 
     // for compatibility
-    pub hires: bool,
     pub autoplay: Option<bool>,
+
+    pub hires: bool,
     pub disable_audio: bool,
     pub judge_offset: f32,
 
@@ -89,6 +90,8 @@ pub struct Config {
     pub render_ui_combo: bool,
     pub render_ui_bar: bool,
     pub render_bg: bool,
+    pub render_bg_dim: bool,
+    pub bg_blurriness: f32,
 
     pub max_particles: usize,
 
@@ -138,8 +141,9 @@ impl Default for Config {
             difficulty: "".to_string(),
             disable_loading: false,
 
-            hires: false,
             autoplay: None,
+
+            hires: false,
             disable_audio: false,
             judge_offset: 0.,
 
@@ -151,6 +155,8 @@ impl Default for Config {
             render_ui_combo: true,
             render_ui_bar: true,
             render_bg: true,
+            render_bg_dim: true,
+            bg_blurriness: 80.,
 
             max_particles: 600000,
 
