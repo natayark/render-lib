@@ -499,8 +499,8 @@ impl JudgeLine {
             }
             if res.config.chart_debug {
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
-                    res.apply_model(|_| {
-                        ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).draw();
+                    res.apply_model(|res| {
+                        ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).color(Color { a: res.alpha, ..Default::default() }).draw();
                     });
                 });
             }
