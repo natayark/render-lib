@@ -56,7 +56,7 @@ pub fn init_assets() {
 }
 
 #[derive(serde::Deserialize, Clone)]
-pub struct Triple(i32, u32, u32);
+pub struct Triple(i32, i32, i32);
 impl Default for Triple {
     fn default() -> Self {
         Self(0, 0, 1)
