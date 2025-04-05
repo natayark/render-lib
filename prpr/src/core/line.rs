@@ -445,7 +445,7 @@ impl JudgeLine {
                     if agg && note_height > height_above / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
                         break;
                     }
-                    note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
+                    note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha, id);
                 }
                 for index in &self.cache.above_indices {
                     let speed = self.notes[*index].speed;
@@ -460,7 +460,7 @@ impl JudgeLine {
                         if agg && note_height > height_above / speed {
                             break;
                         }
-                        note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
+                        note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha, id);
                     }
                 }
 
@@ -477,7 +477,7 @@ impl JudgeLine {
                         if agg && note_height > -height_below / note.speed && matches!(res.chart_format, ChartFormat::Pgr | ChartFormat::Rpe) {
                             break;
                         }
-                        note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
+                        note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha, id);
                     }
                     for index in &self.cache.below_indices {
                         let speed = self.notes[*index].speed;
@@ -492,7 +492,7 @@ impl JudgeLine {
                             if agg && note_height > -height_below / speed {
                                 break;
                             }
-                            note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha);
+                            note.render(ui, res, &mut config, bpm_list, line_set_debug_alpha, id);
                         }
                     }
                 });
@@ -500,7 +500,37 @@ impl JudgeLine {
             if res.config.chart_debug {
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     res.apply_model(|res| {
-                        ui.text(id.to_string()).pos(0., -0.01).anchor(0.5, 1.).size(0.5).color(Color::new(1., 1., 1., res.alpha)).draw();
+                        let parent = if let Some(parent) = self.parent {
+                            format!("({})", parent)
+                        } else {
+                            String::new()
+                        };
+                        let z_index = {
+                            if self.z_index == 0 {
+                                String::new()
+                            } else {
+                                format!(" z_index:{}", self.z_index)
+                            }
+                        };
+                        let attach_ui = {
+                            let num = self.attach_ui.map_or(0, |it| it as u8);
+                            if num == 0 {
+                                String::new()
+                            } else {
+                                format!(" attach_ui:{}", num)
+                            }
+                        };
+                        let anchor = if self.anchor[0] == 0.5 && self.anchor[1] == 0.5 {
+                            String::new()
+                        } else {
+                            format!(" anchor:{} {}", self.anchor[0], self.anchor[1])
+                        };
+                        ui.text(format!("id:{}{} height:{:.2}{}{}{}", id, parent, config.line_height, z_index, attach_ui, anchor))
+                        .pos(0., -0.01)
+                        .anchor(0.5, 1.)
+                        .size(0.2)
+                        .color(Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug)))
+                        .draw();
                     });
                 });
             }

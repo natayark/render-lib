@@ -1,5 +1,5 @@
 use super::{
-    chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource
+    chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource, Vector
 };
 use crate::{
     core::HEIGHT_RATIO, info::ChartFormat, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
@@ -211,7 +211,7 @@ impl Note {
         self.object.now_rotation().append_nonuniform_scaling(&scale).append_translation(&tr)
     }
 
-    pub fn render(&self, _ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList, line_set_debug_alpha: bool) {
+    pub fn render(&self, ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList, line_set_debug_alpha: bool, line_id: usize) {
         if matches!(self.judge, JudgeStatus::Judged) && !matches!(self.kind, NoteKind::Hold { .. }) {
             return;
         }
@@ -445,6 +445,60 @@ impl Note {
             NoteKind::Drag => {
                 if self.fake && res.time >= self.time {return};
                 draw(res, *style.drag);
+            }
+        }
+        if res.config.chart_debug {
+            let speed = if self.speed == 1. {
+                String::new()
+            } else {
+                format!(" speed: {}", self.speed)
+            };
+            let above = if self.above { "" } else { " below" };
+            let fake = if self.fake { " fake" } else { "" };
+            match self.kind {
+                NoteKind::Hold { end_time, end_height, end_speed } => {
+                    let bottom = if self.time <= res.time { 0. } else { height - line_height };
+                    if res.time >= end_time {
+                        return;
+                    }
+                    let end_speed = if end_speed == 1. {
+                        String::new()
+                    } else {
+                        format!(" end_speed: {}", end_speed)
+                    };
+                    res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin), |res: &mut Resource| {
+                        res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
+                            res.apply_model(|res| {
+                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}{}{}", self.time, self.height, base, line_id, speed, above, fake))
+                                    .pos(0., if self.above { 0.03 } else { -0.03 })
+                                    .anchor(0.5, 1.)
+                                    .size(0.2)
+                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .draw();
+                                ui.text(format!("end_time:{:.2} end_height:{:.2}{}", end_time, end_height, end_speed))
+                                    .pos(0., if self.above { 0.05 } else { -0.05 })
+                                    .anchor(0.5, 1.)
+                                    .size(0.2)
+                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .draw();
+                            });
+                        });
+                    });
+                }
+                _ => {
+                    res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res: &mut Resource| {
+                        res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
+                            res.apply_model(|res| {
+                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}{}{}", self.time, self.height, base, line_id, speed, above, fake))
+                                    .pos(0., 0.03)
+                                    .anchor(0.5, 1.)
+                                    .size(0.15)
+                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .draw();
+                            });
+                        });
+                    });
+                }
             }
         }
     }
