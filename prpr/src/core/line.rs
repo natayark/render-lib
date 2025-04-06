@@ -526,7 +526,7 @@ impl JudgeLine {
                             format!(" anchor:{} {}", self.anchor[0], self.anchor[1])
                         };
                         ui.text(format!("id:{}{} height:{:.2}{}{}{}", id, parent, config.line_height, z_index, attach_ui, anchor))
-                        .pos(0., -0.01)
+                        .pos(0., -res.config.chart_debug * 0.1)
                         .anchor(0.5, 1.)
                         .size(res.config.chart_debug)
                         .color(Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.)))
