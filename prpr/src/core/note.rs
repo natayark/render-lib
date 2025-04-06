@@ -494,13 +494,13 @@ impl Note {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
                                 ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}", self.time, self.height, base, line_id, speed))
-                                    .pos(0., res.config.chart_debug * 0.2)
+                                    .pos(0., res.config.chart_debug * 0.15)
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
                                 ui.text(format!("{}{}", above, fake))
-                                    .pos(0., res.config.chart_debug * 0.3)
+                                    .pos(0., res.config.chart_debug * 0.225)
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug)
                                     .color(Color::new(1., 1., 1., res.alpha))
