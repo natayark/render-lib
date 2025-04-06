@@ -181,7 +181,7 @@ impl Note {
 
         if let Some(color) = color {
             self.init_ctrl_obj(ctrl_obj, line_height);
-            let rotation = if res.config.chart_debug { 
+            let rotation = if res.config.chart_debug > 0. { 
                 if self.above { 0. } else { 180. } } 
                 else { random_rotate() 
             };
@@ -267,7 +267,7 @@ impl Note {
             && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.001))
             // && self.speed != 0.
         {
-            if res.config.chart_debug{
+            if res.config.chart_debug > 0. {
                 color.a *= 0.2;
             } else {
                 return;
@@ -331,7 +331,7 @@ impl Note {
                     }
                     let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     if matches!(res.chart_format, ChartFormat::Pgr) && end_spd == 0. {
-                        if res.config.chart_debug {
+                        if res.config.chart_debug > 0. {
                             color.a *= 0.2;
                         } else {
                             return;
@@ -439,15 +439,15 @@ impl Note {
                 });
             }
             NoteKind::Flick => {
-                if self.fake && res.time >= self.time {return};
+                if self.fake && res.time >= self.time { return };
                 draw(res, *style.flick);
             }
             NoteKind::Drag => {
-                if self.fake && res.time >= self.time {return};
+                if self.fake && res.time >= self.time { return };
                 draw(res, *style.drag);
             }
         }
-        if res.config.chart_debug {
+        if res.config.chart_debug > 0. {
             if base > 2. / res.config.chart_ratio {
                 return;
             }
@@ -472,16 +472,16 @@ impl Note {
                     res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
-                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}{}{}", self.time, self.height, base, line_id, speed, above, fake))
-                                    .pos(0., if self.above { 0.03 } else { -0.03 })
+                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}", self.time, self.height, base, line_id, speed))
+                                    .pos(0., if self.above { res.config.chart_debug * 0.2 } else { -res.config.chart_debug * 0.2 })
                                     .anchor(0.5, 1.)
-                                    .size(0.2)
+                                    .size(res.config.chart_debug)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
-                                ui.text(format!("end_time:{:.2} end_height:{:.2}{}", end_time, end_height, end_speed))
-                                    .pos(0., if self.above { 0.05 } else { -0.05 })
+                                ui.text(format!("end_time:{:.2} end_height:{:.2}{}{}{}", end_time, end_height, end_speed, above, fake))
+                                    .pos(0., if self.above { res.config.chart_debug * 0.3 } else { -res.config.chart_debug * 0.3 })
                                     .anchor(0.5, 1.)
-                                    .size(0.2)
+                                    .size(res.config.chart_debug)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
                             });
@@ -493,10 +493,16 @@ impl Note {
                     res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
-                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}{}{}", self.time, self.height, base, line_id, speed, above, fake))
-                                    .pos(0., 0.03)
+                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}", self.time, self.height, base, line_id, speed))
+                                    .pos(0., res.config.chart_debug * 0.2)
                                     .anchor(0.5, 1.)
-                                    .size(0.15)
+                                    .size(res.config.chart_debug)
+                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .draw();
+                                ui.text(format!("{}{}", above, fake))
+                                    .pos(0., res.config.chart_debug * 0.3)
+                                    .anchor(0.5, 1.)
+                                    .size(res.config.chart_debug)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
                             });

@@ -624,7 +624,7 @@ impl ChartList {
 }
 
 struct DebugList {
-    chart_debug_btn: DRectButton,
+    chart_debug_slider: Slider,
     touch_debug_btn: DRectButton,
     ratio_slider: Slider,
     all_good_btn: DRectButton,
@@ -636,7 +636,7 @@ struct DebugList {
 impl DebugList {
     pub fn new() -> Self {
         Self {
-            chart_debug_btn: DRectButton::new(),
+            chart_debug_slider: Slider::new(0.0..1.0, 0.05),
             touch_debug_btn: DRectButton::new(),
             ratio_slider: Slider::new(0.05..1.0, 0.05),
             all_good_btn: DRectButton::new(),
@@ -653,9 +653,8 @@ impl DebugList {
     pub fn touch(&mut self, touch: &Touch, t: f32) -> Result<Option<bool>> {
         let data = get_data_mut();
         let config = &mut data.config;
-        if self.chart_debug_btn.touch(touch, t) {
-            config.chart_debug ^= true;
-            return Ok(Some(true));
+        if let wt @ Some(_) = self.chart_debug_slider.touch(touch, t, &mut config.chart_debug) {
+            return Ok(wt);
         }
         if self.touch_debug_btn.touch(touch, t) {
             config.touch_debug ^= true;
@@ -712,7 +711,7 @@ impl DebugList {
         let config = &data.config;
         item! {
             render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
-            render_switch(ui, rr, t, c, &mut self.chart_debug_btn, config.chart_debug);
+            self.chart_debug_slider.render(ui, rr, t,c, config.chart_debug, format!("{:.2}", config.chart_debug));
         }
         item! {
             render_title(ui, c, tl!("item-touch-debug"), Some(tl!("item-touch-debug-sub")));

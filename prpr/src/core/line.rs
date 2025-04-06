@@ -245,7 +245,7 @@ impl JudgeLine {
                     JudgeLineKind::Normal => {
                         if res.config.render_line {
                             let mut color = color.unwrap_or(res.judge_line_color);
-                            color.a = Self::parse_alpha(color.a * alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            color.a = Self::parse_alpha(color.a * alpha.max(0.0), res.alpha, res.config.chart_debug > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -259,7 +259,7 @@ impl JudgeLine {
                             if res.time <= 0. && matches!(color, WHITE) { // some image show pure white before play
                                 color = BLACK;
                             }
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -284,7 +284,7 @@ impl JudgeLine {
                             let t = anim.now_opt().unwrap_or(0.0);
                             let frame = frames.get_prog_frame(t);
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -306,7 +306,7 @@ impl JudgeLine {
                     JudgeLineKind::Text(anim) => {
                         if res.config.render_line_extra {
                                 let mut color = color.unwrap_or(WHITE);
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug);
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -319,7 +319,7 @@ impl JudgeLine {
                     JudgeLineKind::Paint(anim, state) => {
                         {
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug) * 2.55;
+                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug > 0.) * 2.55;
                             if color.a == 0.0 {
                                 return;
                             }
@@ -394,7 +394,7 @@ impl JudgeLine {
             let mut line_set_debug_alpha = false;
             if alpha < 0.0 {
                 if !settings.pe_alpha_extension {
-                    if res.config.chart_debug {
+                    if res.config.chart_debug > 0. {
                         line_set_debug_alpha = true;
                     } else {
                         return;
@@ -403,7 +403,7 @@ impl JudgeLine {
                 let w = (-alpha).floor() as u32;
                 match w {
                     1 => {
-                        if res.config.chart_debug {
+                        if res.config.chart_debug > 0. {
                             line_set_debug_alpha = true;
                         } else {
                             return;
@@ -497,7 +497,7 @@ impl JudgeLine {
                     }
                 });
             }
-            if res.config.chart_debug {
+            if res.config.chart_debug > 0. {
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     res.apply_model(|res| {
                         let parent = if let Some(parent) = self.parent {
@@ -528,8 +528,8 @@ impl JudgeLine {
                         ui.text(format!("id:{}{} height:{:.2}{}{}{}", id, parent, config.line_height, z_index, attach_ui, anchor))
                         .pos(0., -0.01)
                         .anchor(0.5, 1.)
-                        .size(0.2)
-                        .color(Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug)))
+                        .size(res.config.chart_debug)
+                        .color(Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.)))
                         .draw();
                     });
                 });
