@@ -448,6 +448,9 @@ impl Note {
             }
         }
         if res.config.chart_debug {
+            if base > 2. / res.config.chart_ratio {
+                return;
+            }
             let speed = if self.speed == 1. {
                 String::new()
             } else {
@@ -486,6 +489,7 @@ impl Note {
                     });
                 }
                 _ => {
+                    if res.time >= self.time { return };
                     res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
