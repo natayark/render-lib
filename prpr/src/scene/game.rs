@@ -160,6 +160,7 @@ macro_rules! reset {
         $tm.reset();
         $self.last_update_time = $tm.now();
         $self.state = State::Starting;
+        $self.pause_rewind = None;
     }};
 }
 
@@ -762,9 +763,7 @@ impl GameScene {
                             self.music.seek_to(self.exercise_range.start)?;
                             pos = self.exercise_range.start;
                         }
-                        if !res.config.disable_audio {
-                            self.music.play()?;
-                        }
+                        self.music.play()?;
                         res.time -= 1.;
                         let dst = pos - 1.;
                         if dst < 0. {
@@ -779,6 +778,7 @@ impl GameScene {
                         tm.seek_to(now - 1.);
                         self.music.seek_to(now as f32 - 1.);
                         self.pause_rewind = Some(tm.now() - 0.2);
+                        self.res.config.disable_audio = true;
                     }
                     _ => {}
                 }
@@ -900,6 +900,7 @@ impl GameScene {
             let t = 1 - dt.floor() as i32;
             if t <= 0 {
                 self.pause_rewind = None;
+                self.res.config.disable_audio = false;
             } else {
                 let a = (1. - dt as f32 / 1.) * 1.;
                 let h = 1. / self.res.aspect_ratio;
@@ -1068,9 +1069,7 @@ impl Scene for GameScene {
             State::BeforeMusic => {
                 if time >= 0.0 {
                     self.music.seek_to(time)?;
-                    if !tm.paused() && !self.res.config.disable_audio {
-                        self.music.play()?;
-                    }
+                    self.music.play()?;
                     self.state = State::Playing;
                 }
                 time
@@ -1134,7 +1133,7 @@ impl Scene for GameScene {
         };
         let time = (time - offset).max(0.);
         self.res.time = time;
-        if !tm.paused() && self.pause_rewind.is_none() && self.mode != GameMode::View {
+        if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
             self.gl.quad_gl.viewport(self.res.camera.viewport);
             self.judge.update(&mut self.res, &mut self.chart, &mut self.bad_notes);
             self.gl.quad_gl.viewport(None);
