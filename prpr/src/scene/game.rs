@@ -756,6 +756,8 @@ impl GameScene {
                     }
                     Some(0) => {
                         reset!(self, res, tm);
+                        self.pause_rewind = Some(tm.now() - 0.9);
+                        res.config.disable_audio = true;
                     }
                     Some(1) => {
                         if tm.now() > self.exercise_range.end as f64 { //self.mode == GameMode::Exercise && 
@@ -777,7 +779,7 @@ impl GameScene {
                         tm.resume();
                         tm.seek_to(now - 1.);
                         self.music.seek_to(now as f32 - 1.);
-                        self.pause_rewind = Some(tm.now() - 0.2);
+                        self.pause_rewind = Some(tm.now() - 0.3);
                         self.res.config.disable_audio = true;
                     }
                     _ => {}
@@ -1166,11 +1168,14 @@ impl Scene for GameScene {
                 if matches!(self.state, State::Playing) {
                     self.music.play()?;
                     tm.resume();
+                    self.pause_rewind = Some(tm.now() - 0.9);
+                    res.config.disable_audio = true;
                 }
-            } else if matches!(self.state, State::Playing | State::BeforeMusic) {
+            } else if matches!(self.state, State::Playing) { // State::BeforeMusic
                 if !self.music.paused() {
                     self.music.pause()?;
                 }
+                self.pause_rewind = None;
                 tm.pause();
             }
         }
