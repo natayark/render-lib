@@ -897,8 +897,7 @@ impl GameScene {
                 }
             }
         }
-        if let Some(pause_rewind) = self.pause_rewind {
-            let (time, duration) = pause_rewind;
+        if let Some((time, duration)) = self.pause_rewind {
             let dt = tm.now() - time;
             let t = duration - dt;
             println!("dt: {:.2} t: {:.2}", dt, t);
