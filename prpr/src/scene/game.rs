@@ -137,7 +137,7 @@ pub struct GameScene {
 
     state: State,
     pub last_update_time: f64,
-    pause_rewind: Option<f64>,
+    pause_rewind: Option<(f64, f64)>,
     pause_first_time: f32,
 
     pub bad_notes: Vec<BadNote>,
@@ -756,7 +756,7 @@ impl GameScene {
                     }
                     Some(0) => {
                         reset!(self, res, tm);
-                        self.pause_rewind = Some(tm.now() - 0.9);
+                        self.pause_rewind = Some((tm.now(), 0.01));
                         res.config.disable_audio = true;
                     }
                     Some(1) => {
@@ -779,7 +779,7 @@ impl GameScene {
                         tm.resume();
                         tm.seek_to(now - 1.);
                         self.music.seek_to(now as f32 - 1.);
-                        self.pause_rewind = Some(tm.now() - 0.3);
+                        self.pause_rewind = Some((tm.now(), 1.0));
                         self.res.config.disable_audio = true;
                     }
                     _ => {}
@@ -897,17 +897,19 @@ impl GameScene {
                 }
             }
         }
-        if let Some(time) = self.pause_rewind {
+        if let Some(pause_rewind) = self.pause_rewind {
+            let (time, duration) = pause_rewind;
             let dt = tm.now() - time;
-            let t = 1 - dt.floor() as i32;
-            if t <= 0 {
+            let t = duration - dt;
+            println!("dt: {:.2} t: {:.2}", dt, t);
+            if t <= 0. {
                 self.pause_rewind = None;
                 self.res.config.disable_audio = false;
-            } else {
-                let a = (1. - dt as f32 / 1.) * 1.;
+            } else if t > 0.01 {
+                let a = (duration - dt / duration).clamp(0.0, 1.0) * 0.75;
                 let h = 1. / self.res.aspect_ratio;
-                draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., a));
-                ui.text(t.to_string()).anchor(0.5, 0.5).size(1.).color(c).draw();
+                draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., a as f32));
+                ui.text((t.ceil() as i32).to_string()).anchor(0.5, 0.5).size(1.).color(c).draw();
             }
         }
         Ok(())
@@ -1168,7 +1170,7 @@ impl Scene for GameScene {
                 if matches!(self.state, State::Playing) {
                     self.music.play()?;
                     tm.resume();
-                    self.pause_rewind = Some(tm.now() - 0.9);
+                    self.pause_rewind = Some((tm.now(), 0.01));
                     res.config.disable_audio = true;
                 }
             } else if matches!(self.state, State::Playing) { // State::BeforeMusic
@@ -1191,6 +1193,9 @@ impl Scene for GameScene {
                 let dst = (self.music.position() + 5.).min(res.track_length);
                 self.music.seek_to(dst)?;
                 tm.seek_to(dst as f64);
+
+                self.pause_rewind = Some((tm.now(), 0.01));
+                res.config.disable_audio = true;
             }
             if is_key_pressed(KeyCode::Q) {
                 self.should_exit = true;
