@@ -299,12 +299,10 @@ impl GameScene {
     
 
     pub async fn load_chart(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<(Chart, Vec<u8>, ChartFormat)> {
-        let extra = fs.load_file("extra.json").await.ok().map(String::from_utf8).transpose()?;
-        let extra1 = fs.load_file("extra1.json").await.ok().map(String::from_utf8).transpose()?;
-        let extra = if let Some(extra) = extra {
+        let extra = if let Some(extra) = fs.load_file("extra.json").await.ok().map(String::from_utf8).transpose()? {
             parse_extra(&extra, fs).await.context("Failed to parse extra")?
-        } else if let Some(extra1) = extra1 {
-            parse_extra(&extra1, fs).await.context("Failed to parse extra1")?
+        } else if let Some(extra) = fs.load_file("extra1.json").await.ok().map(String::from_utf8).transpose()? {
+            parse_extra(&extra, fs).await.context("Failed to parse extra1")?
         } else {
             ChartExtra::default()
         };
