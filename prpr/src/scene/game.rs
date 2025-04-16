@@ -308,7 +308,7 @@ impl GameScene {
         };
         let bytes = Self::load_chart_bytes(fs, info).await.context("Failed to load chart")?;
         let format = info.format.clone().unwrap_or_else(|| {
-            if let Ok(text) = String::from_utf8(bytes.clone()) {
+            if let Ok(text) = std::str::from_utf8(&bytes) {
                 if text.starts_with('{') {
                     if text.contains("\"META\"") {
                         ChartFormat::Rpe
