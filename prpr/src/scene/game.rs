@@ -898,7 +898,6 @@ impl GameScene {
         if let Some((time, duration)) = self.pause_rewind {
             let dt = tm.now() - time;
             let t = duration - dt;
-            println!("dt: {:.2} t: {:.2}", dt, t);
             if t <= 0. {
                 self.pause_rewind = None;
                 self.res.config.disable_audio = false;
