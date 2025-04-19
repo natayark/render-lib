@@ -131,7 +131,10 @@ impl ZipFileSystem {
             .file_names()
             .filter(|it| it.ends_with('/') && it.find('/') == Some(it.len() - 1))
             .collect::<Vec<_>>();
-        let root = if root_dirs.len() == 1 { root_dirs[0].to_owned() } else { String::new() };
+        let only_one_folder =  zip.file_names().all(|name| {
+            root_dirs.len() == 1 && name.starts_with(root_dirs[0])
+        });
+        let root = if only_one_folder { root_dirs[0].to_owned() } else { String::new() };
         Ok(Self(Arc::new(Mutex::new(zip)), root))
     }
 }
