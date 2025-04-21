@@ -260,9 +260,9 @@ impl Note {
         };
         
         let mut color = self.object.now_color();
-        color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
 
         if res.config.alpha_tint {
+            color.a = res.alpha;
             if color.a <= 0.5 {
                 color.r *= 0.6;
                 color.g *= 0.8;
@@ -272,6 +272,8 @@ impl Note {
                 color.g *= 0.7;
                 color.b *= 0.9;
             }
+        } else {
+            color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
         }
 
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
