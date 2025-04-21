@@ -473,7 +473,7 @@ impl GameScene {
         let eps = 2e-2;
         let pause_w = 0.011 * scale_ratio;
         let pause_h = pause_w * 3.5;
-        let pause_center = Point::new(-aspect_ratio + 0.040 * scale_ratio, top + eps * 3.6454 - (1. - p) * 0.4 + pause_h / 2.);
+        let pause_center = Point::new(-aspect_ratio + 0.0525 * scale_ratio, top + eps * 3.6454 - (1. - p) * 0.4 + pause_h / 2.);
         if res.config.interactive
             && !tm.paused()
             && self.pause_rewind.is_none()
@@ -539,20 +539,21 @@ impl GameScene {
                     .draw();
             }
         });
-        self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), Some((pause_center.x - pause_w * 1.2, pause_center.y - pause_h / 2.2)), |ui, color| {
+        self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), Some((pause_center.x - pause_w * 1.5, pause_center.y - pause_h * 0.5)), |ui, color| {
             if res.config.render_ui_pause {
                 let mut r = Rect::new(pause_center.x - pause_w / 2., pause_center.y - pause_h / 2., pause_w, pause_h);
                 //let ct = pause_center.coords;
                 let c = Color { a: color.a * c.a, ..color };
                 
+                r.x -= pause_w;
                 ui.fill_rect(r, c);
                 r.x += pause_w * 2.;
                 ui.fill_rect(r, c);
                 ;
         }
         });
-        let unit_h = ui.text("0").measure().h;
-        let combo_top = top + eps * 1.346 - (1. - p) * 0.4;
+        let unit_h = ui.text("0").size(scale_ratio).measure().h;
+        let combo_y = top + eps * 1.55 - (1. - p) * 0.4;
         if self.judge.combo() >= 3 {
             let combo = if res.config.roman {
                 Self::int_to_roman(self.judge.combo())
@@ -562,13 +563,13 @@ impl GameScene {
             else {
                 self.judge.combo().to_string()
             };
-            let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_top + unit_h / 2.)), Some((0., combo_top + unit_h / 2.)), |ui, color| {
+            let btm = self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_y + unit_h / 2. * 0.98)), Some((0., combo_y + unit_h / 2. * 0.98)), |ui, color| {
                 let mut text_size = 0.98 * scale_ratio;
                 let max_width = 0.55 * aspect_ratio;
                 let mut text = ui.text(&combo)
                     .size(text_size)
                     .color(Color::new(0., 0., 0., 0.))
-                    .pos(0., top + eps * 1.55 - (1. - p) * 0.4)
+                    .pos(0., combo_y)
                     .anchor(0.5, 0.);
                 let text_width = text.measure().w;
                 let text_btm = text.draw().bottom();
@@ -585,7 +586,7 @@ impl GameScene {
                 }
                 text_btm
             });
-            self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), Some((0., btm + 0.007777 + unit_h * 0.325 / 2.)), |ui, color| {
+            self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.01 + unit_h / 2. * 0.34)), Some((0., btm + 0.01 + unit_h / 2. * 0.34)), |ui, color| {
                 if Self::validate_value(&res.config.combo) || res.config.combo.len() > 50 {
                     ui.text("AUTOPLAY")
                     .pos(0., btm + 0.01)

@@ -69,9 +69,9 @@ impl Object {
         Matrix::identity().append_nonuniform_scaling(&self.scale.now_with_def(1.0, 1.0))
     }
 
-    pub fn now_scale_fix(&self, ct: Vector) -> Matrix {
+    pub fn now_scale_fix(&self, scale_point: Vector) -> Matrix {
         let scale = self.scale.now_with_def(1.0, 1.0);
-        Matrix::new_translation(&-ct).append_nonuniform_scaling(&scale).append_translation(&ct)
+        Matrix::new_translation(&-scale_point).append_nonuniform_scaling(&scale).append_translation(&scale_point)
     }
 
     pub fn new_rotation_wrt_point(&self, angle: f32, pt: Vector) -> Matrix {
