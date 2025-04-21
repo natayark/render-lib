@@ -98,6 +98,7 @@ pub struct Config {
     pub max_particles: usize,
 
     pub fade: f32,
+    pub alpha_tint: bool, // note.alpha <=0.5 blue, note.alpha >0.5 red
 }
 
 impl Default for Config {
@@ -166,6 +167,7 @@ impl Default for Config {
             max_particles: 600000,
 
             fade: 0.,
+            alpha_tint: false,
         }
     }
 }

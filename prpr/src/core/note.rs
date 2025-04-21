@@ -262,6 +262,18 @@ impl Note {
         let mut color = self.object.now_color();
         color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
 
+        if res.config.alpha_tint {
+            if color.a <= 0.5 {
+                color.r *= 0.6;
+                color.g *= 0.8;
+                color.b *= 1.0;
+            } else if color.a < 1.0 {
+                color.r *= 1.0;
+                color.g *= 0.7;
+                color.b *= 0.9;
+            }
+        }
+
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
         if !config.draw_below
             && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.001))
