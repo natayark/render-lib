@@ -42,8 +42,14 @@ use std::{
     time::Duration,
 };
 use tracing::{debug, warn};
+use lazy_static::lazy_static;
 
 const PAUSE_CLICK_INTERVAL: f32 = 0.7;
+
+lazy_static! {
+    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕ]"##).unwrap();
+    static ref RE_VALIDATE: Regex = Regex::new(r"^[CС][OՕΟ0][MΜ][BΒ8][OՕΟ0]$").unwrap();
+}
 
 #[cfg(feature = "closed")]
 mod inner;
@@ -441,11 +447,12 @@ impl GameScene {
     }
 
     fn validate_value(value: &String) -> bool {
-        let re_filter = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕ]"##).unwrap();
-        let filtered_value = re_filter.replace_all(value, "").trim().to_string();
-    
-        let re_validate = Regex::new(r"^[CС][OՕΟ0][MΜ][BΒ8][OՕΟ0]$").unwrap();
-        return re_validate.is_match(&filtered_value);
+        if value == "AUTOPLAY" || value == "RECORD" {
+            return false;
+        }
+
+        let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
+        return RE_VALIDATE.is_match(&filtered_value);
     }
 
     fn ui(&mut self, ui: &mut Ui, tm: &mut TimeManager) -> Result<()> {

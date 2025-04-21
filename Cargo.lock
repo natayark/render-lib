@@ -2836,6 +2836,7 @@ dependencies = [
  "image",
  "intl-memoizer",
  "js-sys",
+ "lazy_static",
  "libc",
  "lru",
  "lyon",

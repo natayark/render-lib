@@ -63,6 +63,7 @@ tracing-subscriber = { version = "0.3.17", optional = true }
 colored = { version = "2.0.0", optional = true }
 
 prpr-avc = { path = "../prpr-avc" }
+lazy_static = "1.5.0"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 rfd = { version = "0.15.3", default-features = false, features = ["gtk3"] }
