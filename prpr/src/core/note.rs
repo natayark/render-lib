@@ -134,18 +134,6 @@ fn draw_center(res: &Resource, tex: Texture2D, order: i8, scale: f32, color: Col
     );
 }
 
-fn random_rotate() -> f32 {
-    let mut rng = thread_rng();
-    let rotation_degrees: f32 = match rng.gen_range(0..4) {
-        0 => 0.,
-        1 => 90.,
-        2 => 180.,
-        3 => 270.,
-        _ => 0.,
-    };
-    rotation_degrees
-}
-
 impl Note {
     pub fn rotation(&self, line: &JudgeLine) -> f32 {
         line.object.rotation.now() + if self.above { 0. } else { 180. }
@@ -181,10 +169,7 @@ impl Note {
 
         if let Some(color) = color {
             self.init_ctrl_obj(ctrl_obj, line_height);
-            let rotation = if res.config.chart_debug > 0. { 
-                if self.above { 0. } else { 180. } } 
-                else { random_rotate() 
-            };
+            let rotation = if self.above { 0. } else { 180. };
             res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                 res.emit_at_origin(parent_rot + rotation, color)
             });
