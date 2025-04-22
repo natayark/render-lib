@@ -505,6 +505,25 @@ impl JudgeLine {
                         } else {
                             String::new()
                         };
+                        let line_height_error = {
+                            let value = config.line_height.abs();
+                            if !config.line_height.is_nan() & !config.line_height.is_infinite() {
+                                if value < 131072.0 { // error < 0.01
+                                    false
+                                } else {
+                                    true
+                                }
+                            } else {
+                                false
+                            }
+                        };
+                        let line_height_error_string = {
+                                if line_height_error {
+                                    format!("(Speed too large: {:.2})", f32::EPSILON * config.line_height.abs())
+                                } else {
+                                    String::new()
+                                }
+                        };
                         let z_index = {
                             if self.z_index == 0 {
                                 String::new()
@@ -525,11 +544,16 @@ impl JudgeLine {
                         } else {
                             format!(" anchor:{} {}", self.anchor[0], self.anchor[1])
                         };
-                        ui.text(format!("id:{}{} height:{:.2}{}{}{}", id, parent, config.line_height, z_index, attach_ui, anchor))
+                        let color = if line_height_error {
+                            Color::new(1., 1., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
+                        } else {
+                            Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
+                        };
+                        ui.text(format!("id:{}{} height:{:.2}{}{}{}{}", id, parent, config.line_height, line_height_error_string, z_index, attach_ui, anchor))
                         .pos(0., -res.config.chart_debug * 0.1)
                         .anchor(0.5, 1.)
                         .size(res.config.chart_debug)
-                        .color(Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.)))
+                        .color(color)
                         .draw();
                     });
                 });
