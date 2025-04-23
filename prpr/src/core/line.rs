@@ -512,7 +512,7 @@ impl JudgeLine {
                                 0.0
                             }
                         };
-                        let line_height_error_string = {
+                        let line_height_ulp_string = {
                                 if line_height_ulp > 0.0018518519 {
                                     format!("(Speed too large! ULP: {:.4})", line_height_ulp)
                                 } else {
@@ -546,7 +546,7 @@ impl JudgeLine {
                         } else {
                             Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
                         };
-                        ui.text(format!("id:{}{} height:{:.2}{}{}{}{}", id, parent, config.line_height, line_height_error_string, z_index, attach_ui, anchor))
+                        ui.text(format!("id:{}{} height:{:.2}{}{}{}{}", id, parent, config.line_height, line_height_ulp_string, z_index, attach_ui, anchor))
                         .pos(0., -res.config.chart_debug * 0.1)
                         .anchor(0.5, 1.)
                         .size(res.config.chart_debug)
