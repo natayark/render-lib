@@ -505,21 +505,16 @@ impl JudgeLine {
                         } else {
                             String::new()
                         };
-                        let line_height_error = {
-                            let value = config.line_height.abs();
+                        let line_height_ulp = {
                             if !config.line_height.is_nan() & !config.line_height.is_infinite() {
-                                if value < 131072.0 { // error < 0.01
-                                    false
-                                } else {
-                                    true
-                                }
+                                f32::EPSILON * config.line_height.abs()
                             } else {
-                                false
+                                0.0
                             }
                         };
                         let line_height_error_string = {
-                                if line_height_error {
-                                    format!("(Speed too large: {:.2})", f32::EPSILON * config.line_height.abs())
+                                if line_height_ulp > 0.0019 {
+                                    format!("(Speed too large! ULP: {:.4})", line_height_ulp)
                                 } else {
                                     String::new()
                                 }
@@ -544,7 +539,9 @@ impl JudgeLine {
                         } else {
                             format!(" anchor:{} {}", self.anchor[0], self.anchor[1])
                         };
-                        let color = if line_height_error {
+                        let color = if line_height_ulp > 0.0095 { // 5px error in 1080P
+                            Color::new(1., 0., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
+                        } else if line_height_ulp > 0.0019 { // 1px error in 1080P
                             Color::new(1., 1., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
                         } else {
                             Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
