@@ -513,7 +513,7 @@ impl JudgeLine {
                             }
                         };
                         let line_height_error_string = {
-                                if line_height_ulp > 0.0019 {
+                                if line_height_ulp > 0.0018518519 {
                                     format!("(Speed too large! ULP: {:.4})", line_height_ulp)
                                 } else {
                                     String::new()
@@ -539,9 +539,9 @@ impl JudgeLine {
                         } else {
                             format!(" anchor:{} {}", self.anchor[0], self.anchor[1])
                         };
-                        let color = if line_height_ulp > 0.0095 { // 5px error in 1080P
+                        let color = if line_height_ulp > 0.018518519 { // 10px error in 1080P
                             Color::new(1., 0., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
-                        } else if line_height_ulp > 0.0019 { // 1px error in 1080P
+                        } else if line_height_ulp > 0.0018518519 { // 1px error in 1080P
                             Color::new(1., 1., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
                         } else {
                             Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
