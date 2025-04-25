@@ -514,7 +514,7 @@ impl JudgeLine {
                         };
                         let line_height_ulp_string = {
                                 if line_height_ulp > 0.0018518519 {
-                                    format!("(Speed too large! ULP: {:.4})", line_height_ulp)
+                                    format!("(Speed too high! ULP: {:.4})", line_height_ulp)
                                 } else {
                                     String::new()
                                 }
