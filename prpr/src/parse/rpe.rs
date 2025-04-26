@@ -572,16 +572,22 @@ async fn parse_judge_line(
                 }
             }
         } else {
-            JudgeLineKind::Texture(
-                SafeTexture::from(image::load_from_memory(
+            if let Some(texture) = line_texture_map.get(&rpe.texture) {
+                JudgeLineKind::Texture(texture.clone(), rpe.texture.clone())
+            } else {
+                let texture = SafeTexture::from(image::load_from_memory(
                     &fs.load_file(&rpe.texture)
                         .await
                         .with_context(|| ptl!("illustration-load-failed", "path" => rpe.texture.clone()))?,
                 )?)
-                .with_mipmap(),
-                rpe.texture.clone(),
-            )
-        },
+                .with_mipmap();
+                line_texture_map.insert(rpe.texture.clone(), texture.clone());
+                JudgeLineKind::Texture(
+                    texture,
+                    rpe.texture.clone(),
+                )
+            }
+    },
         color: if let Some(events) = rpe.extended.as_ref().and_then(|e| e.color_events.as_ref()) {
             parse_events(r, events, Some(WHITE), bezier_map).with_context(|| ptl!("color-events-parse-failed"))?
         } else {
