@@ -546,7 +546,14 @@ impl JudgeLine {
                         } else {
                             Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug > 0.))
                         };
-                        ui.text(format!("id:{}{} height:{:.2}{}{}{}{}", id, parent, config.line_height, line_height_ulp_string, z_index, attach_ui, anchor))
+                        let kind = match &self.kind {
+                            JudgeLineKind::Normal => String::new(),
+                            JudgeLineKind::Text(text) => format!(" text:{}", text.now()),
+                            JudgeLineKind::Texture(_, name) => format!(" image:{}", name),
+                            JudgeLineKind::TextureGif(_, frames, name) => format!(" gif:{}/{}", name, frames.total_time()),
+                            JudgeLineKind::Paint(_, _) => format!(" paint"),
+                        };
+                        ui.text(format!("id:{}{} height:{:.2}{}{}{}{}{}", id, parent, config.line_height, line_height_ulp_string, z_index, attach_ui, anchor, kind))
                         .pos(0., -res.config.chart_debug * 0.1)
                         .anchor(0.5, 1.)
                         .size(res.config.chart_debug)
