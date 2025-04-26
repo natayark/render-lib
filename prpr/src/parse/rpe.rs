@@ -430,6 +430,7 @@ async fn parse_judge_line(
     bezier_map: &BezierMap,
     hitsounds: &mut HitSoundMap,
 ) -> Result<JudgeLine> {
+    let mut line_texture_map: HashMap<String, SafeTexture> = Default::default();
     let event_layers: Vec<_> = rpe.event_layers.into_iter().flatten().collect();
     let r = &mut BpmList::new(bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm / rpe.bpmfactor)).collect());
 
@@ -554,15 +555,21 @@ async fn parse_judge_line(
                 let events = parse_gif_events(r, events, bezier_map, &frames).with_context(|| ptl!("gif-events-parse-failed"))?;
                 JudgeLineKind::TextureGif(events, frames, rpe.texture.clone())
             } else {
-                JudgeLineKind::Texture(
-                    SafeTexture::from(image::load_from_memory(
+                if let Some(texture) = line_texture_map.get(&rpe.texture) {
+                    JudgeLineKind::Texture(texture.clone(), rpe.texture.clone())
+                } else {
+                    let texture = SafeTexture::from(image::load_from_memory(
                         &fs.load_file(&rpe.texture)
                             .await
                             .with_context(|| ptl!("illustration-load-failed", "path" => rpe.texture.clone()))?,
                     )?)
-                    .with_mipmap(),
-                    rpe.texture.clone(),
-                )
+                    .with_mipmap();
+                    line_texture_map.insert(rpe.texture.clone(), texture.clone());
+                    JudgeLineKind::Texture(
+                        texture,
+                        rpe.texture.clone(),
+                    )
+                }
             }
         } else {
             JudgeLineKind::Texture(
