@@ -290,7 +290,7 @@ impl ParticleEmitter {
         let config_default = Config::default();
         let config = config.unwrap_or(config_default);
         let emitter_config = EmitterConfig {
-            max_particles: config.max_particles,
+            max_particles: config.max_particles / 4,
             local_coords: false,
             texture: Some(*res_pack.hit_fx),
             lifetime: res_pack.info.hit_fx_duration,
@@ -311,9 +311,9 @@ impl ParticleEmitter {
             initial_direction_spread: 2. * std::f32::consts::PI,
             size_randomness: 0.3,
             emitting: false,
-            initial_velocity: 2.5 * scale,
-            initial_velocity_randomness: 1. / 10.,
-            linear_accel: -6. / 1.,
+            initial_velocity: 3.3 * scale,
+            initial_velocity_randomness: 0.3  * scale,
+            linear_accel: -7.0,
             colors_curve,
             ..Default::default()
         };
