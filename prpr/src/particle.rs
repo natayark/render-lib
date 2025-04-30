@@ -358,9 +358,9 @@ impl Default for EmitterConfig {
             emitting: true,
             initial_direction: vec2(0., -1.),
             initial_direction_spread: 0.,
-            initial_velocity: 100.0, // 速度
+            initial_velocity: 50.0,
             initial_velocity_randomness: 0.0,
-            linear_accel: -300.0, // 加速度
+            linear_accel: 0.0,
             initial_rotation: 0.0,
             initial_rotation_randomness: 0.0,
             initial_angular_velocity: 0.0,
