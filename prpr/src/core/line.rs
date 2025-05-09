@@ -553,7 +553,7 @@ impl JudgeLine {
                             JudgeLineKind::TextureGif(_, frames, name) => format!(" gif:{}/{}", name, frames.total_time()),
                             JudgeLineKind::Paint(_, _) => format!(" paint"),
                         };
-                        ui.text(format!("[{}{}] h:{:.2}{}{}{}{}{}", id, parent, config.line_height, line_height_ulp_string, z_index, attach_ui, anchor, kind))
+                        ui.text(format!("[{}]{} h:{:.2}{}{}{}{}{}", id, parent, config.line_height, line_height_ulp_string, z_index, attach_ui, anchor, kind))
                         .pos(0., -res.config.chart_debug_line * 0.1)
                         .anchor(0.5, 1.)
                         .size(res.config.chart_debug_line)
