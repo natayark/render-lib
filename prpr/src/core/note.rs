@@ -266,7 +266,7 @@ impl Note {
             && ((res.time - FADEOUT_TIME >= self.time && !matches!(self.kind, NoteKind::Hold { .. })) || (self.time > res.time && cover_base <= -0.001))
             // && self.speed != 0.
         {
-            if res.config.chart_debug > 0. {
+            if res.config.chart_debug_note > 0. {
                 color.a *= 0.2;
             } else {
                 return;
@@ -330,7 +330,7 @@ impl Note {
                     }
                     let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     if matches!(res.chart_format, ChartFormat::Pgr) && end_spd == 0. {
-                        if res.config.chart_debug > 0. {
+                        if res.config.chart_debug_note > 0. {
                             color.a *= 0.2;
                         } else {
                             return;
@@ -446,15 +446,10 @@ impl Note {
                 draw(res, *style.drag);
             }
         }
-        if res.config.chart_debug > 0. {
+        if res.config.chart_debug_note > 0. {
             if base > 2. / res.config.chart_ratio {
                 return;
             }
-            let speed = if self.speed == 1. {
-                String::new()
-            } else {
-                format!(" speed: {}", self.speed)
-            };
             let above = if self.above { "" } else { " below" };
             let fake = if self.fake { " fake" } else { "" };
             match self.kind {
@@ -463,24 +458,24 @@ impl Note {
                     if res.time >= end_time {
                         return;
                     }
-                    let end_speed = if end_speed == 1. {
+                    let speed = if self.speed == 1. && end_speed == 1. {
                         String::new()
                     } else {
-                        format!(" end_speed: {}", end_speed)
+                        format!(" v: {}({})", self.speed, end_speed)
                     };
                     res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
-                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}", self.time, self.height, base, line_id, speed))
-                                    .pos(0., if self.above { res.config.chart_debug * 0.2 } else { -res.config.chart_debug * 0.2 })
+                                ui.text(format!("[{}] t:{:.2}({:.2}) h:{:.2}({:.2})[{:.2}]", line_id, self.time, end_time, self.height, end_height, base))
+                                    .pos(0., if self.above { res.config.chart_debug_note * 0.2 } else { -res.config.chart_debug_note * 0.2 })
                                     .anchor(0.5, 1.)
-                                    .size(res.config.chart_debug)
+                                    .size(res.config.chart_debug_note)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
-                                ui.text(format!("end_time:{:.2} end_height:{:.2}{}{}{}", end_time, end_height, end_speed, above, fake))
-                                    .pos(0., if self.above { res.config.chart_debug * 0.3 } else { -res.config.chart_debug * 0.3 })
+                                ui.text(format!("{}{}{}", speed, above, fake))
+                                    .pos(0., if self.above { res.config.chart_debug_note * 0.3 } else { -res.config.chart_debug_note * 0.3 })
                                     .anchor(0.5, 1.)
-                                    .size(res.config.chart_debug)
+                                    .size(res.config.chart_debug_note)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
                             });
@@ -489,19 +484,24 @@ impl Note {
                 }
                 _ => {
                     if res.time >= self.time { return };
+                    let speed = if self.speed == 1. {
+                        String::new()
+                    } else {
+                        format!(" v: {}", self.speed)
+                    };
                     res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
-                                ui.text(format!("time:{:.2} height: {:.2} base:{:.2} line:{}{}", self.time, self.height, base, line_id, speed))
-                                    .pos(0., res.config.chart_debug * 0.15)
+                                ui.text(format!("[{}] t:{:.2} h:{:.2}[{:.2}]", line_id, self.time, self.height, base))
+                                    .pos(0., res.config.chart_debug_note * 0.15)
                                     .anchor(0.5, 1.)
-                                    .size(res.config.chart_debug)
+                                    .size(res.config.chart_debug_note)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
-                                ui.text(format!("{}{}", above, fake))
-                                    .pos(0., res.config.chart_debug * 0.225)
+                                ui.text(format!("{}{}{}", speed, above, fake))
+                                    .pos(0., res.config.chart_debug_note * 0.225)
                                     .anchor(0.5, 1.)
-                                    .size(res.config.chart_debug)
+                                    .size(res.config.chart_debug_note)
                                     .color(Color::new(1., 1., 1., res.alpha))
                                     .draw();
                             });
