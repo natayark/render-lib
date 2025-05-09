@@ -120,6 +120,12 @@ enum State {
     Ending,
 }
 
+pub struct PauseRewind {
+    time: Option<f64>,
+    duration: Option<f64>,
+    dim: bool,
+}
+
 pub struct GameScene {
     should_exit: bool,
     next_scene: Option<NextScene>,
@@ -143,7 +149,7 @@ pub struct GameScene {
 
     state: State,
     pub last_update_time: f64,
-    pause_rewind: Option<(f64, f64)>,
+    pause_rewind: PauseRewind,
     pause_first_time: f32,
 
     pub bad_notes: Vec<BadNote>,
@@ -166,7 +172,11 @@ macro_rules! reset {
         $tm.reset();
         $self.last_update_time = $tm.now();
         $self.state = State::Starting;
-        $self.pause_rewind = None;
+        $self.pause_rewind = PauseRewind {
+            time: None,
+            duration: None,
+            dim: false
+        };
     }};
 }
 
@@ -419,7 +429,11 @@ impl GameScene {
 
             state: State::Starting,
             last_update_time: 0.,
-            pause_rewind: None,
+            pause_rewind: PauseRewind {
+                time: None,
+                duration: None,
+                dim: false
+            },
             pause_first_time: f32::NEG_INFINITY,
 
             bad_notes: Vec::new(),
@@ -483,7 +497,7 @@ impl GameScene {
         let pause_center = Point::new(-aspect_ratio + 0.0525 * scale_ratio, top + eps * 3.6454 - (1. - p) * 0.4 + pause_h / 2.);
         if res.config.interactive
             && !tm.paused()
-            && self.pause_rewind.is_none()
+            && self.pause_rewind.time.is_none()
             && Judge::get_touches().iter().any(|touch| {
                 touch.phase == TouchPhase::Started && {
                     let p = touch.position;
@@ -762,7 +776,11 @@ impl GameScene {
                     }
                     Some(0) => {
                         reset!(self, res, tm);
-                        self.pause_rewind = Some((tm.now(), 0.01));
+                        self.pause_rewind = PauseRewind {
+                            time: Some(tm.now()),
+                            duration: Some(0.1),
+                            dim: false,
+                        };
                         res.config.disable_audio = true;
                     }
                     Some(1) => {
@@ -785,7 +803,11 @@ impl GameScene {
                         tm.resume();
                         tm.seek_to(now - 1.);
                         self.music.seek_to(now as f32 - 1.);
-                        self.pause_rewind = Some((tm.now(), 1.0));
+                        self.pause_rewind = PauseRewind {
+                            time: Some(tm.now()),
+                            duration: Some(1.0),
+                            dim: true
+                        };
                         self.res.config.disable_audio = true;
                     }
                     _ => {}
@@ -903,13 +925,21 @@ impl GameScene {
                 }
             }
         }
-        if let Some((time, duration)) = self.pause_rewind {
+        if let PauseRewind {
+            time: Some(time),
+            duration: Some(duration),
+            dim
+        } = self.pause_rewind {
             let dt = tm.now() - time;
             let t = duration - dt;
             if t <= 0. {
-                self.pause_rewind = None;
+                self.pause_rewind = PauseRewind {
+                    time: None,
+                    duration: None,
+                    dim: false
+                };
                 self.res.config.disable_audio = false;
-            } else if t > 0.01 {
+            } else if dim {
                 let a = (duration - dt / duration).clamp(0.0, 1.0) * 0.75;
                 let h = 1. / self.res.aspect_ratio;
                 draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., a as f32));
@@ -1027,7 +1057,11 @@ impl Scene for GameScene {
 
     fn pause(&mut self, tm: &mut TimeManager) -> Result<()> {
         if !tm.paused() {
-            self.pause_rewind = None;
+            self.pause_rewind = PauseRewind {
+                time: None,
+                duration: None,
+                dim: false
+            };
             self.music.pause()?;
             tm.pause();
         }
@@ -1174,14 +1208,22 @@ impl Scene for GameScene {
                 if matches!(self.state, State::Playing) {
                     self.music.play()?;
                     tm.resume();
-                    self.pause_rewind = Some((tm.now(), 0.01));
+                    self.pause_rewind = PauseRewind {
+                        time: Some(tm.now()),
+                        duration: Some(0.1),
+                        dim: false
+                    };
                     res.config.disable_audio = true;
                 }
-            } else if matches!(self.state, State::Playing) { // State::BeforeMusic
+            } else if matches!(self.state, State::Playing) && !self.pause_rewind.dim { // State::BeforeMusic
                 if !self.music.paused() {
                     self.music.pause()?;
                 }
-                self.pause_rewind = None;
+                self.pause_rewind = PauseRewind {
+                    time: None,
+                    duration: None,
+                    dim: false
+                };
                 tm.pause();
             }
         }
@@ -1198,7 +1240,11 @@ impl Scene for GameScene {
                 self.music.seek_to(dst)?;
                 tm.seek_to(dst as f64);
 
-                self.pause_rewind = Some((tm.now(), 0.01));
+                self.pause_rewind = PauseRewind {
+                    time: Some(tm.now()),
+                    duration: Some(0.1),
+                    dim: false
+                };
                 res.config.disable_audio = true;
             }
             if is_key_pressed(KeyCode::Q) {
