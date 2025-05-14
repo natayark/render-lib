@@ -47,8 +47,8 @@ use lazy_static::lazy_static;
 const PAUSE_CLICK_INTERVAL: f32 = 0.7;
 
 lazy_static! {
-    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕ]"##).unwrap();
-    static ref RE_VALIDATE: Regex = Regex::new(r"^[CС][OՕΟ0][MΜ][BΒ8][OՕΟ0]$").unwrap();
+    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕⅭОмвＣＯＭＢ]"##).unwrap();
+    static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣ][OՕΟ0ОＯ][MΜмＭ][BΒ8вＢ][OՕΟ0ОＯ]$").unwrap();
 }
 
 #[cfg(feature = "closed")]
