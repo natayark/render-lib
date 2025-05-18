@@ -521,7 +521,7 @@ impl GameScene {
             ui.fill_circle(pause_center.x, pause_center.y, 0.05 * scale_ratio, Color::new(1., 1., 1., 0.5));
         }
 
-        let margin = 0.0425 * aspect_ratio;
+        let margin = 0.0425 * scale_ratio;
 
         let score = if res.config.roman {
             Self::int_to_roman(self.judge.score())
