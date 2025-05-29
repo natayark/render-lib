@@ -2,7 +2,7 @@ crate::tl_file!("ending");
 
 use super::{draw_background, game::{SimpleRecord, GameScene}, loading::UploadFn, NextScene, Scene};
 use crate::{
-    config::{self, Config},
+    config::Config,
     ext::{
         create_audio_manger, draw_illustration, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, draw_text_aligned_fix, SafeTexture, ScaleType,
         PARALLELOGRAM_SLOPE,

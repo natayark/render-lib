@@ -3,7 +3,6 @@ use crate::{
         Anim, AnimVector, BezierTween, BpmList, Chart, ChartExtra, ChartSettings, ClampedTween, CtrlObject, JudgeLine, JudgeLineCache, JudgeLineKind,
         Keyframe, Note, NoteKind, Object, StaticTween, Tweenable, UIElement,
     },
-    info::ChartFormat,
     judge::{HitSound, JudgeStatus},
     parse::process_lines,
 };

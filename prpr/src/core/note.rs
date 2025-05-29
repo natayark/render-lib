@@ -7,7 +7,6 @@ use crate::{
 
 
 use macroquad::prelude::*;
-use ::rand::{thread_rng, Rng};
 pub use crate::{
     judge::HitSound,
 };

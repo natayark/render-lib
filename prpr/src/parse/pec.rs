@@ -245,7 +245,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         '2' => NoteKind::Hold {
                             end_time: it.take_time(r)?,
                             end_height: 0.0,
-                            end_speed: 1.0,
+                            end_speed: 0.0,
                         },
                         '3' => NoteKind::Flick,
                         '4' => NoteKind::Drag,
