@@ -13,7 +13,7 @@ use super::{
 use crate::{
     bin::{BinaryReader, BinaryWriter},
     config::{Config, Mods},
-    core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, Vector},
+    core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, Vector, BUFFER_SIZE},
     ext::{ease_in_out_quartic, parse_time, screen_aspect, semi_white, RectExt, SafeTexture},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
@@ -398,7 +398,7 @@ impl GameScene {
         
         // Prepare extra sfx from chart.hitsounds
         chart.hitsounds.drain().for_each(|(name, clip)| {
-            if let Ok(clip) = res.create_sfx(clip) {
+            if let Ok(clip) = res.audio.create_sfx(clip, Some(BUFFER_SIZE)) {
                 res.extra_sfxs.insert(name, clip);
             }
         });

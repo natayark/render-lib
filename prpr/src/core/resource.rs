@@ -556,10 +556,6 @@ impl Resource {
         })
     }
 
-    pub fn create_sfx(&mut self, clip: AudioClip) -> Result<Sfx> {
-        self.audio.create_sfx(clip, Some(BUFFER_SIZE))
-    }
-
     pub fn emit_at_origin(&mut self, rotation: f32, color: Color) {
         if !self.config.particle {
             return;
