@@ -564,22 +564,17 @@ impl Judge {
                         && judge_time >= -LIMIT_GOOD
                         && judge_time <= LIMIT_BAD
                 };
-                let unattr_drag = chart.lines.iter_mut().any(|line| {
-                    line.notes.iter_mut().any(|note| drag_or_flick(note))
-                });
                 let line = &mut chart.lines[line_id];
                 if matches!(line.notes[id as usize].kind, NoteKind::Drag) {
                     //debug!("reject by drag");
                     continue;
                 }
                 if click {
-                    if unattr_drag && dt > LIMIT_PERFECT { // flag drag
-                        for line in &mut chart.lines {
-                            for note in &mut line.notes {
-                                if drag_or_flick(note) {
-                                    note.attr = true;
-                                    // debug!("flag drag");
-                                }
+                    if dt > LIMIT_PERFECT && line.notes.iter_mut().any(|note| drag_or_flick(note)) { // flag unattr drag
+                        for note in &mut line.notes {
+                            if drag_or_flick(note) {
+                                note.attr = true;
+                                // debug!("flag drag");
                             }
                         }
                         continue;
