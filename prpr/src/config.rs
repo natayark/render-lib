@@ -166,7 +166,7 @@ impl Default for Config {
             bg_blurriness: 80.,
         
 
-            max_particles: 600000,
+            max_particles: 20000,
 
             fade: 0.,
             alpha_tint: false,
