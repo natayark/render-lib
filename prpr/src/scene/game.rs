@@ -489,9 +489,10 @@ impl GameScene {
         let c = Color::new(1., 1., 1., self.res.alpha);
         let res = &mut self.res;
         let aspect_ratio = res.aspect_ratio;
-        let scale_ratio = 1.777777777777777;
+        let scale_ratio = 1.777777;
         let top = -1.;
         let eps = 2e-2;
+        let margin = 0.0425 * scale_ratio;
         let pause_w = 0.011 * scale_ratio;
         let pause_h = pause_w * 3.5;
         let pause_center = Point::new(-aspect_ratio + 0.0525 * scale_ratio, top + eps * 3.6454 - (1. - p) * 0.4 + pause_h / 2.);
@@ -520,8 +521,6 @@ impl GameScene {
         if tm.now() as f32 - self.pause_first_time <= PAUSE_CLICK_INTERVAL {
             ui.fill_circle(pause_center.x, pause_center.y, 0.05 * scale_ratio, Color::new(1., 1., 1., 0.5));
         }
-
-        let margin = 0.0425 * scale_ratio;
 
         let score = if res.config.roman {
             Self::int_to_roman(self.judge.score())
@@ -560,8 +559,8 @@ impl GameScene {
                     .draw();
             }
         });
-        self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), Some((pause_center.x - pause_w * 1.5, pause_center.y - pause_h * 0.5)), |ui, color| {
-            if res.config.render_ui_pause {
+        if res.config.render_ui_pause {
+            self.chart.with_element(ui, res, UIElement::Pause, Some((pause_center.x, pause_center.y)), Some((pause_center.x - pause_w * 1.5, pause_center.y - pause_h * 0.5)), |ui, color| {
                 let mut r = Rect::new(pause_center.x - pause_w / 2., pause_center.y - pause_h / 2., pause_w, pause_h);
                 //let ct = pause_center.coords;
                 let c = Color { a: color.a * c.a, ..color };
@@ -571,11 +570,11 @@ impl GameScene {
                 r.x += pause_w * 2.;
                 ui.fill_rect(r, c);
                 ;
+            });
         }
-        });
         let unit_h = ui.text("0").size(scale_ratio).measure().h;
         let combo_y = top + eps * 1.55 - (1. - p) * 0.4;
-        if self.judge.combo() >= 3 {
+        if self.judge.combo() >= 3 && res.config.render_ui_combo {
             let combo = if res.config.roman {
                 Self::int_to_roman(self.judge.combo())
             } else if res.config.chinese {
@@ -597,14 +596,12 @@ impl GameScene {
                 if text_width > max_width {
                     text_size *= max_width / text_width
                 }
-                if res.config.render_ui_combo {
-                    ui.text(&combo)
-                    .pos(0., top + eps * 1.30 - (1. - p) * 0.4)
-                    .anchor(0.5, 0.)
-                    .color(Color { a: color.a * c.a, ..color })
-                    .size(text_size)
-                    .draw();
-                }
+                ui.text(&combo)
+                .pos(0., top + eps * 1.30 - (1. - p) * 0.4)
+                .anchor(0.5, 0.)
+                .color(Color { a: color.a * c.a, ..color })
+                .size(text_size)
+                .draw();
                 text_btm
             });
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.01 + unit_h / 2. * 0.34)), Some((0., btm + 0.01 + unit_h / 2. * 0.34)), |ui, color| {
@@ -624,12 +621,11 @@ impl GameScene {
                     .color(Color { a: color.a * c.a, ..color })
                     .draw();
             });
-
         }
         let lf = -aspect_ratio + margin;
         let bt = -top - eps * 3.5;
-        self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
-            if res.config.render_ui_name {
+        if res.config.render_ui_name {
+            self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
                 let mut text_size = 0.505 * scale_ratio;
                 let mut text = ui.text(&res.info.name).size(text_size);
                 let max_width = 0.9 * aspect_ratio;
@@ -644,34 +640,27 @@ impl GameScene {
                     .size(text_size)
                     .color(Color { a: color.a * c.a, ..color })
                     .draw();
-            }
-        });
-        self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((-lf, -top - eps * 2.)), |ui, color| {
-            if res.config.render_ui_level {
+            });
+        }
+        if res.config.render_ui_level {
+            self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((-lf, -top - eps * 2.)), |ui, color| {
                 ui.text(&res.info.level)
                     .pos(-lf, bt + (1. - p) * 0.4)
                     .anchor(1., 1.)
                     .size(0.505 * scale_ratio)
                     .color(Color { a: color.a * c.a, ..color })
                     .draw();
-            }
-
-            /*let watermark = if res.config.watermark == "AntiLeave" { 
-                "".to_string() 
-            } else { 
-                format!("{}Phigros Recorder - Code by HLMC", res.config.watermark) 
-            };*/
-        });
-        { // self.chart.with_element(ui, res, UIElement::Null, None, |ui, color| ...)
-            let watermark = res.config.watermark.clone();
-            ui.text(&watermark)
+            });
+        }
+        if !res.config.watermark.is_empty() {
+            ui.text(&res.config.watermark)
                 .pos(0., -top * 0.98 + (1. - p) * 0.4)
                 .anchor(0.5, 1.)
                 .size(0.25 * scale_ratio)
                 .color(Color::new(1., 1., 1., 0.5 * c.a))
                 .draw();
             if res.config.chart_ratio <= 0.95 {
-                ui.text(&watermark)
+                ui.text(&res.config.watermark)
                 .pos(0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio)
                 .anchor(0.5, 1.)
                 .size(0.25 * scale_ratio / res.config.chart_ratio)
@@ -682,8 +671,8 @@ impl GameScene {
         let hw = 0.003;
         let height = eps * 1.0;
         let dest = (aspect_ratio * 2. * res.time / res.track_length).max(0.).min(aspect_ratio * 2.);
-        self.chart.with_element(ui, res, UIElement::Bar, Some((-aspect_ratio, top + height / 2.)), Some((-aspect_ratio, top + height / 2.)), |ui, color| {
-            if res.config.render_ui_bar {
+        if res.config.render_ui_bar {
+            self.chart.with_element(ui, res, UIElement::Bar, Some((-aspect_ratio, top + height / 2.)), Some((-aspect_ratio, top + height / 2.)), |ui, color| {
                 //let ct = Vector::new(0., top + height / 2.);
                 ui.fill_rect(
                     Rect::new(-aspect_ratio, top, dest, height),
@@ -691,8 +680,8 @@ impl GameScene {
                     Color::new(0.565, 0.565, 0.565, color.a * c.a),
                 );
                 ui.fill_rect(Rect::new(-aspect_ratio + dest - hw, top, hw * 2., height), Color::new(1., 1., 1., color.a * c.a));
-            }
-        });
+            });
+        }
         Ok(())
     }
 
