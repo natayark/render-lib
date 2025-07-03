@@ -18,7 +18,7 @@ static CLIENT: Lazy<ArcSwap<reqwest::Client>> = Lazy::new(|| ArcSwap::from_point
 pub struct Client;
 
 // const API_URL: &str = "http://localhost:2924";
-const API_URL: &str = "https://api.phira.cn";
+const API_URL: &str = "https://phira.5wyxi.com";
 
 pub fn basic_client_builder() -> ClientBuilder {
     let mut builder = reqwest::ClientBuilder::new();
