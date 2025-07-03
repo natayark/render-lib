@@ -416,7 +416,7 @@ pub struct Resource {
     pub sfx_drag: Sfx,
     pub sfx_flick: Sfx,
     pub extra_sfxs: SfxMap,
-    pub frame_times: VecDeque<(f64, f64)>, // (time, frame_time)
+    pub frame_times: VecDeque<f64>, // frame interval time
 
     pub chart_target: Option<MSRenderTarget>,
     pub no_effect: bool,
@@ -501,7 +501,7 @@ impl Resource {
         let sfx_click = audio.create_sfx(res_pack.sfx_click.clone(), buffer_size)?;
         let sfx_drag = audio.create_sfx(res_pack.sfx_drag.clone(), buffer_size)?;
         let sfx_flick = audio.create_sfx(res_pack.sfx_flick.clone(), buffer_size)?;
-        let frame_times: VecDeque<(f64, f64)> = VecDeque::new();
+        let frame_times: VecDeque<f64> = VecDeque::new();
 
         let aspect_ratio = config.aspect_ratio.unwrap_or(info.aspect_ratio);
         let note_width = config.note_scale * NOTE_WIDTH_RATIO_BASE;

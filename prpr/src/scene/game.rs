@@ -1163,8 +1163,7 @@ impl Scene for GameScene {
             }
         };
 
-        let total_duration: f64 = self.res.frame_times.iter().map(|(_, dur)| dur).sum();
-        let avg_frame_time = total_duration / self.res.frame_times.len() as f64;
+        let avg_frame_time = (1.0 / self.res.frame_times.len() as f64).min(0.25);
 
         let time = if self.res.config.adjust_time {
             (time - offset - self.res.audio.estimate_latency().max(0.) - avg_frame_time as f32).max(0.)
@@ -1304,7 +1303,6 @@ impl Scene for GameScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
         let res = &mut self.res;
-        let frame_start = tm.real_time();
 
         let time = tm.now() as f32;
         let p = match self.state {
@@ -1497,11 +1495,10 @@ impl Scene for GameScene {
             self.gl.flush();
         }
 
-        let frame_end = tm.real_time();
-        let frame_duration = frame_end - frame_start;
-        self.res.frame_times.push_back((frame_end, frame_duration));
+        let frame_time = tm.real_time();
+        self.res.frame_times.push_back(frame_time);
 
-        while self.res.frame_times.front().is_some_and(|it| frame_end - it.0 > 1.0) {
+        while self.res.frame_times.front().is_some_and(|it| frame_time - it > 1.0) {
             self.res.frame_times.pop_front();
         }
         
