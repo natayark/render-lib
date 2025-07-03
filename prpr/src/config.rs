@@ -137,7 +137,7 @@ impl Default for Config {
             speed: 1.0,
             touch_debug: false,
             volume_music: 1.0,
-            volume_sfx: 1.0,
+            volume_sfx: 0.0,
             volume_bgm: 1.0,
             watermark: "".to_string(),
             roman: false,
