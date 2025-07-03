@@ -1162,7 +1162,15 @@ impl Scene for GameScene {
                 self.res.track_length
             }
         };
-        let time = (time - offset).max(0.);
+
+        let total_duration: f64 = self.res.frame_times.iter().map(|(_, dur)| dur).sum();
+        let avg_frame_time = total_duration / self.res.frame_times.len() as f64;
+
+        let time = if self.res.config.adjust_time {
+            (time - offset - self.res.audio.estimate_latency().max(0.) - avg_frame_time as f32).max(0.)
+        } else {
+            (time - offset).max(0.)
+        };
         self.res.time = time;
         if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
             self.gl.quad_gl.viewport(self.res.camera.viewport);
@@ -1296,6 +1304,7 @@ impl Scene for GameScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
         let res = &mut self.res;
+        let frame_start = tm.real_time();
 
         let time = tm.now() as f32;
         let p = match self.state {
@@ -1487,6 +1496,15 @@ impl Scene for GameScene {
         } else {
             self.gl.flush();
         }
+
+        let frame_end = tm.real_time();
+        let frame_duration = frame_end - frame_start;
+        self.res.frame_times.push_back((frame_end, frame_duration));
+
+        while self.res.frame_times.front().is_some_and(|it| frame_end - it.0 > 1.0) {
+            self.res.frame_times.pop_front();
+        }
+        
         Ok(())
     }
 

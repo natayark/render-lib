@@ -11,7 +11,7 @@ use macroquad::prelude::*;
 use miniquad::{gl::{GLuint, GL_LINEAR}, Texture, TextureWrap};
 use sasa::{AudioClip, AudioManager, Sfx};
 use serde::Deserialize;
-use std::{cell::RefCell, collections::{BTreeMap, HashMap}, ops::DerefMut, path::Path, sync::atomic::AtomicU32};
+use std::{cell::RefCell, collections::{BTreeMap, HashMap, VecDeque}, ops::DerefMut, path::Path, sync::atomic::AtomicU32};
 
 pub const MAX_SIZE: usize = 64; // needs tweaking
 pub static DPI_VALUE: AtomicU32 = AtomicU32::new(250);
@@ -416,6 +416,7 @@ pub struct Resource {
     pub sfx_drag: Sfx,
     pub sfx_flick: Sfx,
     pub extra_sfxs: SfxMap,
+    pub frame_times: VecDeque<(f64, f64)>, // (time, frame_time)
 
     pub chart_target: Option<MSRenderTarget>,
     pub no_effect: bool,
@@ -500,6 +501,7 @@ impl Resource {
         let sfx_click = audio.create_sfx(res_pack.sfx_click.clone(), buffer_size)?;
         let sfx_drag = audio.create_sfx(res_pack.sfx_drag.clone(), buffer_size)?;
         let sfx_flick = audio.create_sfx(res_pack.sfx_flick.clone(), buffer_size)?;
+        let frame_times: VecDeque<(f64, f64)> = VecDeque::new();
 
         let aspect_ratio = config.aspect_ratio.unwrap_or(info.aspect_ratio);
         let note_width = config.note_scale * NOTE_WIDTH_RATIO_BASE;
@@ -546,6 +548,7 @@ impl Resource {
             sfx_drag,
             sfx_flick,
             extra_sfxs: SfxMap::new(),
+            frame_times,
 
             chart_target: None,
             no_effect,
