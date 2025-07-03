@@ -1160,8 +1160,7 @@ fn build_audio() -> AudioManager {
     {
         use sasa::backend::oboe::*;
         AudioManager::new(OboeBackend::new(OboeSettings {
-            //buffer_size: config.audio_buffer_size,
-            performance_mode: PerformanceMode::LowLatency,
+            performance_mode: PerformanceMode::PowerSaving,
             usage: Usage::Game,
             ..Default::default()
         }))
@@ -1171,8 +1170,8 @@ fn build_audio() -> AudioManager {
     {
         use sasa::backend::cpal::*;
         AudioManager::new(CpalBackend::new(CpalSettings::default()))
-        //.unwrap()
-        .expect("Failed to play sound")
+        .unwrap()
+        //.expect("Failed to play sound")
     }
 }
 
