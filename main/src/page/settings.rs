@@ -675,9 +675,6 @@ impl DebugList {
         }
         if self.combo.touch(touch, t) {
             request_input("combo", &config.combo, tl!("item-combo"));
-            if GameScene::validate_value(&config.combo) {
-                config.combo = "AUTOPLAY".to_string();
-            }
             return Ok(Some(true));
         }
         if self.roman_btn.touch(touch, t) {
@@ -716,8 +713,8 @@ impl DebugList {
         }
         let rr = right_rect(w);
 
-        let data = get_data();
-        let config = &data.config;
+        let data = get_data_mut();
+        let config = &mut data.config;
         item! {
             render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
             self.chart_debug_line_slider.render(ui, rr, t,c, config.chart_debug_line, format!("{:.2}", config.chart_debug_line));
@@ -740,6 +737,9 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-combo"), None);
+            if GameScene::validate_value(&config.combo) {
+                config.combo = "AUTOPLAY".to_string();
+            }
             self.combo.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
         }
         item! {
