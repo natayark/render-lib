@@ -13,6 +13,7 @@ use macroquad::prelude::*;
 use miniquad::{gl::GLenum, BlendFactor, BlendState, BlendValue, CompareFunc, Equation, PrimitiveType, StencilFaceState, StencilOp, StencilState};
 use once_cell::sync::Lazy;
 use ordered_float::{Float, NotNan};
+use regex::Regex;
 use sasa::AudioManager;
 use serde::Deserialize;
 use std::{
@@ -23,6 +24,7 @@ use std::{
     task::{Poll, RawWaker, RawWakerVTable, Waker},
 };
 use tracing::{debug, info_span};
+use lazy_static::lazy_static;
 
 pub type LocalTask<R> = Option<Pin<Box<dyn Future<Output = R>>>>;
 
@@ -612,6 +614,20 @@ pub fn ease_in_out_quintic(t: f32) -> f32 {
         0.5 * t * t * t * t * t + 1.0
     }
 }
+
+lazy_static! {
+    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕⅭОмвＣＯＭＢ]"##).unwrap();
+    static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣ][OՕΟ0ОＯ][MΜмＭ][BΒ8вＢ][OՕΟ0ОＯ]$").unwrap();
+}
+
+    pub fn validate_combo(value: &String) -> bool {
+        if value == "AUTOPLAY" || value == "RECORD" {
+            return false;
+        }
+
+        let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
+        return RE_VALIDATE.is_match(&filtered_value);
+    }
 
 
 mod shader {

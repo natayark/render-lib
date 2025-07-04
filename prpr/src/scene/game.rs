@@ -14,7 +14,7 @@ use crate::{
     bin::{BinaryReader, BinaryWriter},
     config::{Config, Mods},
     core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, Vector, BUFFER_SIZE},
-    ext::{ease_in_out_quartic, parse_time, screen_aspect, semi_white, RectExt, SafeTexture},
+    ext::{ease_in_out_quartic, parse_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
     judge::Judge,
@@ -42,14 +42,8 @@ use std::{
     time::Duration,
 };
 use tracing::{debug, warn};
-use lazy_static::lazy_static;
 
 const PAUSE_CLICK_INTERVAL: f32 = 0.7;
-
-lazy_static! {
-    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕⅭОмвＣＯＭＢ]"##).unwrap();
-    static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣ][OՕΟ0ОＯ][MΜмＭ][BΒ8вＢ][OՕΟ0ОＯ]$").unwrap();
-}
 
 #[cfg(feature = "closed")]
 mod inner;
@@ -460,15 +454,6 @@ impl GameScene {
         (screen_width() / screen_height()) / self.res.aspect_ratio
     }
 
-    pub fn validate_value(value: &String) -> bool {
-        if value == "AUTOPLAY" || value == "RECORD" {
-            return false;
-        }
-
-        let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
-        return RE_VALIDATE.is_match(&filtered_value);
-    }
-
     fn ui(&mut self, ui: &mut Ui, tm: &mut TimeManager) -> Result<()> {
         let time = tm.now() as f32;
         let p = match self.state {
@@ -605,7 +590,7 @@ impl GameScene {
                 text_btm
             });
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.01 + unit_h / 2. * 0.34)), Some((0., btm + 0.01 + unit_h / 2. * 0.34)), |ui, color| {
-                if Self::validate_value(&res.config.combo) || res.config.combo.len() > 50 {
+                if validate_combo(&res.config.combo) || res.config.combo.len() > 50 {
                     ui.text("AUTOPLAY")
                     .pos(0., btm + 0.01)
                     .anchor(0.5, 0.)

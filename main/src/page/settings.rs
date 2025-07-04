@@ -5,9 +5,9 @@ use crate::{get_data, get_data_mut, popup::ChooseButton, save_data, scene::BGM_V
 use anyhow::Result;
 use macroquad::prelude::*;
 use prpr::{
-    ext::{poll_future, semi_black, LocalTask, RectExt, SafeTexture, ScaleType},
+    ext::{poll_future, semi_black, validate_combo, LocalTask, RectExt, SafeTexture, ScaleType},
     l10n::{LanguageIdentifier, LANG_IDENTS, LANG_NAMES},
-    scene::{request_input, return_input, show_error, take_input, GameScene},
+    scene::{request_input, return_input, show_error, take_input},
     ui::{DRectButton, Scroll, Slider, Ui},
 };
 use std::{borrow::Cow, net::ToSocketAddrs, sync::atomic::Ordering};
@@ -737,7 +737,7 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-combo"), None);
-            if GameScene::validate_value(&config.combo) {
+            if validate_combo(&config.combo) {
                 config.combo = "AUTOPLAY".to_string();
             }
             self.combo.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
