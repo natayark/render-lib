@@ -48,6 +48,7 @@ item-roman = 罗马模式
 item-chinese = 中文模式
 
 load-cali-failed = 加载音频失败
+not-combo = 不能是 COMBO
 
 about-content =
   Phi Recorder v{ $version }

@@ -7,7 +7,7 @@ use macroquad::prelude::*;
 use prpr::{
     ext::{poll_future, semi_black, validate_combo, LocalTask, RectExt, SafeTexture, ScaleType},
     l10n::{LanguageIdentifier, LANG_IDENTS, LANG_NAMES},
-    scene::{request_input, return_input, show_error, take_input},
+    scene::{request_input, return_input, show_error, show_message, take_input},
     ui::{DRectButton, Scroll, Slider, Ui},
 };
 use std::{borrow::Cow, net::ToSocketAddrs, sync::atomic::Ordering};
@@ -698,6 +698,18 @@ impl DebugList {
                 return_input(id, text);
             }
         }
+        if let Some((id, text)) = take_input() {
+            if id == "combo" {
+                if validate_combo(&text) {
+                    show_message(tl!("not-combo")).error();
+                    return Ok(false);
+                }
+                data.config.combo = text;
+                return Ok(true);
+            } else {
+                return_input(id, text);
+            }
+        }
         Ok(false)
     }
 
@@ -713,8 +725,8 @@ impl DebugList {
         }
         let rr = right_rect(w);
 
-        let data = get_data_mut();
-        let config = &mut data.config;
+        let data = get_data();
+        let config = &data.config;
         item! {
             render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
             self.chart_debug_line_slider.render(ui, rr, t,c, config.chart_debug_line, format!("{:.2}", config.chart_debug_line));
@@ -737,9 +749,6 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-combo"), None);
-            if validate_combo(&config.combo) {
-                config.combo = "AUTOPLAY".to_string();
-            }
             self.combo.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
         }
         item! {
