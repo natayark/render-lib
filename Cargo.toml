@@ -1,10 +1,10 @@
 [workspace]
 members = [
-	"prpr",
+	"phire",
 	"prpr-avc",
 	"prpr-pbc",
-	"main",
-	"main-window",
+	"phire-ui",
+	"phire-main",
 ]
 resolver = "2"
 

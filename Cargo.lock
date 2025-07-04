@@ -1843,62 +1843,6 @@ version = "0.1.7"
 source = "git+https://github.com/2278535805/prpr-macroquad#37c247d662cd015b90ffe08f0ca80c01c72e702a"
 
 [[package]]
-name = "main"
-version = "0.4.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "base64 0.20.0",
- "bitflags 2.8.0",
- "bytes",
- "cacache",
- "chrono",
- "dotenv-build",
- "futures-util",
- "hex",
- "image",
- "logos",
- "lru",
- "lyon",
- "macroquad",
- "md5",
- "nalgebra",
- "ndk-context",
- "ndk-sys 0.2.2",
- "objc",
- "objc-foundation",
- "once_cell",
- "openssl",
- "phira-mp-client",
- "phira-mp-common",
- "pollster 0.2.5",
- "prpr",
- "rand",
- "regex",
- "reqwest",
- "sasa",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "smallvec",
- "tap",
- "tokio",
- "tracing",
- "uuid",
- "walkdir",
- "zip",
- "zstd 0.12.4",
-]
-
-[[package]]
-name = "main-window"
-version = "0.4.0"
-dependencies = [
- "main",
-]
-
-[[package]]
 name = "malloc_buf"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2560,6 +2504,131 @@ dependencies = [
 ]
 
 [[package]]
+name = "phire"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.21.7",
+ "bitflags 2.8.0",
+ "block",
+ "byteorder",
+ "cfg-if",
+ "chardetng",
+ "chinese-number",
+ "chrono",
+ "color-thief",
+ "colored",
+ "concat-string",
+ "csv",
+ "fastblur",
+ "fluent",
+ "fluent-syntax",
+ "glyph_brush",
+ "hex",
+ "hmac",
+ "image",
+ "intl-memoizer",
+ "js-sys",
+ "lazy_static",
+ "libc",
+ "lru",
+ "lyon",
+ "macroquad",
+ "miniquad",
+ "miniz_oxide 0.7.4",
+ "nalgebra",
+ "ndk-context",
+ "obfstr",
+ "objc",
+ "objc-foundation",
+ "objc_id",
+ "once_cell",
+ "open",
+ "ordered-float 3.9.2",
+ "phf",
+ "prpr-avc",
+ "rand",
+ "rayon",
+ "regex",
+ "rfd",
+ "sasa",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "subtle",
+ "symphonia",
+ "sys-locale",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "unic-langid",
+ "walkdir",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "zip",
+]
+
+[[package]]
+name = "phire-main"
+version = "0.4.0"
+dependencies = [
+ "phire-ui",
+]
+
+[[package]]
+name = "phire-ui"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "base64 0.20.0",
+ "bitflags 2.8.0",
+ "bytes",
+ "cacache",
+ "chrono",
+ "dotenv-build",
+ "futures-util",
+ "hex",
+ "image",
+ "logos",
+ "lru",
+ "lyon",
+ "macroquad",
+ "md5",
+ "nalgebra",
+ "ndk-context",
+ "ndk-sys 0.2.2",
+ "objc",
+ "objc-foundation",
+ "once_cell",
+ "openssl",
+ "phira-mp-client",
+ "phira-mp-common",
+ "phire",
+ "pollster 0.2.5",
+ "rand",
+ "regex",
+ "reqwest",
+ "sasa",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "smallvec",
+ "tap",
+ "tokio",
+ "tracing",
+ "uuid",
+ "walkdir",
+ "zip",
+ "zstd 0.12.4",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2642,75 +2711,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "prpr"
-version = "0.4.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.21.7",
- "bitflags 2.8.0",
- "block",
- "byteorder",
- "cfg-if",
- "chardetng",
- "chinese-number",
- "chrono",
- "color-thief",
- "colored",
- "concat-string",
- "csv",
- "fastblur",
- "fluent",
- "fluent-syntax",
- "glyph_brush",
- "hex",
- "hmac",
- "image",
- "intl-memoizer",
- "js-sys",
- "lazy_static",
- "libc",
- "lru",
- "lyon",
- "macroquad",
- "miniquad",
- "miniz_oxide 0.7.4",
- "nalgebra",
- "ndk-context",
- "obfstr",
- "objc",
- "objc-foundation",
- "objc_id",
- "once_cell",
- "open",
- "ordered-float 3.9.2",
- "phf",
- "prpr-avc",
- "rand",
- "rayon",
- "regex",
- "rfd",
- "sasa",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "subtle",
- "symphonia",
- "sys-locale",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "unic-langid",
- "walkdir",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "zip",
-]
-
-[[package]]
 name = "prpr-avc"
 version = "0.1.0"
 dependencies = [
@@ -2724,8 +2724,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "phire",
  "pollster 0.3.0",
- "prpr",
 ]
 
 [[package]]
