@@ -35,6 +35,7 @@ use std::sync::{mpsc, Mutex};
 use tracing::{error, info};
 
 static MESSAGES_TX: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
+static MESSAGES_TX_ONLY_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
 static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
@@ -165,6 +166,12 @@ async fn the_main() -> Result<()> {
         rx
     };
 
+    let rx_only_pause = {
+        let (tx, rx) = mpsc::channel();
+        *MESSAGES_TX_ONLY_PAUSE.lock().unwrap() = Some(tx);
+        rx
+    };
+
     let aa_rx = {
         let (tx, rx) = mpsc::channel();
         *AA_TX.lock().unwrap() = Some(tx);
@@ -200,6 +207,11 @@ async fn the_main() -> Result<()> {
                     main.pause()?;
                 } else {
                     main.resume()?;
+                }
+            }
+            if let Ok(paused) = rx_only_pause.try_recv() {
+                if paused {
+                    main.only_pause()?;
                 }
             }
             Ok(())
@@ -309,6 +321,15 @@ pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnPause(_: *mut std::
     }
 }
 
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnlyPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+    anti_addiction_action("leaveGame", None);
+    if let Some(tx) = MESSAGES_TX_ONLY_PAUSE.lock().unwrap().as_mut() {
+        let _ = tx.send(true);
+    }
+}
+
 #[cfg(all(target_os = "android", not(feature = "closed")))]
 #[no_mangle]
 pub extern "C" fn Java_quad_1native_QuadNative_preprocessInput(
@@ -328,6 +349,15 @@ pub extern "C" fn Java_quad_1native_QuadNative_preprocessInput(
 pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("enterGame", None);
     if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
+        let _ = tx.send(false);
+    }
+}
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnlyResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+    anti_addiction_action("leaveGame", None);
+    if let Some(tx) = MESSAGES_TX_ONLY_PAUSE.lock().unwrap().as_mut() {
         let _ = tx.send(false);
     }
 }

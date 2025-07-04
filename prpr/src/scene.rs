@@ -517,6 +517,10 @@ impl Main {
         self.scenes.last_mut().unwrap().pause(&mut self.tm)
     }
 
+    pub fn only_pause(&mut self) -> Result<()> {
+        self.scenes.last_mut().unwrap().pause(&mut self.tm)
+    }
+
     pub fn resume(&mut self) -> Result<()> {
         self.paused = false;
         self.scenes.last_mut().unwrap().resume(&mut self.tm)
