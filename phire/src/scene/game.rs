@@ -487,7 +487,7 @@ impl GameScene {
             && Judge::get_touches(1.0).iter().any(|touch| {
                 touch.phase == TouchPhase::Started && {
                     let p = touch.position;
-                    let p = Point::new(p.x * aspect_ratio, p.y * aspect_ratio);
+                    let p = Point::new(p.x * aspect_ratio / res.config.chart_ratio, p.y * aspect_ratio / res.config.chart_ratio);
                     (pause_center - p).norm() < 0.05
                 }
             })
