@@ -120,14 +120,16 @@ pub static INPUT_TEXT: Mutex<(Option<String>, Option<String>)> = Mutex::new((Non
 pub static CHOSEN_FILE: Mutex<(Option<String>, Option<String>)> = Mutex::new((None, None));
 
 #[inline]
-pub fn request_input(id: impl Into<String>, text: &str) {
-    request_input_full(id, text, false);
+pub fn request_input(id: impl Into<String>, text: &str, title: impl Into<String>) {
+    let title = title.into();
+    request_input_full(id, text, false, title.as_str(), "");
 }
 #[inline]
-pub fn request_password(id: impl Into<String>, text: &str) {
-    request_input_full(id, text, true);
+pub fn request_password(id: impl Into<String>, text: &str, title: impl Into<String>) {
+    let title = title.into();
+    request_input_full(id, text, true, title.as_str(), "");
 }
-pub fn request_input_full(id: impl Into<String>, #[allow(unused_variables)] text: &str, #[allow(unused_variables)] is_password: bool) {
+pub fn request_input_full(id: impl Into<String>, #[allow(unused_variables)] text: &str, #[allow(unused_variables)] is_password: bool, #[allow(unused_variables)] title: &str, #[allow(unused_variables)] hint: &str) {
     *INPUT_TEXT.lock().unwrap() = (Some(id.into()), None);
     cfg_if! {
         if #[cfg(target_os = "android")] {
@@ -135,9 +137,12 @@ pub fn request_input_full(id: impl Into<String>, #[allow(unused_variables)] text
                 let env = miniquad::native::attach_jni_env();
                 let ctx = ndk_context::android_context().context();
                 let class = (**env).GetObjectClass.unwrap()(env, ctx);
-                let method = (**env).GetMethodID.unwrap()(env, class, b"inputText\0".as_ptr() as _, b"(Ljava/lang/String;)V\0".as_ptr() as _);
-                let text = std::ffi::CString::new(text.to_owned()).unwrap();
-                (**env).CallVoidMethod.unwrap()(env, ctx, method, (**env).NewStringUTF.unwrap()(env, text.as_ptr()));
+                let method = (**env).GetMethodID.unwrap()(env, class, b"inputText\0".as_ptr() as _, b"(Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V\0".as_ptr() as _);
+
+                let jtext = (**env).NewStringUTF.unwrap()(env, std::ffi::CString::new(text.to_owned()).unwrap().as_ptr());
+                let jtitle = (**env).NewStringUTF.unwrap()(env, std::ffi::CString::new(title.to_owned()).unwrap().as_ptr());
+                let jhint = (**env).NewStringUTF.unwrap()(env, std::ffi::CString::new(hint.to_owned()).unwrap().as_ptr());
+                (**env).CallVoidMethod.unwrap()(env, ctx, method, jtext, is_password as std::ffi::c_uint, jtitle, jhint);
             }
         } else if #[cfg(target_os = "ios")] {
             unsafe {

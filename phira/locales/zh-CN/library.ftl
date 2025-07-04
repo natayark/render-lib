@@ -11,6 +11,8 @@ failed-to-load-online = 加载在线谱面失败
 
 import = 导入
 
+search = 搜索
+
 offline-mode = 离线模式下无法加载在线谱面
 
 must-login = 登录才可查看在线谱面

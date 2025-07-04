@@ -11,6 +11,8 @@ failed-to-load-online = 載入在線譜面失敗
 
 import = 匯入
 
+search = 搜尋
+
 offline-mode = 離線模式下無法載入在線譜面
 
 must-login = 登入才可查看在線譜面

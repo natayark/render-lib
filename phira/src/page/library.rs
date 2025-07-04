@@ -336,7 +336,7 @@ impl Page for LibraryPage {
                     return Ok(true);
                 }
                 if !self.search_clr_btn.rect.contains(touch.position) && self.search_btn.touch(touch, t) {
-                    request_input("search", &self.search_str);
+                    request_input("search", &self.search_str, tl!("search"));
                     return Ok(true);
                 }
                 if self.order_btn.touch(touch, t) {

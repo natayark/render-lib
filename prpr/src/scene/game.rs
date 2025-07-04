@@ -1290,11 +1290,11 @@ impl Scene for GameScene {
                 ..touch.clone()
             };
             if self.exercise_btns.0.touch(&touch) {
-                request_input("exercise_start", &fmt_time(self.exercise_range.start));
+                request_input("exercise_start", &fmt_time(self.exercise_range.start), tl!("ex-time-start"));
                 return Ok(true);
             }
             if self.exercise_btns.1.touch(&touch) {
-                request_input("exercise_end", &fmt_time(self.exercise_range.end));
+                request_input("exercise_end", &fmt_time(self.exercise_range.end), tl!("ex-time-end"));
                 return Ok(true);
             }
         }

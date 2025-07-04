@@ -11,4 +11,6 @@ failed-to-load-online = Échec du chargement des partitions en ligne
 
 import = Importer
 
+search = Rechercher
+
 offline-mode = Impossible de charger les partitions en ligne en mode hors-ligne

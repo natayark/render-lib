@@ -12,4 +12,6 @@ failed-to-load-online = ไม่สามารถโหลดได้
 
 import = เพิ่ม
 
+search = ค้นหา
+
 offline-mode = ไม่สามารถใช้งานในโหมด offline ได้

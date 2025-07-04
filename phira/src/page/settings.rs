@@ -327,7 +327,7 @@ impl GeneralList {
             return Ok(Some(true));
         }
         if self.mp_addr_btn.touch(touch, t) {
-            request_input("mp_addr", &config.mp_address);
+            request_input("mp_addr", &config.mp_address, tl!("item-mp-addr"));
             return Ok(Some(true));
         }
         if self.lowq_btn.touch(touch, t) {
@@ -673,7 +673,7 @@ impl DebugList {
             return Ok(Some(true));
         }
         if self.watermark.touch(touch, t) {
-            request_input("watermark", &config.watermark);
+            request_input("watermark", &config.watermark, tl!("item-watermark"));
             return Ok(Some(true));
         }
         if self.roman_btn.touch(touch, t) {

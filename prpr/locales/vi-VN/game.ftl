@@ -9,3 +9,5 @@ speed = Tốc độ
 ex-time-out-of-range = Thời gian ngoài tầm cho phép
 ex-invalid-format = Định dạng không hợp lệ
 ex-time-set = Đã thay thời gian
+ex-time-start = Đã bắt đầu
+ex-time-end = Đã kết thúc

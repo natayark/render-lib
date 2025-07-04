@@ -9,3 +9,5 @@ speed = 速度
 ex-time-out-of-range = 时间不在范围内
 ex-invalid-format = 格式有误
 ex-time-set = 设置成功
+ex-time-start = 开始时间
+ex-time-end = 结束时间

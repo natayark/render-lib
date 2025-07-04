@@ -881,10 +881,10 @@ impl<'a> Ui<'a> {
     }
 
     pub fn input<'b>(&mut self, label: impl Into<String>, value: &mut String, params: impl Into<InputParams<'b>>) -> Rect {
-        let label = label.into();
+        let label = label.into().to_string();
         let params = params.into();
         let id = format!("input#{label}");
-        let r = self.text(label).anchor(1., 0.).size(0.47).draw();
+        let r = self.text(label.clone()).anchor(1., 0.).size(0.47).draw();
         let lf = r.x;
         let r = Rect::new(0.02, r.y - 0.01, params.length, r.h + 0.02);
         if if params.password {
@@ -892,7 +892,7 @@ impl<'a> Ui<'a> {
         } else {
             self.button(&id, r, value.as_str())
         } {
-            request_input_full(&id, value, params.password);
+            request_input_full(&id, value, params.password, label.as_str(), "");
         }
         if let Some((its_id, text)) = take_input() {
             if its_id == id {

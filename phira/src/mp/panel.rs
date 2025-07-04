@@ -303,7 +303,7 @@ impl MPPanel {
             }
             if let Some(state) = client.blocking_state() {
                 if self.chat_btn.touch(touch, t) {
-                    request_input("chat", &self.chat_text);
+                    request_input("chat", &self.chat_text, mtl!("chat-placeholder"));
                     return true;
                 }
                 if self.chat_send_btn.touch(touch, t) {
@@ -363,11 +363,11 @@ impl MPPanel {
                 }
             } else {
                 if self.create_room_btn.touch(touch, t) {
-                    request_input("room_id", "");
+                    request_input("room_id", "", "");
                     return true;
                 }
                 if self.join_room_btn.touch(touch, t) {
-                    request_input("join_room", "");
+                    request_input("join_room", "", mtl!("join-room"));
                     return true;
                 }
                 if self.disconnect_btn.touch(touch, t) {
