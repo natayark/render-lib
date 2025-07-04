@@ -914,7 +914,7 @@ impl GameScene {
                 };
                 self.res.config.disable_audio = false;
             } else if dim {
-                let a = (duration - dt / duration).clamp(0.0, 1.0) * 0.75;
+                let a = (duration - dt / duration).clamp(0.0, 1.0) * 0.6;
                 let h = 1. / self.res.aspect_ratio;
                 draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., a as f32));
                 ui.text((t.ceil() as i32).to_string()).anchor(0.5, 0.5).size(1.).color(c).draw();
