@@ -460,7 +460,7 @@ impl GameScene {
         (screen_width() / screen_height()) / self.res.aspect_ratio
     }
 
-    fn validate_value(value: &String) -> bool {
+    pub fn validate_value(value: &String) -> bool {
         if value == "AUTOPLAY" || value == "RECORD" {
             return false;
         }

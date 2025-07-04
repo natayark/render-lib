@@ -7,7 +7,7 @@ use macroquad::prelude::*;
 use prpr::{
     ext::{poll_future, semi_black, LocalTask, RectExt, SafeTexture, ScaleType},
     l10n::{LanguageIdentifier, LANG_IDENTS, LANG_NAMES},
-    scene::{request_input, return_input, show_error, take_input},
+    scene::{request_input, return_input, show_error, take_input, GameScene},
     ui::{DRectButton, Scroll, Slider, Ui},
 };
 use std::{borrow::Cow, net::ToSocketAddrs, sync::atomic::Ordering};
@@ -627,9 +627,9 @@ struct DebugList {
     chart_debug_line_slider: Slider,
     chart_debug_note_slider: Slider,
     touch_debug_btn: DRectButton,
-    ratio_slider: Slider,
     all_good_btn: DRectButton,
     watermark: DRectButton,
+    combo: DRectButton,
     roman_btn: DRectButton,
     chinese_btn: DRectButton,
 }
@@ -640,9 +640,9 @@ impl DebugList {
             chart_debug_line_slider: Slider::new(0.0..1.0, 0.05),
             chart_debug_note_slider: Slider::new(0.0..1.0, 0.05),
             touch_debug_btn: DRectButton::new(),
-            ratio_slider: Slider::new(0.05..1.0, 0.05),
             all_good_btn: DRectButton::new(),
             watermark: DRectButton::new(),
+            combo: DRectButton::new(),
             roman_btn: DRectButton::new(),
             chinese_btn: DRectButton::new(),
         }
@@ -665,15 +665,19 @@ impl DebugList {
             config.touch_debug ^= true;
             return Ok(Some(true));
         }
-        if let wt @ Some(_) = self.ratio_slider.touch(touch, t, &mut config.chart_ratio) {
-            return Ok(wt);
-        }
         if self.all_good_btn.touch(touch, t) {
             config.all_good ^= true;
             return Ok(Some(true));
         }
         if self.watermark.touch(touch, t) {
             request_input("watermark", &config.watermark, tl!("item-watermark"));
+            return Ok(Some(true));
+        }
+        if self.combo.touch(touch, t) {
+            request_input("combo", &config.combo, tl!("item-combo"));
+            if GameScene::validate_value(&config.combo) {
+                config.combo = "AUTOPLAY".to_string();
+            }
             return Ok(Some(true));
         }
         if self.roman_btn.touch(touch, t) {
@@ -727,16 +731,16 @@ impl DebugList {
             render_switch(ui, rr, t, c, &mut self.touch_debug_btn, config.touch_debug);
         }
         item! {
-            render_title(ui, c, tl!("item-chart_ratio"), None);
-            self.ratio_slider.render(ui, rr, t,c, config.chart_ratio, format!("{:.2}", config.chart_ratio));
-        }
-        item! {
             render_title(ui, c, tl!("item-all-good"), None);
             render_switch(ui, rr, t, c, &mut self.all_good_btn, config.all_good);
         }
         item! {
             render_title(ui, c, tl!("item-watermark"), None);
             self.watermark.render_text(ui, rr, t, c.a, &config.watermark, 0.4, false);
+        }
+        item! {
+            render_title(ui, c, tl!("item-combo"), None);
+            self.combo.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
         }
         item! {
             render_title(ui, c, tl!("item-roman"), None);
