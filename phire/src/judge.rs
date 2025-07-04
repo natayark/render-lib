@@ -334,7 +334,7 @@ impl Judge {
             if flip_x {
                 touch.position.x *= -1.;
             }
-            touch.position *= scale;
+            touch.position /= scale;
         }
     }
 
