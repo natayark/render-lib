@@ -1089,6 +1089,7 @@ impl Scene for GameScene {
                 self.last_update_time = tm.real_time();
                 if self.first_in && self.mode == GameMode::Exercise {
                     tm.pause();
+                    self.music.pause()?;
                     self.first_in = false;
                 }
                 tm.now() as f32
