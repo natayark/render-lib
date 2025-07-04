@@ -43,6 +43,7 @@ item-touch-debug-sub = Display touch points
 item-chart_ratio = Chart zoom ratio
 item-all-good = Force Good judgment
 item-watermark = Watermark
+item-combo = COMBO Text
 item-roman = Roman Mode
 item-chinese = Chinese Mode
 

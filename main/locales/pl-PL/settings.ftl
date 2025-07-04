@@ -29,13 +29,3 @@ load-cali-failed = Nie załadowano plików audio
 item-chart-debug = Tryb debug
 item-chart-debug-sub = Pokazuje liczbe linii i orientację
 item-touch-debug-sub = Pokazuje dotknięcia
-
-about-content =
-  Phira v{ $version }
-
-  Phira to niekomercyjna, oparta na społeczności gra rytmiczna, inspirowana grą Phigros, zrobioną w Rust.
-
-  Jeśli ta gra ci się podoba, proszę pomyśl nad wspieraniem nas na Patreon (@PhiraGame) lub afdian.com (@Mivik). Twoje wsparcie jest najlepszym impetem dla nas!
-
-  konto BiliBili: @Phira官方
-  Grupa QQ: r48eajexth

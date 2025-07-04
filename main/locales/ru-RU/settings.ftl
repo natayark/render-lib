@@ -42,14 +42,3 @@ item-touch-debug = Отладка касаний
 item-touch-debug-sub = Точки нажатия отображаются
 
 load-cali-failed = Ошибка загрузки аудио
-
-about-content =
-  Phira v{ $version }
-
-  Phira это некоммерческая игра на базе сообщества, вдохновлëнная Phigros, и написанная на Rust
-
-  Если вам нравится игра, вы можете поддержать еë на Patreon (@PhiraGame) или afdian.com (@Mivik). Ваша поддержка это лучший мотиватор для нас. 
-
-  Аккаунт BiliBili: @Phira官方
-  Чат QQ(только Китай): r48eajexth
-
