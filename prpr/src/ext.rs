@@ -486,6 +486,40 @@ pub fn semi_white(alpha: f32) -> Color {
     Color::new(1., 1., 1., alpha)
 }
 
+pub fn open_url(url: &str) -> Result<()> {
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "android")] {
+            unsafe {
+                let env = miniquad::native::attach_jni_env();
+                let ctx = ndk_context::android_context().context();
+                let class = (**env).GetObjectClass.unwrap()(env, ctx);
+                let method =
+                    (**env).GetMethodID.unwrap()(env, class, b"openUrl\0".as_ptr() as _, b"(Ljava/lang/String;)V\0".as_ptr() as _);
+                let url = std::ffi::CString::new(url.to_owned()).unwrap();
+                (**env).CallVoidMethod.unwrap()(
+                    env,
+                    ctx,
+                    method,
+                    (**env).NewStringUTF.unwrap()(env, url.as_ptr()),
+                );
+            }
+        } else if #[cfg(target_os = "ios")] {
+            unsafe {
+                use crate::objc::*;
+
+                let application: ObjcId = msg_send![class!(UIApplication), sharedApplication];
+                let url: ObjcId = msg_send![class!(NSURL), URLWithString: str_to_ns(url)];
+                let _: () = msg_send![application, openURL: url];
+            }
+        } else {
+            open::that(url)?;
+        }
+    }
+
+    Ok(())
+}
+
+
 pub fn unzip_into<R: std::io::Read + std::io::Seek>(reader: R, dir: &crate::dir::Dir, strip_root: bool) -> Result<()> {
     let mut zip = zip::ZipArchive::new(reader)?;
     let root = if strip_root {
