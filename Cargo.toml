@@ -3,9 +3,8 @@ members = [
 	"prpr",
 	"prpr-avc",
 	"prpr-pbc",
-	"phira",
-	"phira-main",
-	"phira-monitor",
+	"main",
+	"main-window",
 ]
 resolver = "2"
 
