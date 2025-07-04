@@ -526,6 +526,10 @@ impl Main {
         self.scenes.last_mut().unwrap().resume(&mut self.tm)
     }
 
+    pub fn only_resume(&mut self) -> Result<()> {
+        self.scenes.last_mut().unwrap().resume(&mut self.tm)
+    }
+
     pub fn should_exit(&self) -> bool {
         self.should_exit
     }
