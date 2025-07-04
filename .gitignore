@@ -5,7 +5,6 @@ inner.rs
 /http-cacache
 /prpr/build.rs
 /target
-/assets/font.ttf
 /assets/charts
 /assets/texture
 /wbindgen
@@ -15,8 +14,6 @@ inner.rs
 /data
 /.cargo
 /config.txt
-/assets/char.png
-/assets/background.jpg
 /assets/res
 /test.uml
 /monitor-config.yml

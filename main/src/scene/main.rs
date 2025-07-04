@@ -70,9 +70,8 @@ impl MainScene {
     pub async fn new() -> Result<Self> {
         Self::init().await?;
 
-        #[cfg(feature = "closed")]
         let bgm = {
-            let bgm_clip = AudioClip::new(crate::load_res("res/bgm").await)?;
+            let bgm_clip = AudioClip::new(load_file("bgm.ogg").await?)?;
             Some(UI_AUDIO.with(|it| {
                 it.borrow_mut().create_music(
                     bgm_clip,
@@ -85,8 +84,6 @@ impl MainScene {
                 )
             })?)
         };
-        #[cfg(not(feature = "closed"))]
-        let bgm = None;
 
         let mut sf = Self::new_inner(bgm).await?;
         sf.pages.push(Box::new(HomePage::new().await?));
