@@ -627,9 +627,10 @@ struct DebugList {
     chart_debug_line_slider: Slider,
     chart_debug_note_slider: Slider,
     touch_debug_btn: DRectButton,
-    ratio_slider: Slider,
+    chart_ratio_slider: Slider,
+    fade_slider: Slider,
     watermark: DRectButton,
-    combo: DRectButton,
+    combo_btn: DRectButton,
     roman_btn: DRectButton,
     chinese_btn: DRectButton,
 }
@@ -640,9 +641,10 @@ impl DebugList {
             chart_debug_line_slider: Slider::new(0.0..1.0, 0.05),
             chart_debug_note_slider: Slider::new(0.0..1.0, 0.05),
             touch_debug_btn: DRectButton::new(),
-            ratio_slider: Slider::new(0.05..1.0, 0.05),
+            chart_ratio_slider: Slider::new(0.05..1.0, 0.05),
+            fade_slider: Slider::new(-2.0..2.0, 0.05),
             watermark: DRectButton::new(),
-            combo: DRectButton::new(),
+            combo_btn: DRectButton::new(),
             roman_btn: DRectButton::new(),
             chinese_btn: DRectButton::new(),
         }
@@ -665,14 +667,17 @@ impl DebugList {
             config.touch_debug ^= true;
             return Ok(Some(true));
         }
-        if let wt @ Some(_) = self.ratio_slider.touch(touch, t, &mut config.chart_ratio) {
+        if let wt @ Some(_) = self.chart_ratio_slider.touch(touch, t, &mut config.chart_ratio) {
+            return Ok(wt);
+        }
+        if let wt @ Some(_) = self.fade_slider.touch(touch, t, &mut config.fade) {
             return Ok(wt);
         }
         if self.watermark.touch(touch, t) {
             request_input("watermark", &config.watermark, tl!("item-watermark"));
             return Ok(Some(true));
         }
-        if self.combo.touch(touch, t) {
+        if self.combo_btn.touch(touch, t) {
             request_input("combo", &config.combo, tl!("item-combo"));
             return Ok(Some(true));
         }
@@ -746,7 +751,11 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-chart_ratio"), None);
-            self.ratio_slider.render(ui, rr, t,c, config.chart_ratio, format!("{:.2}", config.chart_ratio));
+            self.chart_ratio_slider.render(ui, rr, t,c, config.chart_ratio, format!("{:.2}", config.chart_ratio));
+        }
+        item! {
+            render_title(ui, c, tl!("item-fade"), Some(tl!("item-fade-sub")));
+            self.fade_slider.render(ui, rr, t,c, config.fade, format!("{:.2}", config.fade));
         }
         item! {
             render_title(ui, c, tl!("item-watermark"), None);
@@ -754,7 +763,7 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-combo"), None);
-            self.combo.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
+            self.combo_btn.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
         }
         item! {
             render_title(ui, c, tl!("item-roman"), None);
