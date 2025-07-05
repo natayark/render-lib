@@ -637,6 +637,13 @@ pub fn push_frame_time(frame_times: &mut VecDeque<f64>, real_time: f64) {
     }
 }
 
+pub fn round_to_step(value: f32, step: f32) -> f32 {
+    let aligned = (value / step).round() * step;
+    let digits = (-step.log10()).ceil() as i32;
+    let factor = 10_f32.powi(digits);
+    (aligned * factor).round() / factor
+}
+
 
 mod shader {
     pub const VERTEX: &str = r#"#version 100
