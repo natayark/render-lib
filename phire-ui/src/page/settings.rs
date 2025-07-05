@@ -705,7 +705,7 @@ impl DebugList {
         }
         if let Some((id, text)) = take_input() {
             if id == "combo" {
-                if validate_combo(&text) {
+                if validate_combo(&text) || text.len() > 50 {
                     show_message(tl!("not-combo")).error();
                     return Ok(false);
                 }
