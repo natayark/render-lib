@@ -30,7 +30,8 @@ pub struct OffsetPage {
     touched: bool,
     touch: Option<(f32, f32, f32)>,
 
-    pub frame_times: VecDeque<f64>, // frame interval time
+    frame_times: VecDeque<f64>, // frame interval time
+    latency_record: VecDeque<f32>,
 }
 
 impl OffsetPage {
@@ -57,6 +58,7 @@ impl OffsetPage {
         let emitter = ParticleEmitter::new(&respack, get_data().config.note_scale, respack.info.hide_particles, None)?;
 
         let frame_times: VecDeque<f64> = VecDeque::new();
+        let latency_record: VecDeque<f32> = VecDeque::new();
         Ok(Self {
             audio,
             cali,
@@ -76,6 +78,7 @@ impl OffsetPage {
             touch: None,
 
             frame_times,
+            latency_record,
         })
     }
 }
@@ -172,10 +175,10 @@ impl Page for OffsetPage {
                 let latency = get_latency(&self.audio, &self.frame_times);
                 t -= latency;
                 ui.text(format!("Estimated Latency: {:.0}ms", latency * 1000.))
-                    .pos(0.54, 0.1)
+                    .pos(0.54, 0.24)
                     .anchor(0.5, 1.)
                     .size(0.5)
-                    .color(Color::new(1., 1., 1., 0.8 * c.a))
+                    .color(Color::new(1., 1., 1., 0.8))
                     .draw();
             }
 
@@ -218,14 +221,33 @@ impl Page for OffsetPage {
                         ..self.color
                     };
                     ui.fill_rect(Rect::new(ct.0 - hw, pos - hh / 2., hw * 2., hh), c);
-                    ui.text(format!("{:+.0}ms", (diff - 1.) * 1000.))
-                        .pos(0.54, 0.17)
+                    let latency = diff - 1.;
+                    if latency.abs() < 0.200 {
+                        self.latency_record.push_back(latency);
+                        if self.latency_record.len() > 10 {
+                            self.latency_record.pop_front();
+                        }
+                    }
+                    ui.text(format!("Now: {:+.0}ms", latency * 1000.))
+                        .pos(0.54, 0.10)
                         .anchor(0.5, 1.)
                         .size(0.5)
                         .color(Color::new(1., 1., 1., 0.8 * c.a))
                         .draw();
                 }
             }
+
+            let avg_latency = if self.latency_record.is_empty() {
+                0.0
+            } else {
+                self.latency_record.iter().sum::<f32>() / self.latency_record.len() as f32
+            };
+            ui.text(format!("Avg: {:+.0}ms", avg_latency * 1000.))
+                        .pos(0.54, 0.17)
+                        .anchor(0.5, 1.)
+                        .size(0.5)
+                        .color(Color::new(1., 1., 1., 0.8))
+                        .draw();
 
             let offset = config.offset * 1000.;
             self.slider
