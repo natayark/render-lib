@@ -191,7 +191,14 @@ impl Page for OffsetPage {
             }
             let ny = ct.1 + (t - 1.) * 0.75;
             if self.touched {
-                self.touch = Some((t, ot, ny));
+                let latency = t - 1.;
+                self.touch = Some((latency, ot, ny));
+                if latency.abs() < 0.200 {
+                    self.latency_record.push_back(latency);
+                    if self.latency_record.len() > 10 {
+                        self.latency_record.pop_front();
+                    }
+                }
                 self.touched = false;
                 self.cali_hit.play(PlaySfxParams {
                     amplifier: config.volume_sfx,
@@ -211,7 +218,7 @@ impl Page for OffsetPage {
                 self.cali_last = false;
             }
 
-            if let Some((diff, time, pos)) = &self.touch {
+            if let Some((latency, time, pos)) = &self.touch {
                 let p = (ot - time) / Self::FADE_TIME;
                 if p > 1. {
                     self.touch = None;
@@ -222,13 +229,7 @@ impl Page for OffsetPage {
                         ..self.color
                     };
                     ui.fill_rect(Rect::new(ct.0 - hw, pos - hh / 2., hw * 2., hh), c);
-                    let latency = diff - 1.;
-                    if latency.abs() < 0.200 {
-                        self.latency_record.push_back(latency);
-                        if self.latency_record.len() > 10 {
-                            self.latency_record.pop_front();
-                        }
-                    }
+
                     ui.text(format!("{} {:.0}ms", tl!("now"), latency * 1000.))
                         .pos(0.54, 0.10)
                         .anchor(0.5, 1.)
