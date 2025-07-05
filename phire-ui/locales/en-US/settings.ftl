@@ -21,7 +21,7 @@ item-insecure = Insecure mode
 item-insecure-sub = Enable this if you can't use online functionalities. Makes your connection insecure!
 
 item-adjust = Automatic time adjustment
-item-adjust-sub = Adjusts time dynamically to sync the music and beatmap
+item-adjust-sub = Adjusts time dynamically to sync the music and chart
 item-music = Music volume
 item-sfx = Sound effect volume
 item-bgm = BGM volume
@@ -36,8 +36,10 @@ item-opt-sub = Improves performance, but can cause incorrect behavior
 item-speed = Speed
 item-note-size = Note size
 
-item-chart-debug = Beatmap debug mode
-item-chart-debug-sub = Display line number and orientation
+item-chart-debug-line = Chart debug mode - Line
+item-chart-debug-line-sub = Display line properties
+item-chart-debug-note = Chart debug mode - Note
+item-chart-debug-note-sub = Display note properties
 item-touch-debug = Touch debug mode
 item-touch-debug-sub = Display touch points
 item-chart_ratio = Chart zoom ratio

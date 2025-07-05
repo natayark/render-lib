@@ -733,11 +733,11 @@ impl DebugList {
         let data = get_data();
         let config = &data.config;
         item! {
-            render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
+            render_title(ui, c, tl!("item-chart-debug-line"), Some(tl!("item-chart-debug-line-sub")));
             self.chart_debug_line_slider.render(ui, rr, t,c, config.chart_debug_line, format!("{:.2}", config.chart_debug_line));
         }
         item! {
-            render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
+            render_title(ui, c, tl!("item-chart-debug-note"), Some(tl!("item-chart-debug-note-sub")));
             self.chart_debug_note_slider.render(ui, rr, t,c, config.chart_debug_note, format!("{:.2}", config.chart_debug_note));
         }
         item! {

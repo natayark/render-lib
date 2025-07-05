@@ -36,8 +36,10 @@ item-opt-sub = 采用激进的优化策略，提升性能但可能导致部分�
 item-speed = 速度
 item-note-size = 音符大小
 
-item-chart-debug = 谱面调试
-item-chart-debug-sub = 显示判定线编号和朝向
+item-chart-debug-line = 谱面调试 - 判定线
+item-chart-debug-line-sub = 显示判定线属性
+item-chart-debug-note = 谱面调试 - 音符
+item-chart-debug-note-sub = 显示音符属性
 item-touch-debug = 触摸调试
 item-touch-debug-sub = 游玩过程中显示触摸点
 item-chart_ratio = 谱面缩放倍率

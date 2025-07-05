@@ -26,6 +26,4 @@ item-note-size = Rozmiar nut
 
 load-cali-failed = Nie załadowano plików audio
 
-item-chart-debug = Tryb debug
-item-chart-debug-sub = Pokazuje liczbe linii i orientację
 item-touch-debug-sub = Pokazuje dotknięcia
