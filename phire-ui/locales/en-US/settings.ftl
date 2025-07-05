@@ -3,8 +3,9 @@ label = Settings
 
 general = General
 audio = Audio
-chart = Beatmap
+chart = Chart
 debug = Debug
+other = Other
 about = Info
 
 item-lang = Language

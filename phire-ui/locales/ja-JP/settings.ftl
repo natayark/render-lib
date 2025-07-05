@@ -3,7 +3,7 @@ label = 設定
 
 general = General
 audio = Audio
-chart = Beatmap
+chart = Chart
 
 item-lang = 言語
 item-offline = Offline mode

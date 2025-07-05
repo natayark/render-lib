@@ -5,6 +5,7 @@ general = 通用
 audio = 音频
 chart = 谱面
 debug = 调试
+other = 其他
 about = 关于
 
 item-lang = 语言

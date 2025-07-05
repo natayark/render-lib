@@ -19,7 +19,7 @@ enum SettingListType {
     General,
     Audio,
     Chart,
-    Debug,
+    Other,
     About,
 }
 
@@ -27,14 +27,14 @@ pub struct SettingsPage {
     btn_general: DRectButton,
     btn_audio: DRectButton,
     btn_chart: DRectButton,
-    btn_debug: DRectButton,
+    btn_other: DRectButton,
     btn_about: DRectButton,
     chosen: SettingListType,
 
     list_general: GeneralList,
     list_audio: AudioList,
     list_chart: ChartList,
-    list_debug: DebugList,
+    list_other: OtherList,
 
     scroll: Scroll,
     save_time: f32,
@@ -48,14 +48,14 @@ impl SettingsPage {
             btn_general: DRectButton::new(),
             btn_audio: DRectButton::new(),
             btn_chart: DRectButton::new(),
-            btn_debug: DRectButton::new(),
+            btn_other: DRectButton::new(),
             btn_about: DRectButton::new(),
             chosen: SettingListType::General,
 
             list_general: GeneralList::new(icon_lang),
             list_audio: AudioList::new(),
             list_chart: ChartList::new(),
-            list_debug: DebugList::new(),
+            list_other: OtherList::new(),
 
             scroll: Scroll::new(),
             save_time: f32::INFINITY,
@@ -90,7 +90,7 @@ impl Page for SettingsPage {
             SettingListType::General => self.list_general.top_touch(touch, t),
             SettingListType::Audio => self.list_audio.top_touch(touch, t),
             SettingListType::Chart => self.list_chart.top_touch(touch, t),
-            SettingListType::Debug => self.list_debug.top_touch(touch, t),
+            SettingListType::Other => self.list_other.top_touch(touch, t),
             SettingListType::About => false,
         } {
             return Ok(true);
@@ -108,8 +108,8 @@ impl Page for SettingsPage {
             self.switch_to_type(SettingListType::Chart);
             return Ok(true);
         }
-        if self.btn_debug.touch(touch, t) {
-            self.switch_to_type(SettingListType::Debug);
+        if self.btn_other.touch(touch, t) {
+            self.switch_to_type(SettingListType::Other);
             return Ok(true);
         }
         if self.btn_about.touch(touch, t) {
@@ -123,7 +123,7 @@ impl Page for SettingsPage {
             SettingListType::General => self.list_general.touch(touch, t)?,
             SettingListType::Audio => self.list_audio.touch(touch, t)?,
             SettingListType::Chart => self.list_chart.touch(touch, t)?,
-            SettingListType::Debug => self.list_debug.touch(touch, t)?,
+            SettingListType::Other => self.list_other.touch(touch, t)?,
             SettingListType::About => None,
         } {
             if p {
@@ -142,7 +142,7 @@ impl Page for SettingsPage {
             SettingListType::General => self.list_general.update(t)?,
             SettingListType::Audio => self.list_audio.update(t)?,
             SettingListType::Chart => self.list_chart.update(t)?,
-            SettingListType::Debug => self.list_debug.update(t)?,
+            SettingListType::Other => self.list_other.update(t)?,
             SettingListType::About => false,
         } {
             self.save_time = t;
@@ -164,7 +164,7 @@ impl Page for SettingsPage {
                     (&mut self.btn_general, tl!("general"), SettingListType::General),
                     (&mut self.btn_audio, tl!("audio"), SettingListType::Audio),
                     (&mut self.btn_chart, tl!("chart"), SettingListType::Chart),
-                    (&mut self.btn_debug, tl!("debug"), SettingListType::Debug),
+                    (&mut self.btn_other, tl!("other"), SettingListType::Other),
                     (&mut self.btn_about, tl!("about"), SettingListType::About),
                 ]
                 .into_iter()
@@ -184,7 +184,7 @@ impl Page for SettingsPage {
                     SettingListType::General => self.list_general.render(ui, r, t, c),
                     SettingListType::Audio => self.list_audio.render(ui, r, t, c),
                     SettingListType::Chart => self.list_chart.render(ui, r, t, c),
-                    SettingListType::Debug => self.list_debug.render(ui, r, t, c),
+                    SettingListType::Other => self.list_other.render(ui, r, t, c),
                     SettingListType::About => {
                         let pad = 0.04;
                         (
@@ -623,7 +623,7 @@ impl ChartList {
     }
 }
 
-struct DebugList {
+struct OtherList {
     chart_debug_line_slider: Slider,
     chart_debug_note_slider: Slider,
     touch_debug_btn: DRectButton,
@@ -635,7 +635,7 @@ struct DebugList {
     chinese_btn: DRectButton,
 }
 
-impl DebugList {
+impl OtherList {
     pub fn new() -> Self {
         Self {
             chart_debug_line_slider: Slider::new(0.0..1.0, 0.05),
