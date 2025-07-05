@@ -222,23 +222,23 @@ impl Note {
 
         if res.config.aggressive && matches!(res.chart_format, ChartFormat::Pec) && matches!(self.kind, NoteKind::Hold { .. }) {
             let h = if self.time <= res.time { line_height } else { height };
-            let bottom = h - line_height;
+            let bottom = h + self.object.translation.1.now() - line_height;
             if bottom - line_height > 2. / res.config.chart_ratio {
                 return;
             }
         }
 
         let cover_base = if !config.settings.hold_partial_cover {
-            height - line_height
+            height + self.object.translation.1.now() - line_height
         } else {
             match self.kind {
                 NoteKind::Hold { end_time: _,  end_height, end_speed } => {
                     let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
                     let end_height = end_height / res.aspect_ratio * end_spd;
-                    end_height - line_height
+                    end_height + self.object.translation.1.now() - line_height
                 }
                 _ => {
-                    height - line_height
+                    height + self.object.translation.1.now() - line_height
                 }
             }
         };
