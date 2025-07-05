@@ -36,8 +36,6 @@ item-opt-sub = 성능을 향상시킬 수 있지만, 부정확한 동작을 유�
 item-speed = 노트 속도
 item-note-size = 노트 크기
 
-item-chart-debug = 비트맵 디버그 모드
-item-chart-debug-sub = 라인 번호 및 방향 표시
 item-touch-debug = 터치 디버그 모드
 item-touch-debug-sub = 터치 지점 표시
 

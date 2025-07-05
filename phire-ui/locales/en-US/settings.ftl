@@ -3,8 +3,9 @@ label = Settings
 
 general = General
 audio = Audio
-chart = Beatmap
+chart = Chart
 debug = Debug
+other = Other
 about = Info
 
 item-lang = Language
@@ -21,7 +22,7 @@ item-insecure = Insecure mode
 item-insecure-sub = Enable this if you can't use online functionalities. Makes your connection insecure!
 
 item-adjust = Automatic time adjustment
-item-adjust-sub = Adjusts time dynamically to sync the music and beatmap
+item-adjust-sub = Adjusts time dynamically to sync the music and chart
 item-music = Music volume
 item-sfx = Sound effect volume
 item-bgm = BGM volume
@@ -36,11 +37,15 @@ item-opt-sub = Improves performance, but can cause incorrect behavior
 item-speed = Speed
 item-note-size = Note size
 
-item-chart-debug = Beatmap debug mode
-item-chart-debug-sub = Display line number and orientation
-item-touch-debug = Touch debug mode
+item-chart-debug-line = Chart Debug Mode - Line
+item-chart-debug-line-sub = Display line properties
+item-chart-debug-note = Chart Debug Mode - Note
+item-chart-debug-note-sub = Display note properties
+item-touch-debug = Touch Debug Mode
 item-touch-debug-sub = Display touch points
-item-chart_ratio = Chart zoom ratio
+item-chart_ratio = Chart Zoom Ratio
+item-fade = Note Fade Out/Fade In
+item-fade-sub = Fade out when less than 0 Fade in when greater than 0
 item-all-good = Force Good judgment
 item-watermark = Watermark
 item-combo = COMBO Text

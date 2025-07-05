@@ -35,8 +35,6 @@ item-opt-sub = Nâng cao hiệu suất nhưng sẽ gây ra các hành vi không 
 item-speed = Tốc độ
 item-note-size = Kích thước nốt
 
-item-chart-debug = Gỡ lỗi biểu đồ
-item-chart-debug-sub = Hiển thị số dòng và hướng
 item-touch-debug = Gỡ lỗi chạm
 item-touch-debug-sub = Hiển thị điểm chạm
 

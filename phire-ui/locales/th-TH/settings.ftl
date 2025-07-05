@@ -27,8 +27,6 @@ item-opt-sub = เพิ่มประสิทธิภาพให้กั�
 item-speed = ความเร็ว
 item-note-size = ขนาดของ Note
 
-item-chart-debug = Chart debug mode
-item-chart-debug-sub = แสดงตัวเลขของ Line
 item-touch-debug = Touch debug mode
 item-touch-debug-sub = แสดงจุดที่สัมผัส
 

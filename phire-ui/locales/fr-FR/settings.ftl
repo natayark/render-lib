@@ -34,8 +34,6 @@ item-opt-sub = Cela améliorera les performances, mais pourra entraîner des com
 item-speed = Vitesse
 item-note-size = Taille des notes
 
-item-chart-debug = Mode de débogage des partitions
-item-chart-debug-sub = Afficher le numéro et l'orientation de la ligne de jugement
 item-touch-debug = Mode de débogage tactile
 item-touch-debug-sub = Afficher les points de contact
 

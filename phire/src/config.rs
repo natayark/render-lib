@@ -79,7 +79,6 @@ pub struct Config {
     // for compatibility
     pub autoplay: Option<bool>,
 
-    pub hires: bool,
     pub disable_audio: bool,
     pub judge_offset: f32,
 
@@ -148,7 +147,6 @@ impl Default for Config {
 
             autoplay: None,
 
-            hires: false,
             disable_audio: false,
             judge_offset: 0.,
 

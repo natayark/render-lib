@@ -19,7 +19,7 @@ enum SettingListType {
     General,
     Audio,
     Chart,
-    Debug,
+    Other,
     About,
 }
 
@@ -27,14 +27,14 @@ pub struct SettingsPage {
     btn_general: DRectButton,
     btn_audio: DRectButton,
     btn_chart: DRectButton,
-    btn_debug: DRectButton,
+    btn_other: DRectButton,
     btn_about: DRectButton,
     chosen: SettingListType,
 
     list_general: GeneralList,
     list_audio: AudioList,
     list_chart: ChartList,
-    list_debug: DebugList,
+    list_other: OtherList,
 
     scroll: Scroll,
     save_time: f32,
@@ -48,14 +48,14 @@ impl SettingsPage {
             btn_general: DRectButton::new(),
             btn_audio: DRectButton::new(),
             btn_chart: DRectButton::new(),
-            btn_debug: DRectButton::new(),
+            btn_other: DRectButton::new(),
             btn_about: DRectButton::new(),
             chosen: SettingListType::General,
 
             list_general: GeneralList::new(icon_lang),
             list_audio: AudioList::new(),
             list_chart: ChartList::new(),
-            list_debug: DebugList::new(),
+            list_other: OtherList::new(),
 
             scroll: Scroll::new(),
             save_time: f32::INFINITY,
@@ -90,7 +90,7 @@ impl Page for SettingsPage {
             SettingListType::General => self.list_general.top_touch(touch, t),
             SettingListType::Audio => self.list_audio.top_touch(touch, t),
             SettingListType::Chart => self.list_chart.top_touch(touch, t),
-            SettingListType::Debug => self.list_debug.top_touch(touch, t),
+            SettingListType::Other => self.list_other.top_touch(touch, t),
             SettingListType::About => false,
         } {
             return Ok(true);
@@ -108,8 +108,8 @@ impl Page for SettingsPage {
             self.switch_to_type(SettingListType::Chart);
             return Ok(true);
         }
-        if self.btn_debug.touch(touch, t) {
-            self.switch_to_type(SettingListType::Debug);
+        if self.btn_other.touch(touch, t) {
+            self.switch_to_type(SettingListType::Other);
             return Ok(true);
         }
         if self.btn_about.touch(touch, t) {
@@ -123,7 +123,7 @@ impl Page for SettingsPage {
             SettingListType::General => self.list_general.touch(touch, t)?,
             SettingListType::Audio => self.list_audio.touch(touch, t)?,
             SettingListType::Chart => self.list_chart.touch(touch, t)?,
-            SettingListType::Debug => self.list_debug.touch(touch, t)?,
+            SettingListType::Other => self.list_other.touch(touch, t)?,
             SettingListType::About => None,
         } {
             if p {
@@ -142,7 +142,7 @@ impl Page for SettingsPage {
             SettingListType::General => self.list_general.update(t)?,
             SettingListType::Audio => self.list_audio.update(t)?,
             SettingListType::Chart => self.list_chart.update(t)?,
-            SettingListType::Debug => self.list_debug.update(t)?,
+            SettingListType::Other => self.list_other.update(t)?,
             SettingListType::About => false,
         } {
             self.save_time = t;
@@ -164,7 +164,7 @@ impl Page for SettingsPage {
                     (&mut self.btn_general, tl!("general"), SettingListType::General),
                     (&mut self.btn_audio, tl!("audio"), SettingListType::Audio),
                     (&mut self.btn_chart, tl!("chart"), SettingListType::Chart),
-                    (&mut self.btn_debug, tl!("debug"), SettingListType::Debug),
+                    (&mut self.btn_other, tl!("other"), SettingListType::Other),
                     (&mut self.btn_about, tl!("about"), SettingListType::About),
                 ]
                 .into_iter()
@@ -184,7 +184,7 @@ impl Page for SettingsPage {
                     SettingListType::General => self.list_general.render(ui, r, t, c),
                     SettingListType::Audio => self.list_audio.render(ui, r, t, c),
                     SettingListType::Chart => self.list_chart.render(ui, r, t, c),
-                    SettingListType::Debug => self.list_debug.render(ui, r, t, c),
+                    SettingListType::Other => self.list_other.render(ui, r, t, c),
                     SettingListType::About => {
                         let pad = 0.04;
                         (
@@ -623,28 +623,28 @@ impl ChartList {
     }
 }
 
-struct DebugList {
+struct OtherList {
     chart_debug_line_slider: Slider,
     chart_debug_note_slider: Slider,
     touch_debug_btn: DRectButton,
-    ratio_slider: Slider,
-    all_good_btn: DRectButton,
+    chart_ratio_slider: Slider,
+    fade_slider: Slider,
     watermark: DRectButton,
-    combo: DRectButton,
+    combo_btn: DRectButton,
     roman_btn: DRectButton,
     chinese_btn: DRectButton,
 }
 
-impl DebugList {
+impl OtherList {
     pub fn new() -> Self {
         Self {
             chart_debug_line_slider: Slider::new(0.0..1.0, 0.05),
             chart_debug_note_slider: Slider::new(0.0..1.0, 0.05),
             touch_debug_btn: DRectButton::new(),
-            ratio_slider: Slider::new(0.05..1.0, 0.05),
-            all_good_btn: DRectButton::new(),
+            chart_ratio_slider: Slider::new(0.05..1.0, 0.05),
+            fade_slider: Slider::new(-2.0..2.0, 0.05),
             watermark: DRectButton::new(),
-            combo: DRectButton::new(),
+            combo_btn: DRectButton::new(),
             roman_btn: DRectButton::new(),
             chinese_btn: DRectButton::new(),
         }
@@ -667,27 +667,32 @@ impl DebugList {
             config.touch_debug ^= true;
             return Ok(Some(true));
         }
-        if let wt @ Some(_) = self.ratio_slider.touch(touch, t, &mut config.chart_ratio) {
+        if let wt @ Some(_) = self.chart_ratio_slider.touch(touch, t, &mut config.chart_ratio) {
             return Ok(wt);
         }
-        if self.all_good_btn.touch(touch, t) {
-            config.all_good ^= true;
-            return Ok(Some(true));
+        if let wt @ Some(_) = self.fade_slider.touch(touch, t, &mut config.fade) {
+            return Ok(wt);
         }
         if self.watermark.touch(touch, t) {
             request_input("watermark", &config.watermark, tl!("item-watermark"));
             return Ok(Some(true));
         }
-        if self.combo.touch(touch, t) {
+        if self.combo_btn.touch(touch, t) {
             request_input("combo", &config.combo, tl!("item-combo"));
             return Ok(Some(true));
         }
         if self.roman_btn.touch(touch, t) {
             config.roman ^= true;
+            if config.roman && config.roman == config.chinese {
+                config.chinese = !config.roman;
+            }
             return Ok(Some(true));
         }
         if self.chinese_btn.touch(touch, t) {
             config.chinese ^= true;
+            if config.chinese && config.chinese == config.roman {
+                config.roman = !config.chinese;
+            }
             return Ok(Some(true));
         }
         Ok(None)
@@ -705,7 +710,7 @@ impl DebugList {
         }
         if let Some((id, text)) = take_input() {
             if id == "combo" {
-                if validate_combo(&text) {
+                if validate_combo(&text) || text.len() > 50 {
                     show_message(tl!("not-combo")).error();
                     return Ok(false);
                 }
@@ -733,11 +738,11 @@ impl DebugList {
         let data = get_data();
         let config = &data.config;
         item! {
-            render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
+            render_title(ui, c, tl!("item-chart-debug-line"), Some(tl!("item-chart-debug-line-sub")));
             self.chart_debug_line_slider.render(ui, rr, t,c, config.chart_debug_line, format!("{:.2}", config.chart_debug_line));
         }
         item! {
-            render_title(ui, c, tl!("item-chart-debug"), Some(tl!("item-chart-debug-sub")));
+            render_title(ui, c, tl!("item-chart-debug-note"), Some(tl!("item-chart-debug-note-sub")));
             self.chart_debug_note_slider.render(ui, rr, t,c, config.chart_debug_note, format!("{:.2}", config.chart_debug_note));
         }
         item! {
@@ -746,11 +751,11 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-chart_ratio"), None);
-            self.ratio_slider.render(ui, rr, t,c, config.chart_ratio, format!("{:.2}", config.chart_ratio));
+            self.chart_ratio_slider.render(ui, rr, t,c, config.chart_ratio, format!("{:.2}", config.chart_ratio));
         }
         item! {
-            render_title(ui, c, tl!("item-all-good"), None);
-            render_switch(ui, rr, t, c, &mut self.all_good_btn, config.all_good);
+            render_title(ui, c, tl!("item-fade"), Some(tl!("item-fade-sub")));
+            self.fade_slider.render(ui, rr, t,c, config.fade, format!("{:.2}", config.fade));
         }
         item! {
             render_title(ui, c, tl!("item-watermark"), None);
@@ -758,7 +763,7 @@ impl DebugList {
         }
         item! {
             render_title(ui, c, tl!("item-combo"), None);
-            self.combo.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
+            self.combo_btn.render_text(ui, rr, t, c.a, &config.combo, 0.4, false);
         }
         item! {
             render_title(ui, c, tl!("item-roman"), None);
