@@ -1149,7 +1149,9 @@ impl Scene for GameScene {
             }
         };
 
-        let time = if self.res.config.adjust_time {
+        let time = if self.mode == GameMode::TweakOffset {
+            time.max(0.)
+        } else if self.res.config.adjust_time {
             (time - offset - get_latency(&self.res.audio, &self.res.frame_times)).max(0.)
         } else {
             (time - offset).max(0.)
