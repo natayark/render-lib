@@ -124,7 +124,6 @@ impl Page for OffsetPage {
         }
         let x = touch.position.x;
         let y = touch.position.y * screen_aspect();
-        println!("Touch: {}, {}", x, y);
         if touch.phase == TouchPhase::Started
             && (-0.80..0.00).contains(&x)
             && (-0.73..0.94).contains(&y)
@@ -186,7 +185,7 @@ impl Page for OffsetPage {
             if t >= 2. {
                 t -= 2.;
             }
-            let ny = ct.1 + (t - 1.) * 0.6;
+            let ny = ct.1 + (t - 1.) * 0.75;
             if self.touched {
                 self.touch = Some((ot, ny));
                 self.touched = false;
