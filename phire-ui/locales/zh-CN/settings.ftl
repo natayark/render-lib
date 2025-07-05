@@ -56,6 +56,6 @@ load-cali-failed = 加载音频失败
 not-combo = 不能是 COMBO
 
 about-content =
-  Phi Recorder v{ $version }
+  Phire v{ $version }
 
-  Phi Recorder 是一款玩法基于 Phigros 的非商业社区音乐游戏，使用 Rust 开发。
+  Phire 是一款玩法基于 Phigros 的非商业社区音乐游戏，使用 Rust 开发。

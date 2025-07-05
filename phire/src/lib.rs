@@ -995,7 +995,7 @@ pub const SMALL_ICON: [u8; 16 * 16 * 4] = [
 
 pub fn build_conf() -> Conf {
     Conf {
-        window_title: "Phi Recorder".to_string(),
+        window_title: "Phire".to_string(),
         window_width: 1280,
         window_height: 720,
         icon: Some(Icon {
