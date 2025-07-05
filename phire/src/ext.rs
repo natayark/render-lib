@@ -17,11 +17,7 @@ use regex::Regex;
 use sasa::AudioManager;
 use serde::Deserialize;
 use std::{
-    future::Future,
-    ops::Deref,
-    pin::Pin,
-    sync::{Arc, Mutex},
-    task::{Poll, RawWaker, RawWakerVTable, Waker},
+    collections::VecDeque, future::Future, ops::Deref, pin::Pin, sync::{Arc, Mutex}, task::{Poll, RawWaker, RawWakerVTable, Waker}
 };
 use tracing::{debug, info_span};
 use lazy_static::lazy_static;
@@ -620,14 +616,26 @@ lazy_static! {
     static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣ][OՕΟ0ОＯ][MΜмＭ][BΒ8вＢ][OՕΟ0ОＯ]$").unwrap();
 }
 
-    pub fn validate_combo(value: &String) -> bool {
-        if value == "AUTOPLAY" || value == "RECORD" {
-            return false;
-        }
-
-        let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
-        return RE_VALIDATE.is_match(&filtered_value);
+pub fn validate_combo(value: &String) -> bool {
+    if value == "AUTOPLAY" || value == "RECORD" {
+        return false;
     }
+
+    let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
+    return RE_VALIDATE.is_match(&filtered_value);
+}
+
+pub fn get_latency(audio: &AudioManager, frame_times: &VecDeque<f64>) -> f32 {
+    let avg_frame_time = (1.0 / frame_times.len() as f64).min(0.25);
+    audio.estimate_latency().max(0.) + avg_frame_time as f32
+}
+
+pub fn push_frame_time(frame_times: &mut VecDeque<f64>, real_time: f64) {
+    frame_times.push_back(real_time);
+    while frame_times.front().is_some_and(|it| real_time - it > 1.0) {
+        frame_times.pop_front();
+    }
+}
 
 
 mod shader {

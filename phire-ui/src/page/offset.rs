@@ -1,17 +1,19 @@
+use std::collections::VecDeque;
+
 use super::{Page, SharedState};
 use crate::{get_data, get_data_mut, save_data};
 use anyhow::{Context, Result};
 use macroquad::prelude::*;
 use phire::{
     core::{ParticleEmitter, ResourcePack, NOTE_WIDTH_RATIO_BASE},
-    ext::{create_audio_manger, semi_black, RectExt, SafeTexture, ScaleType},
+    ext::{create_audio_manger, get_latency, push_frame_time, screen_aspect, semi_black, RectExt, SafeTexture, ScaleType},
     time::TimeManager,
     ui::{Slider, Ui},
 };
 use sasa::{AudioClip, AudioManager, Music, MusicParams, PlaySfxParams, Sfx};
 
 pub struct OffsetPage {
-    _audio: AudioManager,
+    audio: AudioManager,
     cali: Music,
     cali_hit: Sfx,
 
@@ -27,6 +29,8 @@ pub struct OffsetPage {
 
     touched: bool,
     touch: Option<(f32, f32)>,
+
+    pub frame_times: VecDeque<f64>, // frame interval time
 }
 
 impl OffsetPage {
@@ -51,8 +55,10 @@ impl OffsetPage {
             .context("Failed to load resource pack")?;
         let click = respack.note_style.click.clone();
         let emitter = ParticleEmitter::new(&respack, get_data().config.note_scale, respack.info.hide_particles, None)?;
+
+        let frame_times: VecDeque<f64> = VecDeque::new();
         Ok(Self {
-            _audio: audio,
+            audio,
             cali,
             cali_hit,
 
@@ -68,6 +74,8 @@ impl OffsetPage {
 
             touched: false,
             touch: None,
+
+            frame_times,
         })
     }
 }
@@ -114,7 +122,13 @@ impl Page for OffsetPage {
             config.offset = offset / 1000.;
             return Ok(true);
         }
-        if touch.phase == TouchPhase::Started && touch.position.x < 0. {
+        let x = touch.position.x;
+        let y = touch.position.y * screen_aspect();
+        println!("Touch: {}, {}", x, y);
+        if touch.phase == TouchPhase::Started
+            && (-0.80..0.00).contains(&x)
+            && (-0.73..0.94).contains(&y)
+        {
             self.touched = true;
         }
         Ok(false)
@@ -154,6 +168,18 @@ impl Page for OffsetPage {
 
             let config = &get_data().config;
             let mut t = self.tm.now() as f32 - config.offset;
+
+            if config.adjust_time {
+                let latency = get_latency(&self.audio, &self.frame_times);
+                t -= latency;
+                ui.text(format!("Estimated Latency: {:.0}ms", latency * 1000.))
+                    .pos(0.54, 0.1)
+                    .anchor(0.5, 1.)
+                    .size(0.5)
+                    .color(Color::new(1., 1., 1., 0.75 * c.a))
+                    .draw();
+            }
+
             if t < 0. {
                 t += 2.;
             }
@@ -164,6 +190,9 @@ impl Page for OffsetPage {
             if self.touched {
                 self.touch = Some((ot, ny));
                 self.touched = false;
+                self.cali_hit.play(PlaySfxParams {
+                    amplifier: config.volume_sfx,
+                }).unwrap();
             }
             if t <= 1. {
                 let w = NOTE_WIDTH_RATIO_BASE * config.note_scale * 2.;
@@ -175,9 +204,6 @@ impl Page for OffsetPage {
                 if self.cali_last {
                     let g = ui.to_global(ct);
                     self.emitter.emit_at(vec2(g.0, g.1), 0., self.color);
-                    let _ = self.cali_hit.play(PlaySfxParams {
-                        amplifier: config.volume_sfx,
-                    });
                 }
                 self.cali_last = false;
             }
@@ -199,6 +225,10 @@ impl Page for OffsetPage {
             let offset = config.offset * 1000.;
             self.slider
                 .render(ui, Rect::new(0.46, -0.1, 0.45, 0.2), ot, c, offset, format!("{offset:.0}ms"));
+
+            if config.adjust_time {
+                push_frame_time(&mut self.frame_times, self.tm.real_time());
+            }
         });
 
         self.emitter.draw(get_frame_time());

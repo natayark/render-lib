@@ -14,7 +14,7 @@ use crate::{
     bin::{BinaryReader, BinaryWriter},
     config::{Config, Mods},
     core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, Vector, BUFFER_SIZE},
-    ext::{ease_in_out_quartic, parse_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
+    ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
     judge::Judge,
@@ -1149,10 +1149,8 @@ impl Scene for GameScene {
             }
         };
 
-        let avg_frame_time = (1.0 / self.res.frame_times.len() as f64).min(0.25);
-
         let time = if self.res.config.adjust_time {
-            (time - offset - self.res.audio.estimate_latency().max(0.) - avg_frame_time as f32).max(0.)
+            (time - offset - get_latency(&self.res.audio, &self.res.frame_times)).max(0.)
         } else {
             (time - offset).max(0.)
         };
@@ -1481,11 +1479,8 @@ impl Scene for GameScene {
             self.gl.flush();
         }
 
-        let frame_time = tm.real_time();
-        self.res.frame_times.push_back(frame_time);
-
-        while self.res.frame_times.front().is_some_and(|it| frame_time - it > 1.0) {
-            self.res.frame_times.pop_front();
+        if self.res.config.adjust_time {
+            push_frame_time(&mut self.res.frame_times, tm.real_time());
         }
         
         Ok(())
