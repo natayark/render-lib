@@ -179,7 +179,7 @@ impl Page for OffsetPage {
                     .pos(0.54, 0.24)
                     .anchor(0.5, 1.)
                     .size(0.5)
-                    .color(Color::new(1., 1., 1., 0.8))
+                    .color(Color::new(1., 1., 1., 0.8 * c.a))
                     .draw();
             }
 
@@ -247,7 +247,7 @@ impl Page for OffsetPage {
                 .pos(0.54, 0.17)
                 .anchor(0.5, 1.)
                 .size(0.5)
-                .color(Color::new(1., 1., 1., 0.8))
+                .color(Color::new(1., 1., 1., 0.8 * c.a))
                 .draw();
 
             let offset = config.offset * 1000.;
