@@ -28,7 +28,7 @@ pub struct OffsetPage {
     slider: Slider,
 
     touched: bool,
-    touch: Option<(f32, f32)>,
+    touch: Option<(f32, f32, f32)>,
 
     pub frame_times: VecDeque<f64>, // frame interval time
 }
@@ -160,8 +160,8 @@ impl Page for OffsetPage {
 
             let ct = (-0.4, r.bottom() - 0.12);
             let hw = 0.4;
-            let hh = 0.005;
-            ui.fill_rect(Rect::new(ct.0 - hw, ct.1 - hh, hw * 2., hh * 2.), c);
+            let hh = 0.0075;
+            ui.fill_rect(Rect::new(ct.0 - hw, ct.1 - hh / 2., hw * 2., hh), c);
 
             let ot = t;
 
@@ -175,7 +175,7 @@ impl Page for OffsetPage {
                     .pos(0.54, 0.1)
                     .anchor(0.5, 1.)
                     .size(0.5)
-                    .color(Color::new(1., 1., 1., 0.75 * c.a))
+                    .color(Color::new(1., 1., 1., 0.8 * c.a))
                     .draw();
             }
 
@@ -187,7 +187,7 @@ impl Page for OffsetPage {
             }
             let ny = ct.1 + (t - 1.) * 0.75;
             if self.touched {
-                self.touch = Some((ot, ny));
+                self.touch = Some((t, ot, ny));
                 self.touched = false;
                 self.cali_hit.play(PlaySfxParams {
                     amplifier: config.volume_sfx,
@@ -196,7 +196,7 @@ impl Page for OffsetPage {
             if t <= 1. {
                 let w = NOTE_WIDTH_RATIO_BASE * config.note_scale * 2.;
                 let h = w * self.click.height() / self.click.width();
-                let r = Rect::new(ct.0 - w / 2., ny, w, h);
+                let r = Rect::new(ct.0 - w / 2., ny - h / 2., w, h);
                 ui.fill_rect(r, (*self.click, r, ScaleType::Fit, c));
                 self.cali_last = true;
             } else {
@@ -207,7 +207,7 @@ impl Page for OffsetPage {
                 self.cali_last = false;
             }
 
-            if let Some((time, pos)) = &self.touch {
+            if let Some((diff, time, pos)) = &self.touch {
                 let p = (ot - time) / Self::FADE_TIME;
                 if p > 1. {
                     self.touch = None;
@@ -217,7 +217,13 @@ impl Page for OffsetPage {
                         a: (if p <= 0.5 { 1. } else { (1. - p) * 2. }) * c.a * self.color.a,
                         ..self.color
                     };
-                    ui.fill_rect(Rect::new(ct.0 - hw, pos - hh, hw * 2., hh * 2.), c);
+                    ui.fill_rect(Rect::new(ct.0 - hw, pos - hh / 2., hw * 2., hh), c);
+                    ui.text(format!("{:+.0}ms", (diff - 1.) * 1000.))
+                        .pos(0.54, 0.17)
+                        .anchor(0.5, 1.)
+                        .size(0.5)
+                        .color(Color::new(1., 1., 1., 0.8 * c.a))
+                        .draw();
                 }
             }
 
