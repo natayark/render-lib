@@ -23,6 +23,8 @@ item-insecure-sub = 当无法使用在线功能时可尝试该功能。这会使
 
 item-adjust = 自动对齐时间
 item-adjust-sub = 自动调整延迟以同步音乐和谱面
+item-auto-latency = 自动调整延时
+item-auto-latency-sub = 实时估算设备延时并调整
 item-music = 音乐音量
 item-sfx = 音效音量
 item-bgm = BGM 音量

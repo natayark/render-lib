@@ -497,7 +497,7 @@ impl AudioList {
         let data = get_data();
         let config = &data.config;
         item! {
-            render_title(ui, c, tl!("item-adjust"), Some(tl!("item-adjust-sub")));
+            render_title(ui, c, tl!("item-auto-latency"), Some(tl!("item-auto-latency-sub")));
             render_switch(ui, rr, t, c, &mut self.adjust_btn, config.adjust_time);
         }
         item! {

@@ -23,6 +23,8 @@ item-insecure-sub = Enable this if you can't use online functionalities. Makes y
 
 item-adjust = Automatic time adjustment
 item-adjust-sub = Adjusts time dynamically to sync the music and chart
+item-auto-latency = Auto Latency Adjustment
+item-auto-latency-sub = Dynamically estimate and adjust device latency in real time
 item-music = Music volume
 item-sfx = Sound effect volume
 item-bgm = BGM volume
