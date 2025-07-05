@@ -1,5 +1,6 @@
-use std::collections::VecDeque;
+phire::tl_file!("offset");
 
+use std::collections::VecDeque;
 use super::{Page, SharedState};
 use crate::{get_data, get_data_mut, save_data};
 use anyhow::{Context, Result};
@@ -174,7 +175,7 @@ impl Page for OffsetPage {
             if config.adjust_time {
                 let latency = get_latency(&self.audio, &self.frame_times);
                 t -= latency;
-                ui.text(format!("Estimated Latency: {:.0}ms", latency * 1000.))
+                ui.text(format!("{} {:.0}ms", tl!("estimated"), latency * 1000.))
                     .pos(0.54, 0.24)
                     .anchor(0.5, 1.)
                     .size(0.5)
@@ -228,7 +229,7 @@ impl Page for OffsetPage {
                             self.latency_record.pop_front();
                         }
                     }
-                    ui.text(format!("Now: {:+.0}ms", latency * 1000.))
+                    ui.text(format!("{} {:.0}ms", tl!("now"), latency * 1000.))
                         .pos(0.54, 0.10)
                         .anchor(0.5, 1.)
                         .size(0.5)
@@ -242,12 +243,12 @@ impl Page for OffsetPage {
             } else {
                 self.latency_record.iter().sum::<f32>() / self.latency_record.len() as f32
             };
-            ui.text(format!("Avg: {:+.0}ms", avg_latency * 1000.))
-                        .pos(0.54, 0.17)
-                        .anchor(0.5, 1.)
-                        .size(0.5)
-                        .color(Color::new(1., 1., 1., 0.8))
-                        .draw();
+            ui.text(format!("{} {:.0}ms", tl!("avg"), avg_latency * 1000.))
+                .pos(0.54, 0.17)
+                .anchor(0.5, 1.)
+                .size(0.5)
+                .color(Color::new(1., 1., 1., 0.8))
+                .draw();
 
             let offset = config.offset * 1000.;
             self.slider
