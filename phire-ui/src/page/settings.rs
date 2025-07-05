@@ -684,10 +684,16 @@ impl DebugList {
         }
         if self.roman_btn.touch(touch, t) {
             config.roman ^= true;
+            if config.roman && config.roman == config.chinese {
+                config.chinese = !config.roman;
+            }
             return Ok(Some(true));
         }
         if self.chinese_btn.touch(touch, t) {
             config.chinese ^= true;
+            if config.chinese && config.chinese == config.roman {
+                config.roman = !config.chinese;
+            }
             return Ok(Some(true));
         }
         Ok(None)
