@@ -628,7 +628,6 @@ struct DebugList {
     chart_debug_note_slider: Slider,
     touch_debug_btn: DRectButton,
     ratio_slider: Slider,
-    all_good_btn: DRectButton,
     watermark: DRectButton,
     combo: DRectButton,
     roman_btn: DRectButton,
@@ -642,7 +641,6 @@ impl DebugList {
             chart_debug_note_slider: Slider::new(0.0..1.0, 0.05),
             touch_debug_btn: DRectButton::new(),
             ratio_slider: Slider::new(0.05..1.0, 0.05),
-            all_good_btn: DRectButton::new(),
             watermark: DRectButton::new(),
             combo: DRectButton::new(),
             roman_btn: DRectButton::new(),
@@ -669,10 +667,6 @@ impl DebugList {
         }
         if let wt @ Some(_) = self.ratio_slider.touch(touch, t, &mut config.chart_ratio) {
             return Ok(wt);
-        }
-        if self.all_good_btn.touch(touch, t) {
-            config.all_good ^= true;
-            return Ok(Some(true));
         }
         if self.watermark.touch(touch, t) {
             request_input("watermark", &config.watermark, tl!("item-watermark"));
@@ -753,10 +747,6 @@ impl DebugList {
         item! {
             render_title(ui, c, tl!("item-chart_ratio"), None);
             self.ratio_slider.render(ui, rr, t,c, config.chart_ratio, format!("{:.2}", config.chart_ratio));
-        }
-        item! {
-            render_title(ui, c, tl!("item-all-good"), None);
-            render_switch(ui, rr, t, c, &mut self.all_good_btn, config.all_good);
         }
         item! {
             render_title(ui, c, tl!("item-watermark"), None);
