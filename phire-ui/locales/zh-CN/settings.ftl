@@ -29,6 +29,9 @@ item-music = 音乐音量
 item-sfx = 音效音量
 item-bgm = BGM 音量
 item-cali = 调整延迟
+item-exclusive-audio = 独占音频 (仅 Android)
+item-exclusive-audio-sub = 尝试独占输出设备，可以降低音频延时，但会导致声音无法被录制
+item-audio-compatibility = 音频兼容模式 (仅 Android)
 
 item-show-acc = 显示实时准度
 item-dc-pause = 双击暂停

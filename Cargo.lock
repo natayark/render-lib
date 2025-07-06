@@ -3029,7 +3029,7 @@ dependencies = [
 [[package]]
 name = "sasa"
 version = "0.1.0"
-source = "git+https://github.com/2278535805/sasa#dccd96e3605c4092267289af8d506533f097dd61"
+source = "git+https://github.com/2278535805/sasa#dc8ac7a77488a7c2d1e3f7555b05ac6051bc747b"
 dependencies = [
  "anyhow",
  "cpal",

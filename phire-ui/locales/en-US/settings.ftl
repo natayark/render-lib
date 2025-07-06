@@ -29,6 +29,9 @@ item-music = Music volume
 item-sfx = Sound effect volume
 item-bgm = BGM volume
 item-cali = Adjust offset
+item-exclusive-audio = Exclusive Audio (Only Android)
+item-exclusive-audio-sub = Use exclusive access to reduce latency, but may prevent the sound from being recorded
+item-audio-compatibility = Audio Compatibility Mode (Only Android)
 
 item-show-acc = Show real-time accuracy
 item-dc-pause = Double tap to pause
