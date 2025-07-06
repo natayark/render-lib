@@ -23,7 +23,7 @@ pub use glyph_brush::ab_glyph::FontArc;
 
 use crate::{
     core::{Matrix, Point, Vector},
-    ext::{get_viewport, nalgebra_to_glm, semi_black, semi_white, source_of_image, RectExt, SafeTexture, ScaleType},
+    ext::{get_viewport, nalgebra_to_glm, round_to_step, semi_black, semi_white, source_of_image, RectExt, SafeTexture, ScaleType},
     judge::Judge,
     scene::{request_input_full, return_input, take_input},
 };
@@ -397,11 +397,13 @@ impl Slider {
 
     pub fn touch(&mut self, touch: &Touch, t: f32, dst: &mut f32) -> Option<bool> {
         if self.btn_dec.touch(touch, t) {
-            *dst = (*dst - self.step).max(self.range.start);
+            let val = (*dst - self.step).max(self.range.start);
+            *dst = round_to_step(val, self.step);
             return Some(true);
         }
         if self.btn_inc.touch(touch, t) {
-            *dst = (*dst + self.step).min(self.range.end);
+            let val = (*dst + self.step).min(self.range.end);
+            *dst = round_to_step(val, self.step);
             return Some(true);
         }
         if let Some((id, start_pos, unlocked)) = &mut self.touch {
@@ -415,7 +417,8 @@ impl Slider {
                             let p = (touch.position.x - self.rect.x) / self.rect.w;
                             let p = p.clamp(0., 1.);
                             let p = self.range.start + (self.range.end - self.range.start) * p;
-                            *dst = (p / self.step).round() * self.step;
+                            let val = (p / self.step).round() * self.step;
+                            *dst = round_to_step(val, self.step);
                             return Some(true);
                         }
                     }
@@ -1161,7 +1164,8 @@ fn build_audio() -> AudioManager {
         use sasa::backend::oboe::*;
         AudioManager::new(OboeBackend::new(OboeSettings {
             performance_mode: PerformanceMode::PowerSaving,
-            usage: Usage::Game,
+            sharing_mode: SharingMode::Shared,
+            usage: Usage::Media,
             ..Default::default()
         }))
         .unwrap()

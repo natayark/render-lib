@@ -17,11 +17,7 @@ use regex::Regex;
 use sasa::AudioManager;
 use serde::Deserialize;
 use std::{
-    future::Future,
-    ops::Deref,
-    pin::Pin,
-    sync::{Arc, Mutex},
-    task::{Poll, RawWaker, RawWakerVTable, Waker},
+    collections::VecDeque, future::Future, ops::Deref, pin::Pin, sync::{Arc, Mutex}, task::{Poll, RawWaker, RawWakerVTable, Waker}
 };
 use tracing::{debug, info_span};
 use lazy_static::lazy_static;
@@ -425,10 +421,21 @@ pub fn create_audio_manger(config: &Config) -> Result<AudioManager> {
     #[cfg(target_os = "android")]
     {
         use sasa::backend::oboe::*;
+        let sharing_mode = if config.audio_compatibility {
+            SharingMode::Shared
+        } else {
+            SharingMode::Exclusive
+        };
+        let usage = if config.audio_compatibility {
+            Usage::Media
+        } else {
+            Usage::Game
+        };
         AudioManager::new(OboeBackend::new(OboeSettings {
             buffer_size: config.audio_buffer_size,
             performance_mode: PerformanceMode::LowLatency,
-            usage: Usage::Game,
+            sharing_mode,
+            usage,
         }))
     }
     #[cfg(not(target_os = "android"))]
@@ -588,6 +595,14 @@ pub fn parse_time(s: &str) -> Option<f32> {
     Some(res)
 }
 
+pub fn parse_alpha(alpha: f32, res_alpha: f32, min_alpha: f32, chart_debug: bool) -> f32 {
+    if chart_debug {
+        (min_alpha + (1. - min_alpha) * alpha) * res_alpha
+    } else {
+        alpha * res_alpha
+    }
+}
+
 pub fn ease_in_out_cubic(t: f32) -> f32 {
     if t < 0.5 {
         4.0 * t * t * t
@@ -620,14 +635,33 @@ lazy_static! {
     static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣ][OՕΟ0ОＯ][MΜмＭ][BΒ8вＢ][OՕΟ0ОＯ]$").unwrap();
 }
 
-    pub fn validate_combo(value: &String) -> bool {
-        if value == "AUTOPLAY" || value == "RECORD" {
-            return false;
-        }
-
-        let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
-        return RE_VALIDATE.is_match(&filtered_value);
+pub fn validate_combo(value: &String) -> bool {
+    if value == "AUTOPLAY" || value == "RECORD" {
+        return false;
     }
+
+    let filtered_value = RE_FILTER.replace_all(value, "").trim().to_string();
+    return RE_VALIDATE.is_match(&filtered_value);
+}
+
+pub fn get_latency(audio: &AudioManager, frame_times: &VecDeque<f64>) -> f32 {
+    let avg_frame_time = (1.0 / frame_times.len() as f64).min(0.25);
+    audio.estimate_latency().max(0.) + avg_frame_time as f32
+}
+
+pub fn push_frame_time(frame_times: &mut VecDeque<f64>, real_time: f64) {
+    frame_times.push_back(real_time);
+    while frame_times.front().is_some_and(|it| real_time - it > 1.0) {
+        frame_times.pop_front();
+    }
+}
+
+pub fn round_to_step(value: f32, step: f32) -> f32 {
+    let aligned = (value / step).round() * step;
+    let digits = (-step.log10()).ceil() as i32;
+    let factor = 10_f32.powi(digits);
+    (aligned * factor).round() / factor
+}
 
 
 mod shader {

@@ -1,7 +1,7 @@
 use super::{chart::ChartSettings, object::CtrlObject, Anim, AnimFloat, BpmList, Matrix, Note, Object, Point, RenderConfig, Resource, Vector};
 use crate::{
     config::Mods,
-    ext::{get_viewport, NotNanExt, SafeTexture},
+    ext::{get_viewport, parse_alpha, NotNanExt, SafeTexture},
     info::ChartFormat,
     judge::{JudgeStatus, LIMIT_BAD},
     ui::Ui,
@@ -228,14 +228,6 @@ impl JudgeLine {
             self.object.now_rotation().append_translation(&Self::fetch_pos(self, res, lines))
     }
 
-    pub fn parse_alpha(a: f32, alpha: f32, chart_debug: bool) -> f32 {
-        if chart_debug {
-            (0.10 + 0.90 * a) * alpha
-        } else {
-            a * alpha
-        }
-    }
-
     pub fn render(&self, ui: &mut Ui, res: &mut Resource, lines: &[JudgeLine], bpm_list: &mut BpmList, settings: &ChartSettings, id: usize) {
         let alpha = self.object.alpha.now_opt().unwrap_or(1.0);
         let color = self.color.now_opt();
@@ -245,7 +237,7 @@ impl JudgeLine {
                     JudgeLineKind::Normal => {
                         if res.config.render_line {
                             let mut color = color.unwrap_or(res.judge_line_color);
-                            color.a = Self::parse_alpha(color.a * alpha.max(0.0), res.alpha, res.config.chart_debug_line > 0.);
+                            color.a = parse_alpha(color.a * alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -259,7 +251,7 @@ impl JudgeLine {
                             if res.time <= 0. && matches!(color, WHITE) { // some image show pure white before play
                                 color = BLACK;
                             }
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug_line > 0.);
+                            color.a = parse_alpha(alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -284,7 +276,7 @@ impl JudgeLine {
                             let t = anim.now_opt().unwrap_or(0.0);
                             let frame = frames.get_prog_frame(t);
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug_line > 0.);
+                            color.a = parse_alpha(alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -306,7 +298,7 @@ impl JudgeLine {
                     JudgeLineKind::Text(anim) => {
                         if res.config.render_line_extra {
                                 let mut color = color.unwrap_or(WHITE);
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug_line > 0.);
+                            color.a = parse_alpha(alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -319,7 +311,7 @@ impl JudgeLine {
                     JudgeLineKind::Paint(anim, state) => {
                         {
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = Self::parse_alpha(alpha.max(0.0), res.alpha, res.config.chart_debug_line > 0.) * 2.55;
+                            color.a = parse_alpha(alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.) * 2.55;
                             if color.a == 0.0 {
                                 return;
                             }
@@ -540,11 +532,11 @@ impl JudgeLine {
                             format!(" anc:{} {}", self.anchor[0], self.anchor[1])
                         };
                         let color = if line_height_ulp > 0.018518519 { // 10px error in 1080P
-                            Color::new(1., 0., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug_line > 0.))
+                            Color::new(1., 0., 0., parse_alpha(alpha, res.alpha, 0.15, res.config.chart_debug_line > 0.))
                         } else if line_height_ulp > 0.0018518519 { // 1px error in 1080P
-                            Color::new(1., 1., 0., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug_line > 0.))
+                            Color::new(1., 1., 0., parse_alpha(alpha, res.alpha, 0.15, res.config.chart_debug_line > 0.))
                         } else {
-                            Color::new(1., 1., 1., Self::parse_alpha(alpha, res.alpha, res.config.chart_debug_line > 0.))
+                            Color::new(1., 1., 1., parse_alpha(alpha, res.alpha, 0.15, res.config.chart_debug_line > 0.))
                         };
                         let kind = match &self.kind {
                             JudgeLineKind::Normal => String::new(),

@@ -416,6 +416,7 @@ struct AudioList {
     music_slider: Slider,
     sfx_slider: Slider,
     bgm_slider: Slider,
+    audio_compatibility_btn: DRectButton,
     cali_btn: DRectButton,
 
     cali_task: LocalTask<Result<OffsetPage>>,
@@ -429,6 +430,7 @@ impl AudioList {
             music_slider: Slider::new(0.0..2.0, 0.05),
             sfx_slider: Slider::new(0.0..2.0, 0.05),
             bgm_slider: Slider::new(0.0..2.0, 0.05),
+            audio_compatibility_btn: DRectButton::new(),
             cali_btn: DRectButton::new(),
 
             cali_task: None,
@@ -459,6 +461,10 @@ impl AudioList {
                 BGM_VOLUME_UPDATED.store(true, Ordering::Relaxed);
             }
             return Ok(wt);
+        }
+        if self.audio_compatibility_btn.touch(touch, t) {
+            config.audio_compatibility ^= true;
+            return Ok(Some(true));
         }
         if self.cali_btn.touch(touch, t) {
             self.cali_task = Some(Box::pin(OffsetPage::new()));
@@ -497,7 +503,7 @@ impl AudioList {
         let data = get_data();
         let config = &data.config;
         item! {
-            render_title(ui, c, tl!("item-adjust"), Some(tl!("item-adjust-sub")));
+            render_title(ui, c, tl!("item-auto-latency"), Some(tl!("item-auto-latency-sub")));
             render_switch(ui, rr, t, c, &mut self.adjust_btn, config.adjust_time);
         }
         item! {
@@ -511,6 +517,10 @@ impl AudioList {
         item! {
             render_title(ui, c, tl!("item-bgm"), None);
             self.bgm_slider.render(ui, rr, t, c, config.volume_bgm, format!("{:.2}", config.volume_bgm));
+        }
+        item! {
+            render_title(ui, c, tl!("item-audio-compatibility"), None);
+            render_switch(ui, rr, t, c, &mut self.audio_compatibility_btn, config.audio_compatibility);
         }
         item! {
             render_title(ui, c, tl!("item-cali"), None);

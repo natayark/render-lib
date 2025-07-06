@@ -23,10 +23,15 @@ item-insecure-sub = 当无法使用在线功能时可尝试该功能。这会使
 
 item-adjust = 自动对齐时间
 item-adjust-sub = 自动调整延迟以同步音乐和谱面
+item-auto-latency = 自动调整延时
+item-auto-latency-sub = 实时估算设备延时并调整
 item-music = 音乐音量
 item-sfx = 音效音量
 item-bgm = BGM 音量
 item-cali = 调整延迟
+item-exclusive-audio = 独占音频 (仅 Android)
+item-exclusive-audio-sub = 尝试独占输出设备，可以降低音频延时，但会导致声音无法被录制
+item-audio-compatibility = 音频兼容模式 (仅 Android)
 
 item-show-acc = 显示实时准度
 item-dc-pause = 双击暂停
@@ -56,6 +61,6 @@ load-cali-failed = 加载音频失败
 not-combo = 不能是 COMBO
 
 about-content =
-  Phi Recorder v{ $version }
+  Phire v{ $version }
 
-  Phi Recorder 是一款玩法基于 Phigros 的非商业社区音乐游戏，使用 Rust 开发。
+  Phire 是一款玩法基于 Phigros 的非商业社区音乐游戏，使用 Rust 开发。
