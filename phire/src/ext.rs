@@ -595,6 +595,14 @@ pub fn parse_time(s: &str) -> Option<f32> {
     Some(res)
 }
 
+pub fn parse_alpha(alpha: f32, res_alpha: f32, min_alpha: f32, chart_debug: bool) -> f32 {
+    if chart_debug {
+        (min_alpha + (1. - min_alpha) * alpha) * res_alpha
+    } else {
+        alpha * res_alpha
+    }
+}
+
 pub fn ease_in_out_cubic(t: f32) -> f32 {
     if t < 0.5 {
         4.0 * t * t * t

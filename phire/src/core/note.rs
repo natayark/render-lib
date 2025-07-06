@@ -2,7 +2,7 @@ use super::{
     chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource, Vector
 };
 use crate::{
-    core::HEIGHT_RATIO, info::ChartFormat, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
+    core::HEIGHT_RATIO, ext::parse_alpha, info::ChartFormat, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
 };
 
 
@@ -208,14 +208,21 @@ impl Note {
                 return;
             }
         }
-        
-        if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
-            return;
-        }
+
         let ctrl_obj = &mut config.ctrl_obj;
         self.init_ctrl_obj(ctrl_obj, config.line_height);
-        let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
+        let mut color = self.object.now_color();
+        color.a = parse_alpha(color.a, 1.0, 0.2, res.config.chart_debug_note > 0.);
 
+        if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
+            if res.config.chart_debug_note > 0. {
+                color.a *= 0.2;
+            } else {
+                return;
+            }
+        }
+
+        let spd = self.speed * ctrl_obj.y.now_opt().unwrap_or(1.);
         let line_height = config.line_height / res.aspect_ratio * spd;
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
@@ -242,8 +249,6 @@ impl Note {
                 }
             }
         };
-        
-        let mut color = self.object.now_color();
 
         if res.config.alpha_tint {
             if color.a <= 0.5 {
@@ -257,7 +262,7 @@ impl Note {
             }
             color.a = res.alpha;
         } else {
-            color.a *= res.alpha * ctrl_obj.alpha.now_opt().unwrap_or(1.);
+            color.a *= parse_alpha(ctrl_obj.alpha.now_opt().unwrap_or(1.), res.alpha, 0.2, res.config.chart_debug_note > 0.);
         }
 
         // && ((res.time - FADEOUT_TIME >= self.time) || (self.fake && res.time >= self.time) || (self.time > res.time && base <= -1e-5))
@@ -314,11 +319,11 @@ impl Note {
         };
         match self.kind {
             NoteKind::Click => {
-                if self.fake && res.time >= self.time {return};
+                if self.fake && res.time >= self.time { return };
                 draw(res, *style.click);
             }
             NoteKind::Hold { end_time, end_height, end_speed } => {
-                if self.fake && res.time >= end_time {return};
+                if self.fake && res.time >= end_time { return };
                 res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
                     if matches!(self.judge, JudgeStatus::Judged) {
                         // miss
