@@ -1031,9 +1031,9 @@ impl Scene for GameScene {
     }
 
     fn resume(&mut self, tm: &mut TimeManager) -> Result<()> {
-        if !matches!(self.state, State::Playing) {
-            tm.resume();
-        }
+        // if !matches!(self.state, State::Playing) {
+        //     tm.resume();
+        // }
         Ok(())
     }
 
