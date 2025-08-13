@@ -513,7 +513,7 @@ impl Scene for EndingScene {
                     format!("{rks:.2}")
                 }
             } else {
-                "16.00".to_string()
+                "0.00".to_string()
             }
             ,
             sub.center().x,
