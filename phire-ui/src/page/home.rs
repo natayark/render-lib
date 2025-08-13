@@ -1,8 +1,8 @@
 phire::tl_file!("home");
 
-use std::sync::Arc;
+use std::{sync::Arc};
 
-use super::{EventPage, LibraryPage, MessagePage, NextPage, Page, ResPackPage, SFader, SettingsPage, SharedState};
+use super::{LibraryPage, NextPage, Page, ResPackPage, SFader, SettingsPage, SharedState};
 use crate::{
     client::{recv_raw, Client, LoginParams, User, UserManager},
     dir, get_data, get_data_mut,
@@ -34,9 +34,9 @@ pub struct HomePage {
     icons: Arc<Icons>,
 
     btn_play: DRectButton,
-    btn_event: DRectButton,
+    // btn_event: DRectButton,
     btn_respack: DRectButton,
-    btn_msg: DRectButton,
+    // btn_msg: DRectButton,
     btn_settings: DRectButton,
     btn_user: DRectButton,
 
@@ -80,12 +80,12 @@ impl HomePage {
             character,
             icons: Arc::new(Icons::new().await?),
 
-            btn_play: DRectButton::new().with_delta(-0.01).no_sound(),
-            btn_event: DRectButton::new().with_elevation(0.002).no_sound(),
-            btn_respack: DRectButton::new().with_elevation(0.002).no_sound(),
-            btn_msg: DRectButton::new().with_radius(0.03).with_delta(-0.003).with_elevation(0.002),
-            btn_settings: DRectButton::new().with_radius(0.03).with_delta(-0.003).with_elevation(0.002),
-            btn_user: DRectButton::new().with_delta(-0.003),
+            btn_play: DRectButton::new().with_radius(0.00).with_delta(-0.006).with_elevation(0.000).no_sound(),
+            // btn_event: DRectButton::new().with_elevation(0.002).no_sound(),
+            btn_respack: DRectButton::new().with_radius(0.00).with_delta(-0.003).with_elevation(0.000).no_sound(),
+            // btn_msg: DRectButton::new().with_radius(0.03).with_delta(-0.003).with_elevation(0.002),
+            btn_settings: DRectButton::new().with_radius(0.00).with_delta(-0.003).with_elevation(0.000),
+            btn_user: DRectButton::new().with_delta(-0.000),
 
             next_page: None,
 
@@ -152,24 +152,24 @@ impl Page for HomePage {
             self.next_page = Some(NextPage::Overlay(Box::new(LibraryPage::new(Arc::clone(&self.icons), s.icons.clone())?)));
             return Ok(true);
         }
-        if self.btn_event.touch(touch, t) {
-            button_hit_large();
-            if get_data().me.is_none() {
-                self.login.enter(t);
-            } else {
-                self.next_page = Some(NextPage::Overlay(Box::new(EventPage::new(Arc::clone(&self.icons), s.icons.clone()))));
-            }
-            return Ok(true);
-        }
+        // if self.btn_event.touch(touch, t) {
+        //     button_hit_large();
+        //     if get_data().me.is_none() {
+        //         self.login.enter(t);
+        //     } else {
+        //         self.next_page = Some(NextPage::Overlay(Box::new(EventPage::new(Arc::clone(&self.icons), s.icons.clone()))));
+        //     }
+        //     return Ok(true);
+        // }
         if self.btn_respack.touch(touch, t) {
             button_hit_large();
             self.next_page = Some(NextPage::Overlay(Box::new(ResPackPage::new(Arc::clone(&self.icons))?)));
             return Ok(true);
         }
-        if self.btn_msg.touch(touch, t) {
-            self.next_page = Some(NextPage::Overlay(Box::new(MessagePage::new())));
-            return Ok(true);
-        }
+        // if self.btn_msg.touch(touch, t) {
+        //     self.next_page = Some(NextPage::Overlay(Box::new(MessagePage::new())));
+        //     return Ok(true);
+        // }
         if self.btn_settings.touch(touch, t) {
             self.next_page = Some(NextPage::Overlay(Box::new(SettingsPage::new(self.icons.lang.clone()))));
             return Ok(true);
@@ -270,51 +270,53 @@ impl Page for HomePage {
         let t = s.t;
         let pad = 0.04;
 
+        let offset = s.gyro_offset;
+
         s.render_fader(ui, |ui, c| {
-            let r = Rect::new(-1., -ui.top + 0.1, 1., 1.7);
+            let r = Rect::new(offset.x * 0.4 - 0.9, offset.y * 0.4 - ui.top + 0.1, 1.5, 1.5);
             ui.fill_rect(r, (*self.character, r, ScaleType::CropCenter, c));
         });
 
         // play button
-        let top = s.render_fader(ui, |ui, c| {
-            let r = Rect::new(0., -0.28, 0.8, 0.43);
-            let top = r.bottom() + 0.02;
-            let (r, path) = self.btn_play.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
-            if let Some(cur) = &self.board_tex {
-                let p = (t - self.board_last_time) / BOARD_TRANSIT_TIME;
-                if p > 1. {
-                    self.board_tex_last = None;
-                    ui.fill_path(&path, (**cur, r, ScaleType::CropCenter, c));
-                } else if let Some(last) = &self.board_tex_last {
-                    let (cur, last) = if self.board_dir { (last, cur) } else { (cur, last) };
-                    let p = 1. - (1. - p).powi(3);
-                    let p = if self.board_dir { 1. - p } else { p };
-                    let rad = self.btn_play.config.radius;
-                    rounded_rect(ui, r, rad, |ui| {
-                        let mut nr = r;
-                        nr.h = r.h * (1. - p);
-                        ui.fill_rect(nr, (**last, nr, ScaleType::CropCenter, c));
+        // let top = s.render_fader(ui, |ui, c| {
+        //     let r = Rect::new(0.60, -0.30, 0.3, 0.2);
+        //     let top = r.bottom();
+        //     let (r, path) = self.btn_play.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
+        //     if let Some(cur) = &self.board_tex {
+        //         let p = (t - self.board_last_time) / BOARD_TRANSIT_TIME;
+        //         if p > 1. {
+        //             self.board_tex_last = None;
+        //             ui.fill_path(&path, (**cur, r, ScaleType::CropCenter, c));
+        //         } else if let Some(last) = &self.board_tex_last {
+        //             let (cur, last) = if self.board_dir { (last, cur) } else { (cur, last) };
+        //             let p = 1. - (1. - p).powi(3);
+        //             let p = if self.board_dir { 1. - p } else { p };
+        //             let rad = self.btn_play.config.radius;
+        //             rounded_rect(ui, r, rad, |ui| {
+        //                 let mut nr = r;
+        //                 nr.h = r.h * (1. - p);
+        //                 ui.fill_rect(nr, (**last, nr, ScaleType::CropCenter, c));
 
-                        nr.h = r.h * p;
-                        nr.y = r.bottom() - nr.h;
-                        ui.fill_rect(nr, (**cur, nr, ScaleType::CropCenter, c));
-                    });
-                } else {
-                    ui.fill_path(&path, (**cur, r, ScaleType::CropCenter, semi_white(p * c.a)));
-                }
-            }
-            ui.fill_path(&path, (semi_black(0.7 * c.a), (r.x, r.y), Color::default(), (r.x + 0.6, r.y)));
-            ui.text(tl!("play")).pos(r.x + pad, r.y + pad).color(c).draw();
-            let r = Rect::new(r.x + 0.02, r.bottom() - 0.18, 0.17, 0.17);
-            ui.fill_rect(r, (*self.icons.play, r, ScaleType::Fit, semi_white(0.6 * c.a)));
-            top
-        });
+        //                 nr.h = r.h * p;
+        //                 nr.y = r.bottom() - nr.h;
+        //                 ui.fill_rect(nr, (**cur, nr, ScaleType::CropCenter, c));
+        //             });
+        //         } else {
+        //             ui.fill_path(&path, (**cur, r, ScaleType::CropCenter, semi_white(p * c.a)));
+        //         }
+        //     }
+        //     ui.fill_path(&path, (semi_black(0.7 * c.a), (r.x, r.y), Color::default(), (r.x + 0.6, r.y)));
+        //     ui.text(tl!("play")).pos(r.x + pad, r.y + pad).color(c).size(0.6 * r.w / r.h).draw();
+        //     let r = Rect::new(r.x + 0.02, r.bottom() - 0.10, 0.08, 0.08);
+        //     ui.fill_rect(r, (*self.icons.play, r, ScaleType::Fit, semi_white(0.6 * c.a)));
+        //     top
+        // });
 
         let text_and_icon = |ui: &mut Ui, r: Rect, btn: &mut DRectButton, text, icon, c: Color| {
             let ow = r.w;
             let (r, _) = btn.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
             let ir = Rect::new(r.x + 0.02, r.bottom() - 0.08, 0.14, 0.14);
-            ui.text(text).pos(r.x + 0.026, r.y + 0.026).size(0.7 * r.w / ow).color(c).draw();
+            ui.text(text).pos(r.x + 0.026, r.y + 0.026).size(0.6 * r.w / ow).color(c).draw();
             ui.fill_rect(
                 {
                     let mut ir = ir;
@@ -326,33 +328,38 @@ impl Page for HomePage {
         };
 
         let r = s.render_fader(ui, |ui, c| {
-            let r = Rect::new(0., top, 0.38, 0.23);
-            text_and_icon(ui, r, &mut self.btn_event, tl!("event"), *self.icons.medal, c);
+            let r = Rect::new(offset.x * 0.6 + 0.70, offset.y * 0.6 - 0.30, 1.3, 0.2);
+            text_and_icon(ui, r, &mut self.btn_play, tl!("play"), *self.icons.play, c);
             r
         });
 
+        // let r = s.render_fader(ui, |ui, c| {
+        //     let r = Rect::new(0., top, 0.38, 0.23);
+        //     text_and_icon(ui, r, &mut self.btn_event, tl!("event"), *self.icons.medal, c);
+        //     r
+        // });
+
         let r = s.render_fader(ui, |ui, c| {
-            let r = Rect::new(r.right() + 0.02, top, 0.27, 0.23);
+            let r = Rect::new(r.left(), r.bottom() + 0.02, 1.3, 0.2);
             text_and_icon(ui, r, &mut self.btn_respack, tl!("respack"), *self.icons.respack, c);
             r
         });
 
-        let lf = r.right() + 0.02;
-
         s.render_fader(ui, |ui, c| {
-            let r = Rect::new(lf, top, 0.11, 0.11);
-            let (r, _) = self.btn_msg.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
-            let r = r.feather(-0.01);
-            ui.fill_rect(r, (*self.icons.msg, r, ScaleType::Fit, c));
-            if self.has_new {
-                let pad = 0.007;
-                ui.fill_circle(r.right() - pad, r.y + pad, 0.01, Color { a: c.a, ..RED });
-            }
+            // let r = Rect::new(lf, top, 0.11, 0.11);
+            // let (r, _) = self.btn_msg.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
+            // let r = r.feather(-0.01);
+            // ui.fill_rect(r, (*self.icons.msg, r, ScaleType::Fit, c));
+            // if self.has_new {
+            //     let pad = 0.007;
+            //     ui.fill_circle(r.right() - pad, r.y + pad, 0.01, Color { a: c.a, ..RED });
+            // }
 
-            let r = Rect::new(lf, top + 0.12, 0.11, 0.11);
-            let (r, _) = self.btn_settings.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
-            let r = r.feather(0.004);
-            ui.fill_rect(r, (*self.icons.settings, r, ScaleType::Fit, c));
+            let r = Rect::new(r.left(), r.bottom() + 0.02, 1.3, 0.2);
+            // let (r, _) = self.btn_settings.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
+            // let r = r.feather(0.004);
+            // ui.fill_rect(r, (*self.icons.settings, r, ScaleType::Fit, c));
+            text_and_icon(ui, r, &mut self.btn_settings, tl!("settings"), *self.icons.settings, c);
         });
 
         s.fader.roll_back();
@@ -377,7 +384,7 @@ impl Page for HomePage {
             let rt = ct.0 - rad - 0.02;
             if let Some(me) = &get_data().me {
                 ui.text(&me.name).pos(rt, r.center().y + 0.002).anchor(1., 1.).size(0.6).color(c).draw();
-                ui.text(format!("RKS {:.2}", me.rks))
+                ui.text(format!("{:.2}", me.rks))
                     .pos(rt, r.center().y + 0.008)
                     .anchor(1., 0.)
                     .size(0.4)

@@ -32,12 +32,13 @@ pub struct EndingScene {
     background: SafeTexture,
     illustration: SafeTexture,
     player: SafeTexture,
-    icons: [SafeTexture; 8],
+    icon: SafeTexture,
     icon_retry: SafeTexture,
     icon_proceed: SafeTexture,
     target: Option<RenderTarget>,
     audio: AudioManager,
     bgm: Music,
+    bgm_already_played: bool,
 
     info: ChartInfo,
     result: PlayResult,
@@ -62,7 +63,7 @@ pub struct EndingScene {
 }
 
 impl EndingScene {
-    pub const BPM_WAIT_TIME: f64 = 0.24;
+    pub const BPM_WAIT_TIME: f64 = 0.70;
     pub fn new(
         background: SafeTexture,
         illustration: SafeTexture,
@@ -74,17 +75,18 @@ impl EndingScene {
         result: PlayResult,
         challenge_texture: SafeTexture,
         config: &Config,
-        bgm: AudioClip,
+        endings: [AudioClip; 8],
         upload_fn: Option<UploadFn>,
         player_rks: Option<f32>,
         record_data: Option<Vec<u8>>,
         record: Option<SimpleRecord>,
     ) -> Result<Self> {
+        let index = icon_index(result.score, result.num_of_notes == result.max_combo);
         let mut audio = create_audio_manger(config)?;
         let bgm = audio.create_music(
-            bgm,
+            endings[index].clone(),
             MusicParams {
-                amplifier: config.volume_music,
+                amplifier: config.volume_bgm,
                 loop_mix_time: 0.,
                 ..Default::default()
             },
@@ -96,12 +98,13 @@ impl EndingScene {
             background,
             illustration,
             player,
-            icons,
+            icon: icons[index].clone(),
             icon_retry,
             icon_proceed,
             target: None,
             audio,
             bgm,
+            bgm_already_played: false,
             update_state: if upload_task.is_some() {
                 None
             } else {
@@ -143,7 +146,7 @@ thread_local! {
 impl Scene for EndingScene {
     fn enter(&mut self, tm: &mut TimeManager, target: Option<RenderTarget>) -> Result<()> {
         tm.reset();
-        tm.seek_to(-0.4);
+        tm.seek_to(0.0);
         self.target = target;
         Ok(())
     }
@@ -182,8 +185,9 @@ impl Scene for EndingScene {
 
     fn update(&mut self, tm: &mut TimeManager) -> Result<()> {
         self.audio.recover_if_needed()?;
-        if tm.now() >= EndingScene::BPM_WAIT_TIME - self.config.offset as f64 && self.target.is_none() && self.bgm.paused() {
+        if !self.bgm_already_played && tm.now() >= EndingScene::BPM_WAIT_TIME - self.config.offset as f64 && self.target.is_none() && self.bgm.paused() {
             self.bgm.play()?;
+            self.bgm_already_played = true;
         }
         if RE_UPLOAD.with(|it| std::mem::replace(it.borrow_mut().deref_mut(), false)) && self.upload_task.is_none() {
             self.upload_task = self
@@ -219,14 +223,27 @@ impl Scene for EndingScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
 
-        const START0: f32 = 0.0;
-        const END0: f32 = 1.25;
-        const START1: f32 = 0.00;
-        const END1: f32 = 0.55;
-        const START2: f32 = 0.00;
-        const END2: f32 = 0.85;
-        const START3: f32 = 0.00;
-        const END3: f32 = 1.20;
+        const MAIN_POS_START: f32 = 0.00;
+        const MAIN_POS_END: f32 = 3.00;
+
+        const A_POS_START: f32 = 0.00;
+        const A_POS_END: f32 = 1.15;
+        const A_SCORE_ALPHA_START: f32 = 1.08;
+        const A_SCORE_ALPHA_END: f32 = 1.35;
+        const A_ICON_SCALE_START: f32 = 2.50;
+        const A_ICON_SCALE_END: f32 = 2.90;
+        const A_ICON_ALPHA_START: f32 = 2.40;
+        const A_ICON_ALPHA_END: f32 = 2.70;
+
+        const B_POS_START: f32 = 0.00;
+        const B_POS_END: f32 = 1.60;
+        const B_ALPHA_START: f32 = 1.50;
+        const B_ALPHA_END: f32 = 1.83;
+
+        const C_POS_START: f32 = 0.00;
+        const C_POS_END: f32 = 2.05;
+        const C_ALPHA_START: f32 = 1.91;
+        const C_ALPHA_END: f32 = 2.25;
 
         let (
             text_max_combo,
@@ -239,7 +256,7 @@ impl Scene for EndingScene {
             text_miss,
             text_early,
             text_late,
-        ) = if self.config.chinese{
+        ) = if self.config.chinese {
             (
                 "最大连击数",
                 "准确率",
@@ -287,7 +304,7 @@ impl Scene for EndingScene {
             gl.push_model_matrix(Mat4::from_translation(vec3(x * 2., 0., 0.)));
         }
 
-        let p_main = (1. - ran(t, START0, END0)).powi(6);
+        let p_main = (1. - ran(t, MAIN_POS_START, MAIN_POS_END) + 0.15).powi(10);
         tran(gl, p_main);
         let r = draw_illustration(*self.illustration, -0.372, -0.002, 1.052, 1.22, WHITE, true); // 曲绘
         let main = Rect::new(r.right() - 0.053, r.y, r.w * 0.782, r.h / 2.); // 右边的矩形
@@ -313,8 +330,8 @@ impl Scene for EndingScene {
         //if text.measure().w <= mw {
         //    text.draw();
         //} else {
-            drop(text);
-            ui.text(&self.info.name)
+        drop(text);
+        ui.text(&self.info.name)
             .pos(p.0, p.1)
             .anchor(0., 1.)
             .size(text_size)
@@ -327,18 +344,23 @@ impl Scene for EndingScene {
         let c = Color::new(0., 0., 0., 1.0);
         let c2 = Color::new(0., 0., 0., 0.5); // 矩形颜色
 
-        tran(gl, (1. - ran(t, START1, END1)).powi(4) + p_main);
+        tran(gl, (1. - ran(t, A_POS_START, A_POS_END)).powi(2) + p_main);
         draw_parallelogram(main, None, c2, true);
         {
             let spd = if (self.speed - 1.).abs() <= 1e-4 {
-                format!(" ")//String::new()
+                format!("")//String::new()
             } else {
-                format!(" {:.2}x", self.speed)
+                format!("{:.2}x", self.speed)
+            };
+            let full_screen_judge = if self.config.full_scrrn_judge() {
+                format!("FULL SCREEN JUDGE")
+            } else {
+                format!("")
             };
             let text = if self.autoplay {
                 format!("{text_autoplay} {spd}")
             } else if !self.rated {
-                format!("{spd}")
+                format!("{full_screen_judge} {spd}")
             } else if let Some(state) = &self.update_state {
                 format!(
                     "{spd}  {}",
@@ -351,21 +373,27 @@ impl Scene for EndingScene {
             } else {
                 "Uploading…".to_owned()
             };
-            let pa = ran(t, 0.2, 0.6).powi(5);
+            let pa = ran(t, A_SCORE_ALPHA_START, A_SCORE_ALPHA_END);
             let r = draw_text_aligned(ui, &text, main.x + dx + 0.01, main.bottom() - 0.040, (0., 1.), 0.34, Color::new(1., 1., 1., pa)); // 分数下面的字
-            let score = if self.config.roman {GameScene::int_to_roman(res.score)} else if self.config.chinese {GameScene::int_to_chinese(res.score)} else {format!("{:07}", res.score)};
+            let score = (res.score as f64 / 1_000_000. * self.info.score_total as f64) as u32;
+            let score = if self.config.roman {
+                GameScene::int_to_roman(score)
+            } else if self.config.chinese {
+                GameScene::int_to_chinese(score)
+            } else {
+                format!("{:07}", score)
+            };
             let r = draw_text_aligned_fix(ui, &score, r.x - 0.012, r.y - 0.019, (0., 1.), 1.05, Color::new(1., 1., 1., pa), 0.4); // 分数
-            let icon = icon_index(res.score, res.num_of_notes == res.max_combo);
-            let p = ran(t, 1.2, 1.6).powi(5);
-            let p2 = ran(t, 1.65, 1.9).powi(3);
+            let pa = ran(t, A_ICON_ALPHA_START, A_ICON_ALPHA_END);
+            let ps = ran(t, A_ICON_SCALE_START, A_ICON_SCALE_END).powi(3);
             let s = main.h * 0.72;
             let ct = (main.right() + 0.015 - main.h * slope - s / 2., r.bottom() + 0.033 - s / 2.);
-            let s = s + s * (1. - p2) * 0.3;
+            let s = s + s * (1. - ps) * 0.3;
             draw_texture_ex( // 成绩等级图标
-                *self.icons[icon],
+                *self.icon,
                 ct.0 - s * 0.99 / 2.,
                 ct.1 - s * 1.05 / 2.,
-                Color::new(1., 1., 1., p),
+                Color::new(1., 1., 1., pa),
                 DrawTextureParams {
                     dest_size: Some(vec2(s * 0.99, s * 1.05)),
                     ..Default::default()
@@ -374,9 +402,9 @@ impl Scene for EndingScene {
         }
         gl.pop_model_matrix();
 
-        tran(gl, (1. - ran(t, START2, END2)).powi(2) + p_main);
+        tran(gl, (1. - ran(t, B_POS_START, B_POS_END)).powi(2) + p_main);
         let d = r.h / 15.2;
-        let pa = ran(t, 0.6, 1.0).powi(5);
+        let pa = ran(t, B_ALPHA_START, B_ALPHA_END);
         let s1 = Rect::new(main.x - d * 4. * slope, main.bottom() + d, main.w - d * 5. * slope, d * 2.8);
         draw_parallelogram(s1, None, c2, true);
         {
@@ -396,7 +424,7 @@ impl Scene for EndingScene {
         }
         gl.pop_model_matrix();
 
-        tran(gl, (1. - ran(t, START3, END3)).powi(2) + p_main);
+        tran(gl, (1. - ran(t, C_POS_START, C_POS_END)).powi(2) + p_main);
         let s2 = Rect::new(s1.x - d * 4. * slope, s1.bottom() + d, s1.w, s1.h); // 最下面的矩形
         draw_parallelogram(s2, None, c2, true);
         {
@@ -404,7 +432,7 @@ impl Scene for EndingScene {
             let dy2 = 0.010; // y间隔
             let bg = 0.55; // Perfect Good Bad Miss 的值的大小
             let sm = 0.21; // Perfect Good Bad Miss 的文本的大小
-            let pa = ran(t, 1.1, 1.4).powi(5);
+            let pa = ran(t, C_ALPHA_START, C_ALPHA_END);
             let draw_count = |ui: &mut Ui, ratio: f32, name: &str, count: u32| {
                 let r = draw_text_aligned(ui, name, s2.x + s2.w * ratio, s2.bottom() - dy, (0.5, 1.), sm, Color::new(1., 1., 1., pa)); // Perfect Good Bad Miss 的文本
                 let text = if self.config.roman {GameScene::int_to_roman(count)} else if self.config.chinese {GameScene::int_to_chinese(count)} else {count.to_string()};
@@ -429,8 +457,8 @@ impl Scene for EndingScene {
 
         let dy = 0.010;
         let w = 0.202;
-        let p = (1. - ran(t, 0.7, 1.8)).powi(7); // retry
-        let p2 = (1. - ran(t, 0.7, 1.8)).powi(5); // next
+        let p = (1. - ran(t, 1.2, 2.4)).powi(7); // retry
+        let p2 = (1. - ran(t, 1.35, 2.4)).powi(5); // next
         let h = 0.117;
         let s = 0.10;
         let hs = h * 0.28;
@@ -460,7 +488,7 @@ impl Scene for EndingScene {
             self.btn_proceed.set(ui, r);
         }
 
-        let alpha = ran(t, 0.65, 1.15); // rks
+        let alpha = ran(t, 1.25, 1.75); // rks / Player
         let main = Rect::new(1. - 0.27, -top + dy * 3.2, 0.35, 0.11);
         draw_parallelogram(main, None, Color::new(0., 0., 0., c.a * alpha), false);
         let sub = Rect::new(1. - 0.125, main.center().y + 0.015, 0.12, 0.03);
@@ -496,14 +524,15 @@ impl Scene for EndingScene {
             0.10
         );
         let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color, true);
-        let text = draw_text_aligned(ui, &self.player_name, r.x - 0.005, r.center().y, (1., 0.5), 0.54, color);
+        let mut text = ui.text(&self.player_name).pos(r.x - 0.015, r.center().y - 0.002).anchor(1., 0.5).size(0.54).color(color);
+        let text_rect = text.measure();
         draw_parallelogram(
-            Rect::new(text.x - main.h * slope - 0.02, main.y, r.x - text.x + main.h * slope * 2. + 0.0220, main.h),
+            Rect::new(text_rect.x - main.h * slope - 0.02, main.y, r.x - text_rect.x + main.h * slope * 2. + 0.021, main.h),
             None,
             Color::new(0., 0., 0., c.a * alpha),
             false,
         );
-        draw_text_aligned(ui, &self.player_name, r.x - 0.01, r.center().y, (1., 0.5), 0.54, color);
+        text.draw();
 
         let ct = (1. - 0.1 + 0.043, main.center().y - 0.034 + 0.02);
         let (w, h) = (0.09 * self.challenge_texture.width() / 78., 0.04 * self.challenge_texture.height() / 38.);

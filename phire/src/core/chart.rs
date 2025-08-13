@@ -1,5 +1,9 @@
-use super::{BpmList, Effect, JudgeLine, JudgeLineKind, Matrix, Resource, UIElement, Vector, Video};
-use crate::{fs::FileSystem, judge::JudgeStatus, ui::Ui};
+crate::tl_file!("parser");
+
+#[cfg(feature = "video")]
+use super::Video;
+use super::{BpmList, Effect, JudgeLine, JudgeLineKind, Matrix, Resource, UIElement, Vector};
+use crate::{core::Object, fs::FileSystem, judge::JudgeStatus, ui::Ui};
 use anyhow::{Context, Result};
 use macroquad::prelude::*;
 use sasa::AudioClip;
@@ -9,16 +13,17 @@ use std::{cell::RefCell, collections::HashMap};
 pub struct ChartExtra {
     pub effects: Vec<Effect>,
     pub global_effects: Vec<Effect>,
+    #[cfg(feature = "video")]
     pub videos: Vec<Video>,
 }
 
 #[derive(Default)]
 pub struct ChartSettings {
     pub pe_alpha_extension: bool,
-    pub hold_partial_cover: bool,
 }
 
 pub type HitSoundMap = HashMap<String, AudioClip>;
+const PROGRESS_BAR_COLOR: Color = Color::new(0.565, 0.565, 0.565, 1.0);
 
 pub struct Chart {
     pub offset: f32,
@@ -61,35 +66,24 @@ impl Chart {
 
     #[inline]
     pub fn with_element<R>(&self, ui: &mut Ui, res: &Resource, element: UIElement, scale_point: Option<(f32, f32)>, rotation_point: Option<(f32, f32)>, f: impl FnOnce(&mut Ui, Color) -> R) -> R {
+        let default_color = if matches!(element, UIElement::Bar) { PROGRESS_BAR_COLOR } else { WHITE };
         if let Some(id) = self.attach_ui[element as usize - 1] {
             let lines = &self.lines;
             let line = &lines[id];
             let obj = &line.object;
-            let mut tr = JudgeLine::fetch_pos(line, res, lines);
-            tr.y *= -res.aspect_ratio;
-            tr.x *= res.aspect_ratio;
-            let mut color = self.lines[id].color.now_opt().unwrap_or(WHITE);
+            let translation = {
+                let mut tr = line.fetch_pos(res, lines);
+                tr.y *= -res.aspect_ratio;
+                tr.x *= res.aspect_ratio;
+                let sc = obj.now_scale_wrt_point(scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
+                let ro = Object::new_translation_wrt_point(line.fetch_rotate(res, &lines), rotation_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
+                Matrix::new_translation(&tr) * ro * sc
+            };
+            let mut color = self.lines[id].color.now_opt().unwrap_or(default_color);
             color.a *= obj.now_alpha().max(0.); 
-            let scale = obj.now_scale_fix(scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
-            let ro = obj.new_rotation_wrt_point(-obj.rotation.now().to_radians(), rotation_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
-            ui.with(Matrix::new_translation(&tr) * ro * scale, |ui| f(ui, color))
+            ui.with(translation, |ui| f(ui, color))
         } else {
-            f(ui, WHITE)
-        }
-    }
-
-    pub fn with_element_noscale<R>(&self, ui: &mut Ui, res: &Resource, element: UIElement, ct: Option<(f32, f32)>, f: impl FnOnce(&mut Ui, Color) -> R) -> R {
-        if let Some(id) = self.attach_ui[element as usize - 1] {
-            let obj = &self.lines[id].object;
-            let mut tr = obj.now_translation(res);
-            tr.y = -tr.y;
-            let mut color = self.lines[id].color.now_opt().unwrap_or(WHITE);
-            color.a *= obj.now_alpha().max(0.); 
-            let mut scale = obj.now_scale_fix(ct.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x , y)));
-            scale.m11 = 1.0;
-            ui.with(obj.now_rotation().append_translation(&tr) * scale, |ui| f(ui, color))
-        } else {
-            f(ui, WHITE)
+            f(ui, default_color)
         }
     }
 
@@ -108,14 +102,16 @@ impl Chart {
             .flat_map(|it| it.notes.iter_mut())
             .for_each(|note| {
                 note.judge = JudgeStatus::NotJudged;
-                note.attr = false;
+                note.protected = false;
             });
         for line in &mut self.lines {
             line.cache.reset(&mut line.notes);
         }
+        #[cfg(feature = "video")]
         for video in &mut self.extra.videos {
-            video.next_frame = 0;
-            video.ended = false;
+            if let Err(err) = video.reset() {
+                crate::scene::show_error(err.context(tl!("video-load-failed", "path" => video.video_file.path().to_string_lossy())));
+            }
         }
     }
 
@@ -136,6 +132,7 @@ impl Chart {
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource) {
+        #[cfg(feature = "video")]
         res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, 1.)), |res| {
             for video in &self.extra.videos {
                 video.render(res);

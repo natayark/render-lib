@@ -1,12 +1,5 @@
 use bitflags::bitflags;
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-
-pub static TIPS: Lazy<Vec<String>> = Lazy::new(|| 
-    include_str!("tips.txt").split('\n')
-    //.map(str::to_owned)
-    .map(|s| format!("{}", s))
-    .collect());
 
 bitflags! {
     #[derive(Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -15,6 +8,7 @@ bitflags! {
         const AUTOPLAY = 1;
         const FLIP_X = 2;
         const FADE_OUT = 4;
+        const FULL_SCREEN_JUDGE = 8;
     }
 }
 
@@ -35,10 +29,11 @@ pub enum ChallengeModeColor {
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     #[serde(rename = "adjust_time_new")]
-    pub adjust_time: bool,
+    pub auto_tweak_offset: bool,
     pub aggressive: bool,
     pub aspect_ratio: Option<f32>,
     pub audio_buffer_size: Option<u32>,
+    #[cfg(target_os = "android")]
     pub audio_compatibility: bool,
     pub challenge_color: ChallengeModeColor,
     pub challenge_rank: u32,
@@ -47,10 +42,7 @@ pub struct Config {
     pub chart_ratio: f32,
     pub all_good: bool,
     pub all_bad: bool,
-    pub disable_effect: bool,
     pub double_click_to_pause: bool,
-    pub double_hint: bool,
-    pub fix_aspect_ratio: bool,
     pub fxaa: bool,
     pub interactive: bool,
     pub note_scale: f32,
@@ -86,6 +78,7 @@ pub struct Config {
     pub render_line: bool,
     pub render_line_extra: bool,
     pub render_note: bool,
+    pub render_double_hint: bool,
     pub render_ui_pause: bool,
     pub render_ui_name: bool,
     pub render_ui_level: bool,
@@ -94,33 +87,41 @@ pub struct Config {
     pub render_ui_bar: bool,
     pub render_bg: bool,
     pub render_bg_dim: bool,
+    pub render_extra: bool,
     pub bg_blurriness: f32,
 
     pub max_particles: usize,
 
     pub fade: f32,
     pub alpha_tint: bool, // note.alpha <=0.5 blue, note.alpha >0.5 red
+
+    pub rotation_mode: bool,
+    pub rotation_flat_mode: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            adjust_time: false,
+            #[cfg(not(feature = "play"))]
+            auto_tweak_offset: false,
+            #[cfg(feature = "play")]
+            auto_tweak_offset: true,
+            #[cfg(not(feature = "play"))]
             aggressive: false,
+            #[cfg(feature = "play")]
+            aggressive: true,
             aspect_ratio: None,
             audio_buffer_size: None,
+            #[cfg(target_os = "android")]
             audio_compatibility: false,
             challenge_color: ChallengeModeColor::Rainbow,
-            challenge_rank: 45,
+            challenge_rank: 3,
             chart_debug_line: 0.0,
             chart_debug_note: 0.0,
             chart_ratio: 1.0,
             all_good: false,
             all_bad: false,
-            disable_effect: false,
             double_click_to_pause: true,
-            double_hint: true,
-            fix_aspect_ratio: false,
             fxaa: false,
             interactive: true,
             mods: Mods::default(),
@@ -143,7 +144,7 @@ impl Default for Config {
             watermark: "".to_string(),
             roman: false,
             chinese: false,
-            combo: "COMBO".to_string(),
+            combo: "RECALL".to_string(),
             difficulty: "".to_string(),
             disable_loading: false,
 
@@ -155,6 +156,7 @@ impl Default for Config {
             render_line: true,
             render_line_extra: true,
             render_note: true,
+            render_double_hint: true,
             render_ui_pause: true,
             render_ui_name: true,
             render_ui_level: true,
@@ -163,13 +165,16 @@ impl Default for Config {
             render_ui_bar: true,
             render_bg: true,
             render_bg_dim: true,
+            render_extra: true,
             bg_blurriness: 80.,
-        
 
             max_particles: 20000,
 
             fade: 0.,
             alpha_tint: false,
+
+            rotation_mode: false,
+            rotation_flat_mode: false,
         }
     }
 }
@@ -194,5 +199,10 @@ impl Config {
     #[inline]
     pub fn flip_x(&self) -> bool {
         self.has_mod(Mods::FLIP_X)
+    }
+
+    #[inline]
+    pub fn full_scrrn_judge(&self) -> bool {
+        self.has_mod(Mods::FULL_SCREEN_JUDGE)
     }
 }

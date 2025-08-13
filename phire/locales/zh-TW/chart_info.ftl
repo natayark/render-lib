@@ -13,6 +13,7 @@ preview-too-short = 預覽過短
 preview-too-long = 預覽過長
 offset = 偏移(s)
 aspect-ratio = 長寬比
+force-aspect-ratio = 強制長寬比
 ps = 註：
 aspect-hint = 長寬比可以直接填小數，也可以是 w:h 的形式（英文半形冒號）
 dim = 背景昏暗

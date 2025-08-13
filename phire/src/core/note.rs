@@ -18,7 +18,7 @@ const BAD_TIME: f32 = 0.5;
 #[derive(Clone, Debug)]
 pub enum NoteKind {
     Click,
-    Hold { end_time: f32, end_height: f32, end_speed: f32 },
+    Hold { end_time: f32, end_height: f32, end_speed: Option<f32> },
     Flick,
     Drag,
 }
@@ -46,7 +46,7 @@ pub struct Note {
     pub multiple_hint: bool,
     pub fake: bool,
     pub judge: JudgeStatus,
-    pub attr: bool,
+    pub protected: bool,
 }
 
 unsafe impl Sync for Note {}
@@ -138,11 +138,6 @@ impl Note {
         line.object.rotation.now() + if self.above { 0. } else { 180. }
     }
 
-    pub fn plain(&self) -> bool {
-        !self.fake && !matches!(self.kind, NoteKind::Hold { .. }) && self.object.translation.1.keyframes.len() <= 1
-        // && self.ctrl_obj.is_default()
-    }
-
     pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32, bpm_list: &mut BpmList, index: usize) {
         self.object.set_time(res.time);
         //let mut _immediate_particle = false;
@@ -150,7 +145,7 @@ impl Note {
             if res.time >= *at {
                 //_immediate_particle = true;
                 let beat = 30. / bpm_list.now_bpm(
-                    if matches!(res.chart_format, ChartFormat::Pgr) { index as f32 } else { self.time }
+                    if bpm_list.per_line_bpm_storage { index as f32 } else { self.time }
                 );
                 //println!("{} {} {}", index, bpm_list.now_bpm(index as f32), beat);
                 *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
@@ -169,7 +164,7 @@ impl Note {
         if let Some(color) = color {
             self.init_ctrl_obj(ctrl_obj, line_height);
             let rotation = if self.above { 0. } else { 180. };
-            res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
+            res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0., false, false), |res| {
                 res.emit_at_origin(parent_rot + rotation, color)
             });
         }
@@ -185,21 +180,26 @@ impl Note {
         ctrl_obj.set_height((self.height - line_height + self.object.translation.1.now() / self.speed) * RPE_HEIGHT / 2.);
     }
 
-    pub fn now_transform(&self, res: &Resource, ctrl_obj: &CtrlObject, base: f32, incline_sin: f32) -> Matrix {
+    pub fn now_transform(&self, res: &Resource, ctrl_obj: &CtrlObject, base: f32, incline_sin: f32, can_scale_x: bool, can_scale_y: bool) -> Matrix {
         let incline_val = 1. - incline_sin * (base * res.aspect_ratio + self.object.translation.1.now()) * RPE_HEIGHT / 2. / 360.;
         let mut tr = self.object.now_translation(res);
         tr.x *= incline_val * ctrl_obj.pos.now_opt().unwrap_or(1.);
         tr.y += base;
-        let mut scale = self.object.scale.now_with_def(1., 1.);
-        scale.x *= ctrl_obj.size.now_opt().unwrap_or(1.);
+        let mut scale = self.object.scale.now_with_def(1.0, 1.0);
+        if can_scale_x {
+            scale.x *= ctrl_obj.size.now_opt().unwrap_or(1.0);
+        } else {
+            scale.x = 1.0;
+        };
+        if res.info.note_uniform_scale && can_scale_y {
+            scale.y *= ctrl_obj.size.now_opt().unwrap_or(1.0);
+        } else {
+            scale.y = 1.0;
+        };
         self.object.now_rotation().append_nonuniform_scaling(&scale).append_translation(&tr)
     }
 
-    pub fn render(&self, ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList, line_set_debug_alpha: bool, line_id: usize) {
-        if matches!(self.judge, JudgeStatus::Judged) && !matches!(self.kind, NoteKind::Hold { .. }) {
-            return;
-        }
-
+    pub fn render(&self, ui: &mut Ui, res: &mut Resource, config: &mut RenderConfig, bpm_list: &mut BpmList, line_set_debug_alpha: bool, line_id: usize, height_above: f32) {
         if config.appear_before.is_finite() {
         //if config.appear_before.is_finite() && !matches!(self.kind, NoteKind::Hold { .. }) {
             let beat = bpm_list.beat(self.time);
@@ -227,21 +227,12 @@ impl Note {
         let height = self.height / res.aspect_ratio * spd;
         let base = height - line_height;
 
-        if res.config.aggressive && matches!(res.chart_format, ChartFormat::Pec) && matches!(self.kind, NoteKind::Hold { .. }) {
-            let h = if self.time <= res.time { line_height } else { height };
-            let bottom = h + self.object.translation.1.now() - line_height;
-            if bottom - line_height > 2. / res.config.chart_ratio {
-                return;
-            }
-        }
-
-        let cover_base = if !config.settings.hold_partial_cover {
+        let cover_base = if !res.info.hold_partial_cover {
             height + self.object.translation.1.now() - line_height
         } else {
             match self.kind {
-                NoteKind::Hold { end_time: _,  end_height, end_speed } => {
-                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-                    let end_height = end_height / res.aspect_ratio * end_spd;
+                NoteKind::Hold { end_time: _,  end_height, end_speed: _ } => {
+                    let end_height = end_height / res.aspect_ratio;
                     end_height + self.object.translation.1.now() - line_height
                 }
                 _ => {
@@ -297,13 +288,13 @@ impl Note {
             }
         }
 
-        let scale = (if res.config.double_hint && self.multiple_hint {
+        let scale = (if res.config.render_double_hint && self.multiple_hint {
             res.res_pack.note_style_mh.click.width() / res.res_pack.note_style.click.width()
         } else {
             1.0
         }) * res.note_width;
         let order = self.kind.order();
-        let style = if res.config.double_hint && self.multiple_hint {
+        let style = if res.config.render_double_hint && self.multiple_hint {
             &res.res_pack.note_style_mh
         } else {
             &res.res_pack.note_style
@@ -313,7 +304,7 @@ impl Note {
             if !config.draw_below {
                 color.a *= (self.time - res.time).min(0.) / FADEOUT_TIME + 1.;
             }
-            res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res| {
+            res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin, true, true), |res| {
                 draw_center(res, tex, order, scale, color);
             });
         };
@@ -324,21 +315,13 @@ impl Note {
             }
             NoteKind::Hold { end_time, end_height, end_speed } => {
                 if self.fake && res.time >= end_time { return };
-                res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
+                res.with_model(self.now_transform(res, ctrl_obj, 0., 0., true, false), |res| {
                     if matches!(self.judge, JudgeStatus::Judged) {
                         // miss
                         color.a *= 0.5;
                     }
                     if res.time >= end_time {
                         return;
-                    }
-                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-                    if matches!(res.chart_format, ChartFormat::Pgr) && end_spd == 0. {
-                        if res.config.chart_debug_note > 0. {
-                            color.a *= 0.2;
-                        } else {
-                            return;
-                        }
                     }
 
                     let end_height = end_height / res.aspect_ratio * spd;
@@ -349,7 +332,16 @@ impl Note {
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
-                    let top = if matches!(res.chart_format, ChartFormat::Pgr) {
+                    let top = if let Some(end_spd) = end_speed {
+                        let end_spd = end_spd * ctrl_obj.y.now_opt().unwrap_or(1.);
+                        if end_spd == 0. {
+                            if res.config.chart_debug_note > 0. {
+                                color.a *= 0.2;
+                            } else {
+                                return;
+                            }
+                        }
+
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
                         bottom + hold_height - hold_line_height
@@ -366,7 +358,7 @@ impl Note {
                     //    return;
                     //}
 
-                    let style = if res.config.double_hint && self.multiple_hint {
+                    let style = if res.config.render_double_hint && self.multiple_hint {
                         &res.res_pack.note_style_mh
                     } else {
                         &res.res_pack.note_style
@@ -451,7 +443,7 @@ impl Note {
             }
         }
         if res.config.chart_debug_note > 0. {
-            if base > 2. / res.config.chart_ratio {
+            if base > height_above || res.time <= 0. {
                 return;
             }
             let above = if self.above { "" } else { " below" };
@@ -462,51 +454,57 @@ impl Note {
                     if res.time >= end_time {
                         return;
                     }
-                    let speed = if self.speed == 1. && end_speed == 1. {
+                    let speed = if self.speed == 1.0 && end_speed.is_none() {
                         String::new()
                     } else {
-                        format!(" v: {}({})", self.speed, end_speed)
+                        let end_spd = match end_speed {
+                            Some(spd) => format!("({})", spd),
+                            None => "".to_string(),
+                        };
+                        format!(" v: {}{}", self.speed, end_spd)
                     };
-                    res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin), |res: &mut Resource| {
+                    res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin, false, false), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
                                 ui.text(format!("[{}] t:{:.2}({:.2}) h:{:.2}({:.2})[{:.2}]", line_id, self.time, end_time, self.height, end_height, base))
                                     .pos(0., if self.above { res.config.chart_debug_note * 0.2 } else { -res.config.chart_debug_note * 0.2 })
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                                 ui.text(format!("{}{}{}", speed, above, fake))
                                     .pos(0., if self.above { res.config.chart_debug_note * 0.3 } else { -res.config.chart_debug_note * 0.3 })
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                             });
                         });
                     });
                 }
                 _ => {
-                    if res.time >= self.time { return };
+                    if res.time >= self.time {
+                        return
+                    };
                     let speed = if self.speed == 1. {
                         String::new()
                     } else {
                         format!(" v: {}", self.speed)
                     };
-                    res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res: &mut Resource| {
+                    res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin, false, false), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
                                 ui.text(format!("[{}] t:{:.2} h:{:.2}[{:.2}]", line_id, self.time, self.height, base))
                                     .pos(0., res.config.chart_debug_note * 0.15)
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                                 ui.text(format!("{}{}{}", speed, above, fake))
                                     .pos(0., res.config.chart_debug_note * 0.225)
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                             });
                         });

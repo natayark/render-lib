@@ -164,6 +164,39 @@ impl BinaryData for f32 {
     }
 }
 
+impl BinaryData for u32 {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        Ok(r.0.read_u32::<LE>()?)
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        Ok(w.0.write_u32::<LE>(*self)?)
+    }
+}
+
+impl BinaryData for u64 {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        Ok(r.0.read_u64::<LE>()?)
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        Ok(w.0.write_u64::<LE>(*self)?)
+    }
+}
+
+impl BinaryData for usize {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        let value = u64::read_binary(r)? as usize;
+        Ok(value)
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        let value = *self as u64;
+        value.write_binary(w)?;
+        Ok(())
+    }
+}
+
 impl BinaryData for String {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         Ok(String::from_utf8(r.array()?)?)
@@ -180,10 +213,10 @@ impl BinaryData for Color {
     }
 
     fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
-        w.write_val((self.r * 256.) as u8)?;
-        w.write_val((self.g * 256.) as u8)?;
-        w.write_val((self.b * 256.) as u8)?;
-        w.write_val((self.a * 256.) as u8)?;
+        w.write_val((self.r * 255.) as u8)?;
+        w.write_val((self.g * 255.) as u8)?;
+        w.write_val((self.b * 255.) as u8)?;
+        w.write_val((self.a * 255.) as u8)?;
         Ok(())
     }
 }
@@ -227,6 +260,31 @@ impl<T: BinaryData> BinaryData for Keyframe<T> {
         Ok(())
     }
 }
+
+impl<T: BinaryData> BinaryData for Option<T> {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        if bool::read_binary(r)? {
+            let value = T::read_binary(r)?;
+            Ok(Some(value))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        match self {
+            Some(value) => {
+                true.write_binary(w)?;
+                value.write_binary(w)?;
+            }
+            None => {
+                false.write_binary(w)?;
+            }
+        }
+        Ok(())
+    }
+}
+
 
 fn read_opt<R: Read, T: BinaryData + Tweenable>(r: &mut BinaryReader<R>) -> Result<Option<Box<Anim<T>>>> {
     Ok(match r.read::<u8>()? {
@@ -321,7 +379,7 @@ impl BinaryData for Note {
             1 => NoteKind::Hold {
                 end_time: r.read()?,
                 end_height: r.read()?,
-                end_speed: if r.read()? { r.read::<f32>()? } else { 1. },
+                end_speed: r.read()?,
             },
             2 => NoteKind::Flick,
             3 => NoteKind::Drag,
@@ -339,7 +397,7 @@ impl BinaryData for Note {
             multiple_hint: false,
             fake: r.read()?,
             judge: JudgeStatus::NotJudged,
-            attr: false,
+            protected: false,
         })
     }
 
@@ -386,17 +444,16 @@ impl BinaryData for JudgeLine {
         let height = r.read()?;
         let mut notes = r.array()?;
         let color = r.read()?;
-        let parent = match r.uleb()? {
-            0 => None,
-            x => Some(x as usize - 1),
-        };
+        let parent = r.read()?;
+        let rotate_with_parent = r.read()?;
         let anchor = r.read()?;
         let show_below = r.read()?;
-        let cache = JudgeLineCache::new(&mut notes);
         let attach_ui = UIElement::from_u8(r.read()?);
         let ctrl_obj = RefCell::new(r.read()?);
         let incline = r.read()?;
         let z_index = r.read()?;
+
+        let cache = JudgeLineCache::new(&mut notes);
         Ok(Self {
             object,
             kind,
@@ -404,6 +461,7 @@ impl BinaryData for JudgeLine {
             notes,
             color,
             parent,
+            rotate_with_parent,
             anchor,
             show_below,
 
@@ -439,10 +497,9 @@ impl BinaryData for JudgeLine {
         w.write(&self.height)?;
         w.array(&self.notes)?;
         w.write(&self.color)?;
-        w.uleb(match self.parent {
-            None => 0,
-            Some(index) => index as u64 + 1,
-        })?;
+        w.write(&self.parent)?;
+        w.write(&self.rotate_with_parent)?;
+        w.write(&self.anchor)?;
         w.write_val(self.show_below)?;
         w.write_val(self.attach_ui.map_or(0, |it| it as u8))?;
         w.write(self.ctrl_obj.borrow().deref())?;
@@ -455,14 +512,12 @@ impl BinaryData for JudgeLine {
 impl BinaryData for ChartSettings {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         Ok(Self {
-            pe_alpha_extension: r.read::<u8>()? == 1,
-            hold_partial_cover: r.read::<u8>()? == 1,
+            pe_alpha_extension: r.read()?,
         })
     }
 
     fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
-        w.write_val(self.pe_alpha_extension as u8)?;
-        w.write_val(self.hold_partial_cover as u8)?;
+        w.write_val(self.pe_alpha_extension)?;
         Ok(())
     }
 }

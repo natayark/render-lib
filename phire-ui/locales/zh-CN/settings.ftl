@@ -29,9 +29,9 @@ item-music = 音乐音量
 item-sfx = 音效音量
 item-bgm = BGM 音量
 item-cali = 调整延迟
-item-exclusive-audio = 独占音频 (仅 Android)
+item-exclusive-audio = 独占音频
 item-exclusive-audio-sub = 尝试独占输出设备，可以降低音频延时，但会导致声音无法被录制
-item-audio-compatibility = 音频兼容模式 (仅 Android)
+item-audio-compatibility = 音频兼容模式
 
 item-show-acc = 显示实时准度
 item-dc-pause = 双击暂停
@@ -41,6 +41,7 @@ item-opt = 激进优化
 item-opt-sub = 采用激进的优化策略，提升性能但可能导致部分谱面显示出错
 item-speed = 速度
 item-note-size = 音符大小
+item-render-extra = 显示额外内容 (着色器/特效)
 
 item-chart-debug-line = 谱面调试 - 判定线
 item-chart-debug-line-sub = 显示判定线属性
@@ -56,6 +57,9 @@ item-watermark = 水印
 item-combo = COMBO 文字
 item-roman = 罗马模式
 item-chinese = 中文模式
+item-rotation-mode = 旋转模式
+item-rotation-flat-mode = 旋转模式 - 平放
+item-rotation-flat-mode-sub = 此模式会根据开始游戏时的方向来矫正方向。如果方向错误，可在暂停游戏页重置方位
 
 load-cali-failed = 加载音频失败
 not-combo = 不能是 COMBO

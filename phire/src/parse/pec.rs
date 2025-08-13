@@ -172,6 +172,7 @@ fn parse_judge_line(mut pec: PECJudgeLine, id: usize, max_time: f32) -> Result<J
         notes: pec.notes,
         color: Anim::default(),
         parent: None,
+        rotate_with_parent: false,
         anchor: [0.5, 0.5],
         z_index: 0,
         show_below: false,
@@ -245,7 +246,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         '2' => NoteKind::Hold {
                             end_time: it.take_time(r)?,
                             end_height: 0.0,
-                            end_speed: 0.0,
+                            end_speed: None,
                         },
                         '3' => NoteKind::Flick,
                         '4' => NoteKind::Drag,
@@ -275,7 +276,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         multiple_hint: false,
                         fake,
                         judge: JudgeStatus::NotJudged,
-                        attr: false,
+                        protected: false,
                     });
                     if it.next() == Some("#") {
                         last_note!().speed = it.take_f32()?;

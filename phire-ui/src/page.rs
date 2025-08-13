@@ -40,11 +40,7 @@ use phire::{
     ui::{FontArc, IntoShading, Shading, TextPainter, Ui},
 };
 use std::{
-    any::Any,
-    borrow::Cow,
-    ops::DerefMut,
-    path::PathBuf,
-    sync::{Arc, Mutex},
+    any::Any, borrow::Cow, ops::DerefMut, path::PathBuf, sync::{Arc, Mutex}
 };
 use tracing::warn;
 
@@ -346,7 +342,14 @@ pub struct SharedState {
     pub charts_local: Vec<ChartItem>,
 
     pub icons: [SafeTexture; 8],
+
+    pub gyro_offset: Vec2,
 }
+
+pub const RESTORE_RATE: f32 = 0.005;
+pub const ROT_SCALE_X: f32 = -0.004;
+pub const ROT_SCALE_Y: f32 = 0.004;
+pub const MAX_ROTATE_RATE: f32 = 0.7;
 
 impl SharedState {
     pub async fn new() -> Result<Self> {
@@ -360,6 +363,7 @@ impl SharedState {
             charts_local: Vec::new(),
 
             icons: Resource::load_icons().await?,
+            gyro_offset: Vec2::ZERO,
         })
     }
 

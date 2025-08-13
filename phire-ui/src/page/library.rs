@@ -497,7 +497,7 @@ impl Page for LibraryPage {
             ChartListType::Popular => {}
         }
         s.fader.render(ui, t, |ui, c| {
-            let path = r.rounded(0.02);
+            let path = r.rounded(0.00);
             ui.fill_path(&path, semi_black(0.4 * c.a));
             self.render_charts(ui, c, s.t, r.feather(-0.01));
         });

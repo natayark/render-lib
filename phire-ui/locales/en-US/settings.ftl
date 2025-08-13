@@ -29,9 +29,9 @@ item-music = Music volume
 item-sfx = Sound effect volume
 item-bgm = BGM volume
 item-cali = Adjust offset
-item-exclusive-audio = Exclusive Audio (Only Android)
+item-exclusive-audio = Exclusive Audio
 item-exclusive-audio-sub = Use exclusive access to reduce latency, but may prevent the sound from being recorded
-item-audio-compatibility = Audio Compatibility Mode (Only Android)
+item-audio-compatibility = Audio Compatibility Mode
 
 item-show-acc = Show real-time accuracy
 item-dc-pause = Double tap to pause
@@ -41,6 +41,7 @@ item-opt = Aggressive optimization
 item-opt-sub = Improves performance, but can cause incorrect behavior
 item-speed = Speed
 item-note-size = Note size
+item-render-extra = Enable Extra (Shader/Effect)
 
 item-chart-debug-line = Chart Debug Mode - Line
 item-chart-debug-line-sub = Display line properties
@@ -56,6 +57,9 @@ item-watermark = Watermark
 item-combo = COMBO Text
 item-roman = Roman Mode
 item-chinese = Chinese Mode
+item-rotation-mode = Rotation Mode
+item-rotation-flat-mode = Rotation Mode - Lay Flat
+item-rotation-flat-mode-sub = Orientation calibrates when the game starts. If its wrong, tap reset on the pause screen.
 
 load-cali-failed = Failed to load audio
 not-combo = Cannot be COMBO

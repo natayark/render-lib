@@ -161,6 +161,33 @@ pub fn render_chart_info(ui: &mut Ui, edit: &mut ChartInfoEdit, width: f32) -> (
             ui.text(tl!("aspect-hint")).pos(0.02, 0.).size(0.35).max_width(len).multiline().draw().h + 0.03
         }));
 
+        ui.dx(0.01);
+        let r = ui.checkbox(tl!("force-aspect-ratio"), &mut info.force_aspect_ratio);
+        dy!(r.h + s);
+        ui.dx(-0.01);
+
+        let mut string = format!("{}", info.score_total);
+        let mut changed = false;
+        let r = ui.input(tl!("score-total"), &mut string, (len, &mut changed));
+        dy!(r.h + s);
+        if changed {
+            match string.parse::<u32>() {
+                Err(_) => {
+                    show_message(tl!("illegal-input")).error();
+                }
+                Ok(value) => {
+                    info.score_total = value;
+                }
+            }
+        }
+
+        ui.dx(0.01);
+        let r = ui.checkbox(tl!("hold-partial-cover"), &mut info.hold_partial_cover);
+        dy!(r.h + s);
+        let r = ui.checkbox(tl!("note-uniform-scale"), &mut info.note_uniform_scale);
+        dy!(r.h + s);
+        ui.dx(-0.01);
+
         ui.dx(-rt);
         let r = ui.slider(tl!("dim"), 0.0..1.0, 0.05, &mut info.background_dim, Some(width - 0.2));
         dy!(r.h + s + 0.01);

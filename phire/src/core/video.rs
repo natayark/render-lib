@@ -1,6 +1,6 @@
 use super::{Anim, Resource};
 use crate::ext::{source_of_image, ScaleType};
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use macroquad::prelude::*;
 use miniquad::{Texture, TextureFormat, TextureParams, TextureWrap};
 use prpr_avc::AVPixelFormat;
@@ -13,7 +13,7 @@ thread_local! {
 
 pub struct Video {
     video: prpr_avc::Video,
-    _video_file: NamedTempFile,
+    pub video_file: NamedTempFile,
 
     material: Material,
     tex_y: Texture2D,
@@ -71,7 +71,7 @@ impl Video {
 
         Ok(Self {
             video,
-            _video_file: video_file,
+            video_file,
 
             material,
             tex_y,
@@ -145,6 +145,13 @@ impl Video {
         gl.draw_mode(DrawMode::Triangles);
         gl.geometry(&vertices, &[0, 2, 3, 0, 1, 3]);
         gl_use_default_material();
+    }
+
+    pub fn reset(&mut self) -> Result<()> {
+        self.next_frame = 0;
+        self.ended = false;
+        self.video = prpr_avc::Video::open(self.video_file.path().as_os_str().to_str().unwrap(), AVPixelFormat::YUV420P)?;
+        Ok(())
     }
 }
 

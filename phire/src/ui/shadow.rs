@@ -39,8 +39,8 @@ pub struct ShadowConfig {
 impl Default for ShadowConfig {
     fn default() -> Self {
         Self {
-            elevation: 0.005,
-            radius: 0.02,
+            elevation: 0.000,
+            radius: 0.00,
             base: 0.7,
         }
     }

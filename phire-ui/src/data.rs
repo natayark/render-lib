@@ -12,6 +12,10 @@ use phire::{
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ops::DerefMut, path::Path};
 
+fn default_score_total() -> u32 {
+    1_000_000
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BriefChartInfo {
@@ -25,6 +29,8 @@ pub struct BriefChartInfo {
     pub charter: String,
     pub composer: String,
     pub illustrator: String,
+    #[serde(default="default_score_total")]
+    pub score_total: u32,
     pub created: Option<DateTime<Utc>>,
     pub updated: Option<DateTime<Utc>>,
     pub chart_updated: Option<DateTime<Utc>>,
@@ -42,6 +48,7 @@ impl From<ChartInfo> for BriefChartInfo {
             charter: info.charter,
             composer: info.composer,
             illustrator: info.illustrator,
+            score_total: info.score_total,
             created: info.created,
             updated: info.updated,
             chart_updated: info.chart_updated,

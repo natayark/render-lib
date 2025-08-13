@@ -173,7 +173,7 @@ impl Page for SettingsPage {
         });
         let r = ui.content_rect();
         s.fader.render(ui, t, |ui, c| {
-            let path = r.rounded(0.02);
+            let path = r.rounded(0.00);
             ui.fill_path(&path, semi_black(0.4 * c.a));
             let r = r.feather(-0.01);
             self.scroll.size((r.w, r.h));
@@ -416,8 +416,9 @@ struct AudioList {
     music_slider: Slider,
     sfx_slider: Slider,
     bgm_slider: Slider,
-    audio_compatibility_btn: DRectButton,
     cali_btn: DRectButton,
+    #[cfg(target_os = "android")]
+    audio_compatibility_btn: DRectButton,
 
     cali_task: LocalTask<Result<OffsetPage>>,
     next_page: Option<NextPage>,
@@ -430,8 +431,9 @@ impl AudioList {
             music_slider: Slider::new(0.0..2.0, 0.05),
             sfx_slider: Slider::new(0.0..2.0, 0.05),
             bgm_slider: Slider::new(0.0..2.0, 0.05),
-            audio_compatibility_btn: DRectButton::new(),
             cali_btn: DRectButton::new(),
+            #[cfg(target_os = "android")]
+            audio_compatibility_btn: DRectButton::new(),
 
             cali_task: None,
             next_page: None,
@@ -446,7 +448,7 @@ impl AudioList {
         let data = get_data_mut();
         let config = &mut data.config;
         if self.adjust_btn.touch(touch, t) {
-            config.adjust_time ^= true;
+            config.auto_tweak_offset ^= true;
             return Ok(Some(true));
         }
         if let wt @ Some(_) = self.music_slider.touch(touch, t, &mut config.volume_music) {
@@ -462,13 +464,14 @@ impl AudioList {
             }
             return Ok(wt);
         }
-        if self.audio_compatibility_btn.touch(touch, t) {
-            config.audio_compatibility ^= true;
-            return Ok(Some(true));
-        }
         if self.cali_btn.touch(touch, t) {
             self.cali_task = Some(Box::pin(OffsetPage::new()));
             return Ok(Some(false));
+        }
+        #[cfg(target_os = "android")]
+        if self.audio_compatibility_btn.touch(touch, t) {
+            config.audio_compatibility ^= true;
+            return Ok(Some(true));
         }
         Ok(None)
     }
@@ -504,7 +507,7 @@ impl AudioList {
         let config = &data.config;
         item! {
             render_title(ui, c, tl!("item-auto-latency"), Some(tl!("item-auto-latency-sub")));
-            render_switch(ui, rr, t, c, &mut self.adjust_btn, config.adjust_time);
+            render_switch(ui, rr, t, c, &mut self.adjust_btn, config.auto_tweak_offset);
         }
         item! {
             render_title(ui, c, tl!("item-music"), None);
@@ -519,12 +522,13 @@ impl AudioList {
             self.bgm_slider.render(ui, rr, t, c, config.volume_bgm, format!("{:.2}", config.volume_bgm));
         }
         item! {
-            render_title(ui, c, tl!("item-audio-compatibility"), None);
-            render_switch(ui, rr, t, c, &mut self.audio_compatibility_btn, config.audio_compatibility);
-        }
-        item! {
             render_title(ui, c, tl!("item-cali"), None);
             self.cali_btn.render_text(ui, rr, t, c.a, format!("{:.0}ms", config.offset * 1000.), 0.5, true);
+        }
+        #[cfg(target_os = "android")]
+        item! {
+            render_title(ui, c, tl!("item-audio-compatibility"), None);
+            render_switch(ui, rr, t, c, &mut self.audio_compatibility_btn, config.audio_compatibility);
         }
         (w, h)
     }
@@ -541,6 +545,7 @@ struct ChartList {
     opt_btn: DRectButton,
     speed_slider: Slider,
     size_slider: Slider,
+    render_extra_btn: DRectButton,
 }
 
 impl ChartList {
@@ -550,8 +555,9 @@ impl ChartList {
             dc_pause_btn: DRectButton::new(),
             dhint_btn: DRectButton::new(),
             opt_btn: DRectButton::new(),
-            speed_slider: Slider::new(0.5..2., 0.05),
-            size_slider: Slider::new(0.8..1.2, 0.005),
+            speed_slider: Slider::new(0.1..2.0, 0.05),
+            size_slider: Slider::new(0.0..5.0, 0.005),
+            render_extra_btn: DRectButton::new(),
         }
     }
 
@@ -571,7 +577,7 @@ impl ChartList {
             return Ok(Some(true));
         }
         if self.dhint_btn.touch(touch, t) {
-            config.double_hint ^= true;
+            config.render_double_hint ^= true;
             return Ok(Some(true));
         }
         if self.opt_btn.touch(touch, t) {
@@ -583,6 +589,10 @@ impl ChartList {
         }
         if let wt @ Some(_) = self.size_slider.touch(touch, t, &mut config.note_scale) {
             return Ok(wt);
+        }
+        if self.render_extra_btn.touch(touch, t) {
+            config.render_extra ^= true;
+            return Ok(Some(true));
         }
         Ok(None)
     }
@@ -615,7 +625,7 @@ impl ChartList {
         }
         item! {
             render_title(ui, c, tl!("item-dhint"), Some(tl!("item-dhint-sub")));
-            render_switch(ui, rr, t, c, &mut self.dhint_btn, config.double_hint);
+            render_switch(ui, rr, t, c, &mut self.dhint_btn, config.render_double_hint);
         }
         item! {
             render_title(ui, c, tl!("item-opt"), Some(tl!("item-opt-sub")));
@@ -628,6 +638,10 @@ impl ChartList {
         item! {
             render_title(ui, c, tl!("item-note-size"), None);
             self.size_slider.render(ui, rr, t,c, config.note_scale, format!("{:.3}", config.note_scale));
+        }
+        item! {
+            render_title(ui, c, tl!("item-render-extra"), None);
+            render_switch(ui, rr, t, c, &mut self.render_extra_btn, config.render_extra);
         }
         (w, h)
     }
@@ -643,6 +657,8 @@ struct OtherList {
     combo_btn: DRectButton,
     roman_btn: DRectButton,
     chinese_btn: DRectButton,
+    rotation_mode: DRectButton,
+    rotation_flat_mode: DRectButton,
 }
 
 impl OtherList {
@@ -657,6 +673,8 @@ impl OtherList {
             combo_btn: DRectButton::new(),
             roman_btn: DRectButton::new(),
             chinese_btn: DRectButton::new(),
+            rotation_mode: DRectButton::new(),
+            rotation_flat_mode: DRectButton::new(),
         }
     }
 
@@ -702,6 +720,20 @@ impl OtherList {
             config.chinese ^= true;
             if config.chinese && config.chinese == config.roman {
                 config.roman = !config.chinese;
+            }
+            return Ok(Some(true));
+        }
+        if self.rotation_mode.touch(touch, t) {
+            config.rotation_mode ^= true;
+            if !config.rotation_mode && config.rotation_flat_mode {
+                config.rotation_flat_mode = false;
+            }
+            return Ok(Some(true));
+        }
+        if self.rotation_flat_mode.touch(touch, t) {
+            config.rotation_flat_mode ^= true;
+            if config.rotation_flat_mode && !config.rotation_mode {
+                config.rotation_mode = true;
             }
             return Ok(Some(true));
         }
@@ -782,6 +814,14 @@ impl OtherList {
         item! {
             render_title(ui, c, tl!("item-chinese"), None);
             render_switch(ui, rr, t, c, &mut self.chinese_btn, config.chinese);
+        }
+        item! {
+            render_title(ui, c, tl!("item-rotation-mode"), None);
+            render_switch(ui, rr, t, c, &mut self.rotation_mode, config.rotation_mode);
+        }
+        item! {
+            render_title(ui, c, tl!("item-rotation-flat-mode"), Some(tl!("item-rotation-flat-mode-sub")));
+            render_switch(ui, rr, t, c, &mut self.rotation_flat_mode, config.rotation_flat_mode);
         }
         (w, h)
     }

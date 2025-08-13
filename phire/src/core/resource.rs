@@ -4,7 +4,7 @@ use crate::{
     ext::{create_audio_manger, nalgebra_to_glm, SafeTexture},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
-    particle::{AtlasConfig, ColorCurve, Emitter, EmitterConfig},
+    particle::{AtlasConfig, ColorCurve, Emitter, EmitterConfig, ParticleShape},
 };
 use anyhow::{bail, Context, Result};
 use macroquad::prelude::*;
@@ -12,10 +12,15 @@ use miniquad::{gl::{GLuint, GL_LINEAR}, Texture, TextureWrap};
 use sasa::{AudioClip, AudioManager, Sfx};
 use serde::Deserialize;
 use std::{cell::RefCell, collections::{BTreeMap, HashMap, VecDeque}, ops::DerefMut, path::Path, sync::atomic::AtomicU32};
+use rand_pcg::{
+    Pcg32,
+    rand_core::SeedableRng
+};
 
 pub const MAX_SIZE: usize = 64; // needs tweaking
 pub static DPI_VALUE: AtomicU32 = AtomicU32::new(250);
 pub const BUFFER_SIZE: usize = 1024;
+pub const RNG_SEED: u64 = 0x7a_61_6b_6f;
 
 #[inline]
 fn default_scale() -> f32 {
@@ -28,23 +33,23 @@ fn default_duration() -> f32 {
 }
 
 #[inline]
-fn default_perfect() -> u32 {
-    0xffffeca0
+fn default_perfect_fx() -> (f32, f32, f32, f32) {
+    (1.0, 0.9, 0.65, 0.9)
 }
 
 #[inline]
-fn default_good() -> u32 {
-    0xffb4e1ff
+fn default_good_fx() -> (f32, f32, f32, f32) {
+    (0.70, 0.9, 1.0, 0.9)
 }
 
 #[inline]
-fn default_perfect_line() -> u32 {
-    0xfffeffa9
+fn default_perfect_line() -> (f32, f32, f32, f32) {
+    (1.0, 1.0, 0.7, 1.0)
 }
 
 #[inline]
-fn default_good_line() -> u32 {
-    0xffa2eeff
+fn default_good_line() -> (f32, f32, f32, f32) {
+    (0.65, 0.94, 1.0, 1.0)
 }
 
 #[inline]
@@ -68,8 +73,12 @@ pub struct ResPackInfo {
     pub hit_fx_rotate: bool,
     #[serde(default)]
     pub hide_particles: bool,
+    #[serde(default)]
+    pub circle_particles: bool,
     #[serde(default = "default_tinted")]
     pub hit_fx_tinted: bool,
+    #[serde(default = "default_tinted")]
+    pub line_tinted: bool,
 
     pub hold_atlas: (u32, u32),
     #[serde(rename = "holdAtlasMH")]
@@ -82,15 +91,15 @@ pub struct ResPackInfo {
     #[serde(default)]
     pub hold_compact: bool,
 
-    #[serde(default = "default_perfect")]
-    pub color_perfect: u32,
-    #[serde(default = "default_good")]
-    pub color_good: u32,
+    #[serde(default = "default_perfect_fx")]
+    pub color_perfect_fx: (f32, f32, f32, f32),
+    #[serde(default = "default_good_fx")]
+    pub color_good_fx: (f32, f32, f32, f32),
 
     #[serde(default = "default_perfect_line")]
-    pub color_perfect_line: u32,
+    pub color_perfect_line: (f32, f32, f32, f32),
     #[serde(default = "default_good_line")]
-    pub color_good_line: u32,
+    pub color_good_line: (f32, f32, f32, f32),
 
     #[serde(default)]
     pub description: String,
@@ -99,7 +108,7 @@ pub struct ResPackInfo {
 impl ResPackInfo {
     pub fn fx_perfect(&self) -> Color {
         if self.hit_fx_tinted {
-            Color::from_hex(self.color_perfect)
+            Color::new(self.color_perfect_fx.0, self.color_perfect_fx.1, self.color_perfect_fx.2, self.color_perfect_fx.3)
         } else {
             WHITE
         }
@@ -107,23 +116,23 @@ impl ResPackInfo {
 
     pub fn fx_good(&self) -> Color {
         if self.hit_fx_tinted {
-            Color::from_hex(self.color_good)
+            Color::new(self.color_good_fx.0, self.color_good_fx.1, self.color_good_fx.2, self.color_good_fx.3)
         } else {
             WHITE
         }
     }
 
-    pub fn fx_perfect_line(&self) -> Color {
-        if self.hit_fx_tinted {
-            Color::from_hex(self.color_perfect_line)
+    pub fn line_perfect(&self) -> Color {
+        if self.line_tinted {
+            Color::new(self.color_perfect_line.0, self.color_perfect_line.1, self.color_perfect_line.2, self.color_perfect_line.3)
         } else {
             WHITE
         }
     }
 
-    pub fn fx_good_line(&self) -> Color {
-        if self.hit_fx_tinted {
-            Color::from_hex(self.color_good_line)
+    pub fn line_good(&self) -> Color {
+        if self.line_tinted {
+            Color::new(self.color_good_line.0, self.color_good_line.1, self.color_good_line.2, self.color_good_line.3)
         } else {
             WHITE
         }
@@ -180,7 +189,7 @@ pub struct ResourcePack {
     pub sfx_click: AudioClip,
     pub sfx_drag: AudioClip,
     pub sfx_flick: AudioClip,
-    pub ending: AudioClip,
+    pub endings: [AudioClip; 8],
     pub hit_fx: SafeTexture,
 }
 
@@ -255,6 +264,24 @@ impl ResourcePack {
                 }
             };
         }
+
+        macro_rules! load_ending {
+            ($suffix:literal) => {
+                if let Some(sfx) = fs.load_file(format!("ending{}.ogg", $suffix).as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Some(sfx) = fs.load_file(format!("ending{}.mp3", $suffix).as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Some(sfx) = fs.load_file(format!("ending.ogg").as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Some(sfx) = fs.load_file(format!("ending.mp3").as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Ok(file) = load_file(format!("ending{}.ogg", $suffix).as_str()).await {
+                    AudioClip::new(file)?
+                } else {
+                    AudioClip::new(load_file(format!("ending.ogg").as_str()).await?)?
+                }
+            };
+        }
         Ok(Self {
             info,
             note_style,
@@ -262,23 +289,30 @@ impl ResourcePack {
             sfx_click: load_clip!("click"),
             sfx_drag: load_clip!("drag"),
             sfx_flick: load_clip!("flick"),
-            ending: load_clip!("ending"),
+            endings: [
+                load_ending!("_ap"),
+                load_ending!("_fc"),
+                load_ending!("_v"),
+                load_ending!("_s"),
+                load_ending!("_a"),
+                load_ending!("_b"),
+                load_ending!("_c"),
+                load_ending!("")
+                ],
             hit_fx,
         })
     }
 }
 
 pub struct ParticleEmitter {
-    scale: f32,
-    emitter: Emitter,
-    emitter_config: EmitterConfig,
-    emitter_square: Emitter,
-    emitter_square_config: EmitterConfig,
-    hide_particles: bool,
+    pub scale: f32,
+    pub emitter: Emitter,
+    pub emitter_square: Emitter,
+    pub hide_particles: bool,
 }
 
 impl ParticleEmitter {
-    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool, config: Option<Config>) -> Result<Self> {
+    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool, config: Option<Config>) -> Self {
         let colors_curve = {
             let start = WHITE;
             let mut mid = start;
@@ -303,45 +337,51 @@ impl ParticleEmitter {
             colors_curve,
             ..Default::default()
         };
+        let shape = if res_pack.info.circle_particles {
+            ParticleShape::Circle { subdivisions: 16 }
+        } else {
+            ParticleShape::Rectangle { aspect_ratio: 1.0 }
+        };
+        let rng = Pcg32::seed_from_u64(RNG_SEED);
         let emitter_square_config = EmitterConfig {
             max_particles: config.max_particles,
+            rng: Some(rng),
             local_coords: false,
             lifetime: res_pack.info.hit_fx_duration,
             lifetime_randomness: 0.0,
             initial_direction_spread: 2. * std::f32::consts::PI,
             size_randomness: 0.3,
             emitting: false,
-            initial_velocity: 3.3 * scale,
+            initial_velocity: 4.3 * scale,
             initial_velocity_randomness: 0.3  * scale,
-            linear_accel: -7.0,
+            linear_accel: -9.0,
+            shape,
             colors_curve,
             ..Default::default()
         };
         let mut res = Self {
             scale: res_pack.info.hit_fx_scale,
-            emitter: Emitter::new(emitter_config.clone()),
-            emitter_config,
-            emitter_square: Emitter::new(emitter_square_config.clone()),
-            emitter_square_config,
+            emitter: Emitter::new(emitter_config),
+            emitter_square: Emitter::new(emitter_square_config),
             hide_particles,
         };
         res.set_scale(scale);
-        Ok(res)
+        res
     }
 
     pub fn emit_at(&mut self, pt: Vec2, rotation: f32, color: Color) {
         self.emitter.config.initial_rotation = rotation;
         self.emitter.config.base_color = color;
-        self.emitter.emit(&self.emitter_config, pt, 1);
+        self.emitter.emit(pt, 1);
         if !self.hide_particles {
             self.emitter_square.config.base_color = color;
-            self.emitter_square.emit(&self.emitter_square_config, pt, 4);
+            self.emitter_square.emit(pt, 4);
         }
     }
 
     pub fn draw(&mut self, dt: f32) {
-        self.emitter.draw(&self.emitter_config, vec2(0., 0.), dt);
-        self.emitter_square.draw(&self.emitter_config, vec2(0., 0.), dt);
+        self.emitter.draw(vec2(0., 0.), dt);
+        self.emitter_square.draw(vec2(0., 0.), dt);
     }
 
     pub fn set_scale(&mut self, scale: f32) {
@@ -382,7 +422,6 @@ impl NoteBuffer {
 
 pub struct Resource {
     pub config: Config,
-    pub chart_format: ChartFormat,
     pub info: ChartInfo,
     pub aspect_ratio: f32,
     pub dpi: u32,
@@ -438,14 +477,14 @@ impl Resource {
             };
         }
         Ok(loads![
-            "rank/F.png",
-            "rank/C.png",
-            "rank/B.png",
-            "rank/A.png",
-            "rank/S.png",
-            "rank/V.png",
+            "rank/phi.png",
             "rank/FC.png",
-            "rank/phi.png"
+            "rank/V.png",
+            "rank/S.png",
+            "rank/A.png",
+            "rank/B.png",
+            "rank/C.png",
+            "rank/F.png"
         ])
     }
 
@@ -471,7 +510,6 @@ impl Resource {
 
     pub async fn new(
         config: Config,
-        chart_format: ChartFormat,
         info: ChartInfo,
         mut fs: Box<dyn FileSystem>,
         player: Option<SafeTexture>,
@@ -496,7 +534,7 @@ impl Resource {
 
         let mut audio = create_audio_manger(&config)?;
         let music = AudioClip::new(fs.load_file(&info.music).await?)?;
-        let track_length = music.length();
+        let track_length = music.length() as f32;
         let buffer_size = Some(BUFFER_SIZE);
         let sfx_click = audio.create_sfx(res_pack.sfx_click.clone(), buffer_size)?;
         let sfx_drag = audio.create_sfx(res_pack.sfx_drag.clone(), buffer_size)?;
@@ -507,14 +545,13 @@ impl Resource {
         let note_width = config.note_scale * NOTE_WIDTH_RATIO_BASE;
         let note_scale = config.note_scale;
 
-        let no_effect = config.disable_effect || has_no_effect;
+        let no_effect = !config.render_extra || has_no_effect;
 
-        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()))?;
+        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()));
 
         macroquad::window::gl_set_drawcall_buffer_capacity(MAX_SIZE * 4, MAX_SIZE * 6);
         Ok(Self {
             config,
-            chart_format,
             info,
             aspect_ratio,
             dpi: DPI_VALUE.load(std::sync::atomic::Ordering::SeqCst),
@@ -524,7 +561,7 @@ impl Resource {
             time: 0.,
 
             alpha: 1.,
-            judge_line_color: res_pack.info.fx_perfect_line(),
+            judge_line_color: res_pack.info.line_perfect(),
 
             camera,
 
@@ -557,6 +594,11 @@ impl Resource {
 
             model_stack: vec![Matrix::identity()],
         })
+    }
+
+    pub fn reset(&mut self) {
+        self.judge_line_color = self.res_pack.info.line_perfect();
+        self.emitter = ParticleEmitter::new(&self.res_pack, self.config.note_scale, self.res_pack.info.hide_particles, Some(self.config.clone()));
     }
 
     pub fn emit_at_origin(&mut self, rotation: f32, color: Color) {
@@ -594,7 +636,7 @@ impl Resource {
             (x + ((w - rw) / 2.).round() as i32, y + ((h - rh) / 2.).round() as i32, rw as i32, rh as i32)
         }
         let aspect_ratio = self.config.aspect_ratio.unwrap_or(self.info.aspect_ratio);
-        if self.config.fix_aspect_ratio {
+        if self.info.force_aspect_ratio {
             self.aspect_ratio = aspect_ratio;
             self.camera.viewport = Some(viewport(aspect_ratio, vp));
         } else {

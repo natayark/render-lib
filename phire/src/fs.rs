@@ -1,4 +1,4 @@
-use crate::{ext::spawn_task, info::ChartInfo};
+use crate::{info::ChartInfo};
 use anyhow::{anyhow, bail, Context, Result};
 use async_trait::async_trait;
 use chardetng::EncodingDetector;
@@ -207,6 +207,17 @@ impl FileSystem for PatchedFileSystem {
 
     fn as_any(&mut self) -> &mut dyn Any {
         self
+    }
+}
+
+pub async fn spawn_task<R: Send + 'static>(f: impl FnOnce() -> Result<R> + Send + 'static) -> Result<R> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        f()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        Ok(tokio::task::spawn_blocking(f).await??)
     }
 }
 

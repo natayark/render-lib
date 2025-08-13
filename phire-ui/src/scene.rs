@@ -37,6 +37,7 @@ use uuid::Uuid;
 
 thread_local! {
     pub static TEX_BACKGROUND: RefCell<Option<SafeTexture>> = RefCell::new(None);
+    pub static TEX_BACKGROUND_BLUR: RefCell<Option<SafeTexture>> = RefCell::new(None);
     pub static TEX_ICON_BACK: RefCell<Option<SafeTexture>> = RefCell::new(None);
 }
 

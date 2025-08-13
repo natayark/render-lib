@@ -775,6 +775,7 @@ impl SongScene {
             let chart_updated = info.chart_updated;
             config.mods = mods;
             LoadingScene::new(
+                None,
                 mode,
                 info,
                 &config,
@@ -1082,6 +1083,7 @@ impl SongScene {
             item(tl!("mods-autoplay"), Some(tl!("mods-autoplay-sub")), Mods::AUTOPLAY);
             item(tl!("mods-flip-x"), Some(tl!("mods-flip-x-sub")), Mods::FLIP_X);
             item(tl!("mods-fade-out"), Some(tl!("mods-fade-out-sub")), Mods::FADE_OUT);
+            item(tl!("mods-full-screen-judge"), None, Mods::FULL_SCREEN_JUDGE);
             (width, h)
         });
     }
@@ -1888,7 +1890,7 @@ impl Scene for SongScene {
 
         let r = ui.back_rect();
         self.back_btn.set(ui, r);
-        ui.fill_rect(r, (*self.icons.back, r, ScaleType::Fit, c));
+        ui.fill_rect(r, (*self.icons.back, r, ScaleType::Fit, WHITE));
 
         let r = ui
             .text(&self.info.name)
@@ -1906,9 +1908,10 @@ impl Scene for SongScene {
         // bottom bar
         let s = 0.25;
         let r = Rect::new(-0.94, ui.top - s - 0.06, s, s);
-        let icon = self.record.as_ref().map_or(0, |it| icon_index(it.score as _, it.full_combo));
+        let icon = self.record.as_ref().map_or(7, |it| icon_index(it.score as _, it.full_combo));
         ui.fill_rect(r, (*self.rank_icons[icon], r, ScaleType::Fit, c));
         let score = self.record.as_ref().map(|it| it.score).unwrap_or_default();
+        let score = (score as f64 / 1_000_000.0 * self.info.score_total as f64) as u32;
         let accuracy = self.record.as_ref().map(|it| it.accuracy).unwrap_or_default();
         let r = ui
             .text(format!("{score:07}"))

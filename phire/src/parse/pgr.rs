@@ -44,7 +44,7 @@ pub struct PgrNote {
     position_x: f32,
     hold_time: f32,
     speed: f32,
-    #[allow(unused)]floor_position: f32,
+    #[allow(unused)] floor_position: f32,
 }
 
 #[derive(Deserialize)]
@@ -81,10 +81,10 @@ macro_rules! validate_events {
                 true
             }
         });
-        /*事件应当连续 官谱中可能有重叠事件所以不用管这个
+        /*
         for i in 0..($pgr.len() - 1) {
             if $pgr[i].end_time != $pgr[i + 1].start_time {
-                 ptl!(bail "event-not-contiguous");
+                ptl!(bail "event-not-contiguous");
             }
         }*/
         // if $pgr.last().unwrap().end_time <= 900000000.0 {
@@ -95,23 +95,19 @@ macro_rules! validate_events {
 
 fn parse_speed_events(r: f32, mut pgr: Vec<PgrSpeedEvent>, max_time: f32) -> Result<(AnimFloat, AnimFloat)> {
     validate_events!(pgr);
-    //assert_eq!(pgr[0].start_time, 0.0);
     if pgr[0].start_time != 0. { pgr[0].start_time = 0. }
     let mut kfs = Vec::new();
     let mut pos = 0.;
     kfs.extend(pgr[..pgr.len().saturating_sub(1)].iter().map(|it| {
         let from_pos = pos;
         pos += (it.end_time - it.start_time) * r * it.value;
-        //println!("{}\t{}\tpos:{}", it.start_time * r, it.value, from_pos);
         Keyframe::new(it.start_time * r, from_pos, 2)
     }));
     let last = pgr.last().unwrap();
     kfs.push(Keyframe::new(last.start_time * r, pos, 2));
     kfs.push(Keyframe::new(max_time, pos + (max_time - last.start_time * r) * last.value, 0));
-    //println!("—————————分割线——————————");
     for kf in &mut kfs {
         kf.value /= HEIGHT_RATIO;
-        //println!("kf:{}\t{}", kf.time, kf.value)
     }
     Ok((
         AnimFloat::new(pgr.iter().map(
@@ -211,7 +207,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, _speed: &mut AnimFloat, height: &m
                 3 => {
                     let end_time = (pgr.time + pgr.hold_time) * r;
                     let end_height = height + (pgr.hold_time * pgr.speed * r / HEIGHT_RATIO);
-                    let end_speed = pgr.speed;
+                    let end_speed = Some(pgr.speed);
                     NoteKind::Hold { end_time, end_height, end_speed }
                 }
                 4 => NoteKind::Flick,
@@ -237,7 +233,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, _speed: &mut AnimFloat, height: &m
                 multiple_hint: false,
                 fake: false,
                 judge: JudgeStatus::NotJudged,
-                attr: false,
+                protected: false,
             })
         })
         .collect()
@@ -271,6 +267,7 @@ fn parse_judge_line(pgr: PgrJudgeLine, max_time: f32, format_version: u32) -> Re
         notes,
         color: Anim::default(),
         parent: None,
+        rotate_with_parent: false,
         anchor: [0.5, 0.5],
         z_index: 0,
         show_below: false,
@@ -311,5 +308,5 @@ pub fn parse_phigros(source: &str, extra: ChartExtra) -> Result<Chart> {
         .collect::<Result<Vec<_>>>()?;
 
     process_lines(&mut lines);
-    Ok(Chart::new(pgr.offset, lines, BpmList::new_time(bpm_values), ChartSettings::default(), extra, HashMap::new()))
+    Ok(Chart::new(pgr.offset, lines, BpmList::from_time(bpm_values), ChartSettings::default(), extra, HashMap::new()))
 }

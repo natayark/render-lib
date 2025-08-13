@@ -4,29 +4,24 @@ use crate::{
     data::LocalChart,
     dir, get_data, get_data_mut,
     mp::MPPanel,
-    page::{HomePage, NextPage, Page, ResPackItem, SharedState},
+    page::{HomePage, NextPage, Page, ResPackItem, SharedState, MAX_ROTATE_RATE, RESTORE_RATE, ROT_SCALE_X, ROT_SCALE_Y},
     save_data,
-    scene::{TEX_BACKGROUND, TEX_ICON_BACK},
+    scene::{TEX_BACKGROUND, TEX_BACKGROUND_BLUR, TEX_ICON_BACK},
 };
 use anyhow::{anyhow, Context, Result};
 use macroquad::prelude::*;
 use phire::{
     core::ResPackInfo,
-    ext::{unzip_into, RectExt, SafeTexture},
+    ext::{blur_image, unzip_into, RectExt, SafeTexture, ScaleType},
     scene::{return_file, show_error, show_message, take_file, NextScene, Scene},
     task::Task,
     time::TimeManager,
     ui::{button_hit, RectButton, Ui, UI_AUDIO},
+    gyro::GYROSCOPE_DATA
 };
 use sasa::{AudioClip, Music};
 use std::{
-    any::Any,
-    cell::RefCell,
-    fs::File,
-    io::BufReader,
-    sync::atomic::{AtomicBool, Ordering},
-    thread_local,
-    time::{Duration, Instant},
+    any::Any, cell::RefCell, fs::File, io::BufReader, sync::atomic::{AtomicBool, Ordering}, thread_local, time::{Duration, Instant}
 };
 use uuid::Uuid;
 
@@ -50,6 +45,7 @@ pub struct MainScene {
     bgm: Option<Music>,
 
     background: SafeTexture,
+    background_blur: SafeTexture,
     btn_back: RectButton,
     icon_back: SafeTexture,
 
@@ -103,10 +99,15 @@ impl MainScene {
         load_sfx!(UI_BTN_HITSOUND, "button.ogg");
         load_sfx!(UI_SWITCH_SOUND, "switch.ogg");
 
-        let background: SafeTexture = load_texture("background.jpg").await?.into();
+        let background: SafeTexture = load_texture("background.png").await?.into();
+
+        let image = image::load_from_memory(&load_file("background.png").await?).context("Failed to decode image")?;
+        let background_blur = blur_image(image, 80.)?;
+
         let icon_back: SafeTexture = load_texture("back.png").await?.into();
 
         TEX_BACKGROUND.with(|it| *it.borrow_mut() = Some(background));
+        TEX_BACKGROUND_BLUR.with(|it| *it.borrow_mut() = Some(background_blur));
         TEX_ICON_BACK.with(|it| *it.borrow_mut() = Some(icon_back));
 
         Ok(())
@@ -122,6 +123,8 @@ impl MainScene {
             bgm,
 
             background: TEX_BACKGROUND.with(|it| it.borrow().clone().unwrap()),
+            background_blur: TEX_BACKGROUND_BLUR.with(|it| it.borrow().clone().unwrap()),
+
             btn_back: RectButton::new(),
             icon_back: TEX_ICON_BACK.with(|it| it.borrow().clone().unwrap()),
 
@@ -371,9 +374,33 @@ impl Scene for MainScene {
 
     fn render(&mut self, tm: &mut TimeManager, ui: &mut Ui) -> Result<()> {
         set_camera(&ui.camera());
-        ui.fill_rect(ui.screen_rect(), (*self.background, ui.screen_rect()));
         let s = &mut self.state;
         s.update(tm);
+        let gyro = GYROSCOPE_DATA.lock().unwrap().clone().angular_velocity;
+        // let rate = mouse_position_local();
+
+        let rx = gyro.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
+        let ry = gyro.y.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
+        let restore_factor = (rx.abs().max(ry.abs())) / MAX_ROTATE_RATE;
+        s.gyro_offset.x += -rx * ROT_SCALE_X;
+        s.gyro_offset.y += -ry * ROT_SCALE_Y;
+        let t = RESTORE_RATE + RESTORE_RATE * restore_factor;
+        s.gyro_offset = s.gyro_offset.lerp(Vec2::ZERO, t);
+
+        let mut r = ui.screen_rect();
+        r.x -= (s.gyro_offset.x + MAX_ROTATE_RATE / 2.) * 0.5;
+        r.y -= (s.gyro_offset.y + MAX_ROTATE_RATE / 2.) * 0.5;
+        r.w += MAX_ROTATE_RATE * 0.5;
+        r.h += MAX_ROTATE_RATE * 0.5;
+
+        ui.fill_rect(r, (*self.background, r));
+        let alpha = match self.pages.len() {
+            1 => 0.,
+            2 => 1. - s.fader.for_sub(|f| f.progress(s.t)),
+            _ => 1.,
+        };
+        let c = Color::new(1., 1., 1., alpha);
+        ui.fill_rect(r, (*self.background_blur, r, ScaleType::CropCenter, c));
 
         // 1. title
         if s.fader.transiting() {

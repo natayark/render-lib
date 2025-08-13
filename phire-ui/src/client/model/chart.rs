@@ -53,6 +53,7 @@ impl Chart {
             charter: self.charter.clone(),
             composer: self.composer.clone(),
             illustrator: self.illustrator.clone(),
+            score_total: 1_000_000,
             created: Some(self.created),
             updated: Some(self.updated),
             chart_updated: Some(self.chart_updated),

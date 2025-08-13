@@ -15,10 +15,11 @@ use std::{cell::RefCell, collections::HashMap, num::FpCategory};
 
 pub const FLICK_SPEED_THRESHOLD: f32 = 0.8;
 pub const LIMIT_PERFECT: f32 = 0.08;
-pub const LIMIT_GOOD: f32 = 0.16;
-pub const LIMIT_BAD: f32 = 0.18;
+pub const LIMIT_GOOD: f32 = 0.18;
+pub const LIMIT_BAD: f32 = 0.22;
 pub const UP_TOLERANCE: f32 = 0.05;
 pub const DIST_FACTOR: f32 = 0.2;
+const LATE_OFFSET: f32 = 0.13;
 
 pub fn play_sfx(sfx: &mut Sfx, config: &Config) {
     if config.volume_sfx <= 1e-2 {
@@ -208,11 +209,10 @@ impl JudgeInner {
     }
 
     pub fn score(&self) -> u32 {
-        const TOTAL: u32 = 1000000;
         if self.counts[0] == self.num_of_notes {
-            TOTAL
+            1_000_000
         } else {
-            let score = (0.9 * self.accuracy() + self.max_combo as f64 / self.num_of_notes as f64 * 0.1) * TOTAL as f64;
+            let score = (0.9 * self.accuracy() + self.max_combo as f64 / self.num_of_notes as f64 * 0.1) * 1_000_000.;
             score.round() as u32
         }
     }
@@ -323,7 +323,17 @@ impl Judge {
         });
     }
 
-    fn touch_transform(flip_x: bool, scale: f32) -> impl Fn(&mut Touch) {
+    fn rotate_vec2(vec: Vec2, angle_rad: f32) -> Vec2 {
+        let cos_theta = angle_rad.cos();
+        let sin_theta = angle_rad.sin();
+
+        Vec2::new(
+            vec.x * cos_theta - vec.y * sin_theta,
+            vec.x * sin_theta + vec.y * cos_theta,
+        )
+    }
+
+    fn touch_transform(flip_x: bool, scale: f32, angle: f32) -> impl Fn(&mut Touch) {
         let vp = get_viewport();
         move |touch| {
             let p = touch.position;
@@ -334,6 +344,7 @@ impl Judge {
             if flip_x {
                 touch.position.x *= -1.;
             }
+            touch.position = Self::rotate_vec2(touch.position, angle);
             touch.position /= scale;
         }
     }
@@ -341,7 +352,7 @@ impl Judge {
     pub fn get_touches(scale: f32) -> Vec<Touch> {
         TOUCHES.with(|it| {
             let guard = it.borrow();
-            let tr = Self::touch_transform(false, scale);
+            let tr = Self::touch_transform(false, scale, 0.);
             guard
                 .0
                 .iter()
@@ -354,12 +365,16 @@ impl Judge {
         })
     }
 
-    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>) {
+    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>, angle: f32) {
         if res.config.autoplay() {
             self.auto_play_update(res, chart);
             return;
         }
-        const X_DIFF_MAX: f32 = 0.21 / (16. / 9.) * 2.;
+        let x_diff_max: f32 = if res.config.full_scrrn_judge() {
+            2. / res.config.chart_ratio
+        } else {
+            0.21 / (16. / 9.) * 2.
+        };
         let spd = res.config.speed;
 
         #[cfg(not(target_os = "windows"))]
@@ -396,7 +411,7 @@ impl Judge {
                     time: f64::NEG_INFINITY,
                 });
             }
-            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio);
+            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, angle);
             touches
                 .into_iter()
                 .map(|mut it| {
@@ -508,7 +523,7 @@ impl Judge {
                 continue;
             }
             let t = time_of(touch);
-            let mut closest = (None, X_DIFF_MAX, LIMIT_BAD, LIMIT_BAD + (X_DIFF_MAX / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR, 0.);
+            let mut closest = (None, x_diff_max, LIMIT_BAD, LIMIT_BAD + (x_diff_max / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR, 0.);
             for (line_id, ((line, pos), (idx, st))) in chart.lines.iter_mut().zip(pos.iter()).zip(self.notes.iter_mut()).enumerate() {
                 let Some(pos) = pos[id] else { continue; };
                 for id in &idx[*st..] {
@@ -520,7 +535,7 @@ impl Judge {
                         continue;
                     }
                     let dt = (note.time - t) / spd;
-                    if dt >= closest.3 {
+                    if dt.abs() >= closest.3.abs() {
                         break;
                     }
                     // let dt = if dt < 0. { (dt + EARLY_OFFSET).min(0.).abs() } else { dt };
@@ -528,11 +543,11 @@ impl Judge {
                     x.set_time(t);
                     let posx = pos.x;
                     let dist = (x.now() - posx).abs();
-                    if dist > X_DIFF_MAX {
+                    if dist > x_diff_max {
                         continue;
                     }
-                    if dt
-                        > if matches!(note.kind, NoteKind::Click) {
+                    if dt.abs() >
+                        if matches!(note.kind, NoteKind::Click) {
                             LIMIT_BAD // LIMIT_BAD - LIMIT_PERFECT * (dist - 0.9).max(0.)
                         } else {
                             LIMIT_GOOD
@@ -540,50 +555,63 @@ impl Judge {
                     {
                         continue;
                     }
-                    let dt = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) {
-                        dt.abs().max(LIMIT_GOOD)
+                    let dist_key = if res.config.full_scrrn_judge() {
+                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * 0.01
                     } else {
-                        dt
+                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR
                     };
-                    let key = dt + (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR;
+                    let key = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) { // Low Priority
+                        dt.abs() + LIMIT_BAD
+                    } else if dt < -LIMIT_GOOD { // Prevent Late Bad
+                        dt.abs()
+                    } else if dt < 0.0 {
+                        (dt + LATE_OFFSET).min(0.0).abs() // Protect Late Good
+                    } else {
+                        dt.abs()
+                    };
+                    let key = key + dist_key;
                     if key < closest.3 {
                         closest = (Some((line_id, *id)), dist, dt, key, posx);
                     }
                 }
             }
-            if let (Some((line_id, id)), dist, dt, _, posx) = closest {
-                let drag_or_flick = |note: &mut Note| {
+            if let (Some((line_id, id)), _, dt, _, posx) = closest {
+                let can_protect_note = |note: &mut Note| {
                     let x = &mut note.object.translation.0;
                     x.set_time(t);
-                    let dist2 = (x.now() - posx).abs();
-                    let dist = (dist2 - dist).abs();
                     let judge_time = t - note.time;
                     matches!(note.kind, NoteKind::Drag | NoteKind::Flick)
-                        && dist <= X_DIFF_MAX
-                        && !note.fake
-                        && !note.attr
                         && judge_time >= -LIMIT_GOOD
                         && judge_time <= LIMIT_BAD
+                        && (x.now() - posx).abs() <= x_diff_max // note_dist <= x_diff_max
+                        && !note.protected
+                        && !note.fake
                 };
-                let line = &mut chart.lines[line_id];
-                if matches!(line.notes[id as usize].kind, NoteKind::Drag) {
-                    //debug!("reject by drag");
+                let lines = &mut chart.lines;
+                if matches!(lines[line_id].notes[id as usize].kind, NoteKind::Drag) {
+                    // debug!("reject by drag");
                     continue;
                 }
                 if click {
-                    if dt > LIMIT_PERFECT && line.notes.iter_mut().any(|note| drag_or_flick(note)) { // flag unattr drag
-                        for note in &mut line.notes {
-                            if drag_or_flick(note) {
-                                note.attr = true;
-                                // debug!("flag drag");
-                            }
+                    if dt > LIMIT_PERFECT {
+                        let mut any = false;
+                        lines.iter_mut()
+                            .flat_map(|line| line.notes.iter_mut())
+                            .for_each(|note| {
+                                if can_protect_note(note) {
+                                    note.protected = true;
+                                    any = true;
+                                }
+                            });
+                        if any {
+                            continue;
                         }
-                        continue;
                     }
                     // click & hold
-                    let note = &mut line.notes[id as usize];
+                    let note = &mut lines[line_id].notes[id as usize];
                     let dt = dt.abs();
                     if matches!(note.kind, NoteKind::Flick) {
+                        // debug!("reject by flick");
                         continue; // to next loop
                     }
                     if dt <= LIMIT_GOOD || matches!(note.kind, NoteKind::Hold { .. }) {
@@ -603,13 +631,13 @@ impl Judge {
                         // prevent extra judgements
                         if matches!(note.judge, JudgeStatus::NotJudged) {
                             // keep the note after bad judgement
-                            line.notes[id as usize].judge = JudgeStatus::PreJudge;
+                            note.judge = JudgeStatus::PreJudge;
                             judgements.push((Judgement::Bad, line_id, id, None));
                         }
                     }
                 } else {
                     // flick
-                    line.notes[id as usize].judge = JudgeStatus::PreJudge;
+                    lines[line_id].notes[id as usize].judge = JudgeStatus::PreJudge;
                     if let Some(tracker) = self.trackers.get_mut(&touch.id) {
                         tracker.flicked = false;
                     }
@@ -679,7 +707,7 @@ impl Judge {
                         let x = &mut note.object.translation.0;
                         x.set_time(t);
                         let x = x.now();
-                        if self.key_down_count == 0 && !pos.iter().any(|it| it.map_or(false, |it| (it.x - x).abs() <= X_DIFF_MAX)) {
+                        if self.key_down_count == 0 && !pos.iter().any(|it| it.map_or(false, |it| (it.x - x).abs() <= x_diff_max)) {
                             if t > *up_time + UP_TOLERANCE {
                                 note.judge = JudgeStatus::Judged;
                                 judgements.push((Judgement::Miss, line_id, *id, None));
@@ -716,7 +744,7 @@ impl Judge {
                     || pos.iter().any(|it| {
                         it.map_or(false, |it| {
                             let dx = (it.x - x).abs();
-                            dx <= X_DIFF_MAX && dt <= (LIMIT_BAD - LIMIT_PERFECT * (dx - 0.9).max(0.))
+                            dx <= x_diff_max && dt <= (LIMIT_BAD - LIMIT_PERFECT * (dx - 0.9).max(0.))
                         })
                     })
                 {
@@ -809,6 +837,7 @@ impl Judge {
                                     &line.ctrl_obj.borrow_mut(),
                                     (note.height - line.height.now()) / res.aspect_ratio * note.speed,
                                     incline_sin,
+                                    true, true
                                 );
                                 mat
                             },
@@ -1019,13 +1048,13 @@ pub struct PlayResult {
 
 pub fn icon_index(score: u32, full_combo: bool) -> usize {
     match (score, full_combo) {
-        (x, _) if x >= 1000000 => 7,
-        (_, true) => 6,
-        (x, _) if x < 700000 => 0,
-        (x, _) if x < 820000 => 1,
-        (x, _) if x < 880000 => 2,
-        (x, _) if x < 920000 => 3,
-        (x, _) if x < 960000 => 4,
-        (_, false) => 5,
+        (x, _) if x >= 1000000 => 0,
+        (_, true) => 1,
+        (x, _) if x < 700000 => 7,
+        (x, _) if x < 820000 => 6,
+        (x, _) if x < 880000 => 5,
+        (x, _) if x < 920000 => 4,
+        (x, _) if x < 960000 => 3,
+        (_, false) => 2,
     }
 }

@@ -33,6 +33,7 @@ pub struct ChartInfo {
     pub preview_start: f32,
     pub preview_end: Option<f32>,
     pub aspect_ratio: f32,
+    pub force_aspect_ratio: bool,
     pub background_dim: f32,
     pub line_length: f32,
     pub offset: f32,
@@ -42,6 +43,9 @@ pub struct ChartInfo {
     pub intro: String,
 
     pub hold_partial_cover: bool,
+    pub note_uniform_scale: bool,
+    pub score_total: u32,
+
     pub created: Option<DateTime<Utc>>,
     pub updated: Option<DateTime<Utc>>,
     pub chart_updated: Option<DateTime<Utc>>,
@@ -68,6 +72,7 @@ impl Default for ChartInfo {
             preview_start: 0.,
             preview_end: None,
             aspect_ratio: 16. / 9.,
+            force_aspect_ratio: false,
             background_dim: 0.1,
             line_length: 6.,
             offset: 0.,
@@ -77,6 +82,8 @@ impl Default for ChartInfo {
             intro: String::new(),
 
             hold_partial_cover: false,
+            note_uniform_scale: false,
+            score_total: 1_000_000,
 
             created: None,
             updated: None,

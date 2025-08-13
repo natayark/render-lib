@@ -9,13 +9,13 @@ use crate::{
     },
     ext::{NotNanExt, SafeTexture},
     fs::FileSystem,
-    judge::{HitSound, JudgeStatus},
+    judge::{HitSound, JudgeStatus}
 };
 use anyhow::{Context, Result};
 use image::{codecs::gif, AnimationDecoder, DynamicImage, ImageError};
 use macroquad::prelude::{Color, WHITE};
 use sasa::AudioClip;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap, future::IntoFuture, rc::Rc, str::FromStr, time::Duration};
 use tracing::debug;
 
@@ -23,9 +23,9 @@ pub const RPE_WIDTH: f32 = 1350.;
 pub const RPE_HEIGHT: f32 = 900.;
 const SPEED_RATIO: f32 = 10. / 45. / HEIGHT_RATIO;
 
-#[derive(Deserialize, Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEBpmItem {
+pub struct RPEBpmItem {
     bpm: f32,
     start_time: Triple,
 }
@@ -39,9 +39,9 @@ fn f32_one() -> f32 {
     1.
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEEvent<T = f32> {
+pub struct RPEEvent<T = f32> {
     #[serde(default = "f32_zero")]
     easing_left: f32,
     #[serde(default = "f32_one")]
@@ -57,27 +57,27 @@ struct RPEEvent<T = f32> {
     end_time: Triple,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPECtrlEvent {
+pub struct RPECtrlEvent {
     easing: u8,
     x: f32,
     #[serde(flatten)]
     value: HashMap<String, f32>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPESpeedEvent {
+pub struct RPESpeedEvent {
     start_time: Triple,
     end_time: Triple,
     start: f32,
     end: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEEventLayer {
+pub struct RPEEventLayer {
     alpha_events: Option<Vec<RPEEvent>>,
     move_x_events: Option<Vec<RPEEvent>>,
     move_y_events: Option<Vec<RPEEvent>>,
@@ -85,17 +85,17 @@ struct RPEEventLayer {
     speed_events: Option<Vec<RPESpeedEvent>>,
 }
 
-#[derive(Clone, Deserialize)]
-struct RGBColor(u8, u8, u8);
+#[derive(Clone, Deserialize, Serialize)]
+pub struct RGBColor(u8, u8, u8);
 impl From<RGBColor> for Color {
     fn from(RGBColor(r, g, b): RGBColor) -> Self {
         Self::from_rgba(r, g, b, 255)
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEExtendedEvents {
+pub struct RPEExtendedEvents {
     color_events: Option<Vec<RPEEvent<RGBColor>>>,
     text_events: Option<Vec<RPEEvent<String>>>,
     scale_x_events: Option<Vec<RPEEvent>>,
@@ -105,9 +105,9 @@ struct RPEExtendedEvents {
     gif_events: Option<Vec<RPEEvent>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPENote {
+pub struct RPENote {
     // TODO above == 0? what does that even mean?
     #[serde(rename = "type")]
     kind: u8,
@@ -124,9 +124,9 @@ struct RPENote {
     visible_time: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEJudgeLine {
+pub struct RPEJudgeLine {
     // TODO group
     #[serde(rename = "Name")]
     name: String,
@@ -134,8 +134,11 @@ struct RPEJudgeLine {
     texture: String,
     #[serde(rename = "father")]
     parent: Option<isize>,
+    #[serde(default, rename = "rotateWithFather")]
+    rotate_with_parent: bool,
     anchor: Option<[f32; 2]>,
-    bpmfactor: f32,
+    #[serde(default="f32_one", rename = "bpmfactor")]
+    bpm_factor: f32,
     event_layers: Vec<Option<RPEEventLayer>>,
     extended: Option<RPEExtendedEvents>,
     notes: Option<Vec<RPENote>>,
@@ -155,15 +158,17 @@ struct RPEJudgeLine {
     y_control: Vec<RPECtrlEvent>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEMetadata {
+pub struct RPEMetadata {
+    #[serde(rename = "RPEVersion")]
+    #[allow(unused)] rpe_version: i32,
     offset: i32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEChart {
+pub struct RPEChart {
     #[serde(rename = "META")]
     meta: RPEMetadata,
     #[serde(rename = "BPMList")]
@@ -340,7 +345,7 @@ async fn parse_notes(
                 NoteKind::Hold {
                     end_time,
                     end_height: height.now(),
-                    end_speed: 0.0,
+                    end_speed: None,
                 }
             }
             3 => NoteKind::Flick,
@@ -383,14 +388,11 @@ async fn parse_notes(
                     AnimFloat::new(vec![Keyframe::new(0.0, 0.0, 0), Keyframe::new(time - note.visible_time, alpha, 0)])
                 },
                 translation: AnimVector(AnimFloat::fixed(note.position_x / (RPE_WIDTH / 2.)), AnimFloat::fixed(y_offset)),
-                scale: AnimVector(
-                    if note.size == 1.0 {
-                        AnimFloat::default()
-                    } else {
-                        AnimFloat::fixed(note.size)
-                    },
-                    AnimFloat::default(),
-                ),
+                scale: if note.size == 1.0 {
+                    AnimVector::default()
+                } else {
+                    AnimVector(AnimFloat::fixed(note.size), AnimFloat::fixed(note.size))
+                },
                 ..Default::default()
             },
             kind,
@@ -403,7 +405,7 @@ async fn parse_notes(
             multiple_hint: false,
             fake: note.is_fake != 0,
             judge: JudgeStatus::NotJudged,
-            attr: false,
+            protected: false,
         })
     }
     Ok(notes)
@@ -432,7 +434,7 @@ async fn parse_judge_line(
 ) -> Result<JudgeLine> {
     let mut line_texture_map: HashMap<String, SafeTexture> = Default::default();
     let event_layers: Vec<_> = rpe.event_layers.into_iter().flatten().collect();
-    let r = &mut BpmList::new(bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm / rpe.bpmfactor)).collect());
+    let r = &mut BpmList::new(bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm / rpe.bpm_factor)).collect());
 
     fn events_with_factor(
         r: &mut BpmList,
@@ -468,7 +470,13 @@ async fn parse_judge_line(
                         .as_ref()
                         .map(|it| parse_events(r, it, None, bezier_map))
                         .transpose()?
-                        .unwrap_or_default();
+                        .unwrap_or(
+                            if factor == 1. {
+                                Anim::default()
+                            } else {
+                                Anim::fixed(1.0)
+                            }
+                        );
                     res.map_value(|v| v * factor);
                     Ok(res)
                 }
@@ -601,6 +609,7 @@ async fn parse_judge_line(
                 Some(parent as usize)
             }
         },
+        rotate_with_parent: rpe.rotate_with_parent,
         anchor: rpe.anchor.unwrap_or([0.5, 0.5]),
         z_index: rpe.z_order,
         show_below: rpe.is_cover != 1,

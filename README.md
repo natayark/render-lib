@@ -1,3 +1,3 @@
-# Phigros Recorder Core
+# Phire
 
-[Phigros Recorder](https://github.com/2278535805/Phigros-Recorder)
+[Phi Recorder](https://github.com/2278535805/Phi-Recorder)

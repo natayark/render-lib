@@ -205,7 +205,7 @@ impl DRectButton {
             last_touching: false,
             start_time: None,
             config: ShadowConfig::default(),
-            delta: -0.006,
+            delta: -0.004,
             play_sound: true,
         }
     }
@@ -831,13 +831,11 @@ impl<'a> Ui<'a> {
     }
 
     pub fn accent(&self) -> Color {
-        Color::from_hex(0xff2196f3)
+        Color::new(0.85, 0.85, 0.85, 1.0)
     }
 
     pub fn background(&self) -> Color {
-        //Color::from_hex(0xff546e7a)
-        //Color::from_hex(0xff3F51B5)
-        Color::from_hex(0xff212121)
+        Color::new(0.13, 0.13, 0.13, 1.0)
     }
 
     pub fn button(&mut self, id: &str, rect: Rect, text: impl Into<String>) -> bool {
@@ -846,7 +844,7 @@ impl<'a> Ui<'a> {
             let mut state = state.borrow_mut();
             let entry = state.entry(id.to_owned()).or_default();
             self.fill_path(
-                &rect.rounded(0.01),
+                &rect.rounded(0.00),
                 Color {
                     a: if entry.is_some() { 0.5 } else { 1. },
                     ..self.background()
@@ -874,7 +872,7 @@ impl<'a> Ui<'a> {
             let s = 0.03;
             let text = self.text(text).pos(w, 0.).size(0.5).no_baseline().draw();
             let r = Rect::new(w / 2. - s, text.center().y - s, s * 2., s * 2.);
-            self.fill_rect(r, if *value { self.accent() } else { WHITE });
+            self.fill_rect(r, if *value { self.accent() } else { self.background() });
             let r = Rect::new(r.x, r.y, text.right() - r.x, (text.bottom() - r.y).max(w));
             if self.clicked(r, entry) {
                 *value ^= true;
@@ -1087,7 +1085,7 @@ impl<'a> Ui<'a> {
 
     #[inline]
     pub fn tab_rects<'b>(&mut self, c: Color, t: f32, it: impl IntoIterator<Item = (&'b mut DRectButton, Cow<'b, str>, bool)>) {
-        let mut r = Rect::new(-0.92, -self.top + 0.18, 0.2, 0.11);
+        let mut r = Rect::new(-0.92, -self.top + 0.15, 0.2, 0.11);
         for (btn, text, chosen) in it {
             btn.render_text(self, r, t, c.a, text, 0.5, chosen);
             r.y += 0.125;

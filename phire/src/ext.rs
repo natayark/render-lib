@@ -377,17 +377,6 @@ pub fn thread_as_future<R: Send + 'static>(f: impl FnOnce() -> R + Send + 'stati
     DummyFuture(arc)
 }
 
-pub async fn spawn_task<R: Send + 'static>(f: impl FnOnce() -> Result<R> + Send + 'static) -> Result<R> {
-    #[cfg(target_arch = "wasm32")]
-    {
-        f()
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        Ok(tokio::task::spawn_blocking(f).await??)
-    }
-}
-
 pub fn poll_future<R>(future: Pin<&mut (impl Future<Output = R> + ?Sized)>) -> Option<R> {
     fn waker() -> Waker {
         unsafe fn clone(data: *const ()) -> RawWaker {
@@ -595,11 +584,11 @@ pub fn parse_time(s: &str) -> Option<f32> {
     Some(res)
 }
 
-pub fn parse_alpha(alpha: f32, res_alpha: f32, min_alpha: f32, chart_debug: bool) -> f32 {
+pub fn parse_alpha(alpha: f32, force_alpha: f32, min_alpha: f32, chart_debug: bool) -> f32 {
     if chart_debug {
-        (min_alpha + (1. - min_alpha) * alpha) * res_alpha
+        (min_alpha + (1. - min_alpha) * alpha) * force_alpha
     } else {
-        alpha * res_alpha
+        alpha * force_alpha
     }
 }
 
@@ -631,8 +620,8 @@ pub fn ease_in_out_quintic(t: f32) -> f32 {
 }
 
 lazy_static! {
-    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕⅭОмвＣＯＭＢ]"##).unwrap();
-    static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣ][OՕΟ0ОＯ][MΜмＭ][BΒ8вＢ][OՕΟ0ОＯ]$").unwrap();
+    static ref RE_FILTER: Regex = Regex::new(r##"[^a-zA-Z0-9!"'#$%&'()*+,\-.\/:;<=>?@\\\[\]^_`{|}~ΜΟΒСՕⅭОмвＣＯＭＢМⅯВϹȮΌϺϺƁ]"##).unwrap();
+    static ref RE_VALIDATE: Regex = Regex::new(r"^[CСⅭＣϹ][OՕΟ0ОＯȮΌ][MΜмＭМⅯϺϺ][BΒ8вＢВ][OՕΟ0ОＯȮΌ]$").unwrap();
 }
 
 pub fn validate_combo(value: &String) -> bool {
@@ -644,9 +633,9 @@ pub fn validate_combo(value: &String) -> bool {
     return RE_VALIDATE.is_match(&filtered_value);
 }
 
-pub fn get_latency(audio: &AudioManager, frame_times: &VecDeque<f64>) -> f32 {
+pub fn get_latency(audio: &AudioManager, frame_times: &VecDeque<f64>) -> f64 {
     let avg_frame_time = (1.0 / frame_times.len() as f64).min(0.25);
-    audio.estimate_latency().max(0.) + avg_frame_time as f32
+    audio.estimate_latency().max(0.) + avg_frame_time
 }
 
 pub fn push_frame_time(frame_times: &mut VecDeque<f64>, real_time: f64) {
@@ -661,6 +650,31 @@ pub fn round_to_step(value: f32, step: f32) -> f32 {
     let digits = (-step.log10()).ceil() as i32;
     let factor = 10_f32.powi(digits);
     (aligned * factor).round() / factor
+}
+
+pub fn blur_image(image: DynamicImage, blur: f32) -> Result<SafeTexture> {
+    let (w, h) = (image.width(), image.height());
+    let size = w as usize * h as usize;
+    let mut blurred_rgb = image.to_rgb8();
+    let mut vec = unsafe { Vec::from_raw_parts(std::mem::transmute(blurred_rgb.as_mut_ptr()), size, size) };
+    fastblur::gaussian_blur(&mut vec, w as _, h as _, blur);
+    std::mem::forget(vec);
+    let mut blurred = Vec::with_capacity(size * 4);
+    for input in blurred_rgb.chunks_exact(3) {
+        //blurred.extend_from_slice(input);
+        blurred.push(input[0]);
+        blurred.push(input[1]);
+        blurred.push(input[2]);
+        blurred.push(255);
+    }
+    Ok((
+        Texture2D::from_image(&Image {
+            width: w as _,
+            height: h as _,
+            bytes: blurred,
+        })
+    ).into())
+
 }
 
 

@@ -1,5 +1,9 @@
-name: "Phigros Official"
-author: PigeonGames
-hitFx: [5, 6]
+name: "air light Z"
+author: 星鹿ELEC
+description: |
+  打击音效 - 小赵 & HLMC
+  　　　结算音乐 - StarN_Woolf
+hitFx: [8, 8]
 holdAtlas: [50, 50]
-holdAtlasMH: [98, 98]
+holdAtlasMH: [125, 125]
+circleParticles: true

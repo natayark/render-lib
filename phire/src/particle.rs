@@ -11,6 +11,7 @@
 
 use macroquad::prelude::*;
 use macroquad::window::miniquad::*;
+use rand_pcg::rand_core::RngCore;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Interpolation {
@@ -108,6 +109,7 @@ impl Default for ColorCurve {
 #[derive(Debug, Clone)]
 pub struct EmitterConfig {
     pub max_particles: usize,
+    pub rng: Option<rand_pcg::Lcg64Xsh32>,
     /// If false - particles spawns at position supplied to .draw(), but afterwards lives in current camera coordinate system.
     /// If false particles use coordinate system originated to the emitter draw position
     pub local_coords: bool,
@@ -346,7 +348,8 @@ impl AtlasConfig {
 impl Default for EmitterConfig {
     fn default() -> EmitterConfig {
         EmitterConfig {
-            max_particles: 600000,
+            max_particles: 20000,
+            rng: None,
             local_coords: false,
             emission_shape: EmissionShape::Point,
             one_shot: false,
@@ -565,21 +568,30 @@ impl Emitter {
         self.mesh_dirty = true;
     }
 
-    fn emit_particle(&mut self, config: &EmitterConfig, offset: Vec2) {
-        if self.gpu_particles.len() == config.max_particles {
+    fn emit_particle(&mut self, offset: Vec2) {
+        if self.gpu_particles.len() == self.config.max_particles {
             return;
         }
         let offset = offset + self.config.emission_shape.gen_random_point();
 
-        fn random_initial_vector(dir: Vec2, spread: f32, velocity: f32) -> Vec2 {
-            let angle = rand::gen_range(-spread / 2.0, spread / 2.0);
+        fn map_u64_to_f32(r: u64, min: f32, max: f32) -> f32 {
+            let frac = (r as f64) / (u64::MAX as f64 + 1.0);
+            min + (max - min) * (frac as f32)
+        }
+
+        let mut random_initial_vector = |dir: Vec2, spread: f32, velocity: f32| -> Vec2 {
+            let angle = if let Some(rng) = self.config.rng.as_mut() {
+                map_u64_to_f32(rng.next_u64(), -spread / 2.0, spread / 2.0)
+            } else {
+                rand::gen_range(-spread / 2.0, spread / 2.0)
+            };
 
             let quat = glam::Quat::from_rotation_z(angle);
             let dir = quat * vec3(dir.x, dir.y, 0.0);
             let res = dir * velocity;
 
             vec2(res.x, res.y)
-        }
+        };
 
         let r = self.config.size - self.config.size * rand::gen_range(0.0, self.config.size_randomness);
 
@@ -619,7 +631,7 @@ impl Emitter {
         });
     }
 
-    fn update(&mut self, config: &EmitterConfig, ctx: &mut Context, dt: f32) {
+    fn update(&mut self, ctx: &mut Context, dt: f32) {
         if self.mesh_dirty {
             self.bindings = self
                 .config
@@ -644,7 +656,7 @@ impl Emitter {
                 self.last_emit_time = self.time_passed;
 
                 if self.particles_spawned < self.config.amount as u64 {
-                    self.emit_particle(config, vec2(0.0, 0.0));
+                    self.emit_particle(vec2(0.0, 0.0));
                 }
 
                 if self.gpu_particles.len() >= self.config.amount as usize {
@@ -719,9 +731,9 @@ impl Emitter {
     }
 
     /// Immediately emit N particles, ignoring "emitting" and "amount" params of EmitterConfig
-    pub fn emit(&mut self, config: &EmitterConfig, pos: Vec2, n: usize) {
+    pub fn emit(&mut self, pos: Vec2, n: usize) {
         for _ in 0..n {
-            self.emit_particle(config, pos);
+            self.emit_particle(pos);
             self.particles_spawned += 1;
         }
     }
@@ -787,7 +799,7 @@ impl Emitter {
         }
     }
 
-    pub fn draw(&mut self, config: &EmitterConfig, pos: Vec2, dt: f32) {
+    pub fn draw(&mut self, pos: Vec2, dt: f32) {
         let mut gl = unsafe { get_internal_gl() };
 
         gl.flush();
@@ -796,7 +808,7 @@ impl Emitter {
 
         self.position = pos;
 
-        self.update(config, ctx, dt);
+        self.update(ctx, dt);
 
         self.setup_render_pass(quad_gl, ctx);
         self.perform_render_pass(quad_gl, ctx);
