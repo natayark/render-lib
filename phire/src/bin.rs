@@ -333,6 +333,7 @@ impl<T: BinaryData + Tweenable> BinaryData for Anim<T> {
 impl BinaryData for Object {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         Ok(Self {
+            color: r.read()?,
             alpha: r.read()?,
             scale: AnimVector(r.read()?, r.read()?),
             rotation: r.read()?,
@@ -341,6 +342,7 @@ impl BinaryData for Object {
     }
 
     fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        w.write(&self.color)?;
         w.write(&self.alpha)?;
         w.write(&self.scale.0)?;
         w.write(&self.scale.1)?;
@@ -397,6 +399,7 @@ impl BinaryData for Note {
             multiple_hint: false,
             fake: r.read()?,
             judge: JudgeStatus::NotJudged,
+            judge_scale: r.read()?,
             protected: false,
         })
     }
@@ -426,6 +429,7 @@ impl BinaryData for Note {
         }
         w.write_val(self.above)?;
         w.write_val(self.fake)?;
+        w.write_val(self.judge_scale)?;
         Ok(())
     }
 }
@@ -443,7 +447,6 @@ impl BinaryData for JudgeLine {
         };
         let height = r.read()?;
         let mut notes = r.array()?;
-        let color = r.read()?;
         let parent = r.read()?;
         let rotate_with_parent = r.read()?;
         let anchor = r.read()?;
@@ -459,7 +462,6 @@ impl BinaryData for JudgeLine {
             kind,
             height,
             notes,
-            color,
             parent,
             rotate_with_parent,
             anchor,
@@ -496,7 +498,6 @@ impl BinaryData for JudgeLine {
         }
         w.write(&self.height)?;
         w.array(&self.notes)?;
-        w.write(&self.color)?;
         w.write(&self.parent)?;
         w.write(&self.rotate_with_parent)?;
         w.write(&self.anchor)?;

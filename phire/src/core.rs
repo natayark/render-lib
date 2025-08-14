@@ -69,6 +69,10 @@ impl Triple {
     pub fn beats(&self) -> f32 {
         self.0 as f32 + self.1 as f32 / self.2 as f32
     }
+
+    pub fn display(&self) -> String {
+        format!("{}:{}/{}", self.0, self.1, self.2)
+    }
 }
 
 #[derive(Default, Clone)] // the default is a dummy

@@ -3,7 +3,7 @@ crate::tl_file!("parser" ptl);
 use super::process_lines;
 use crate::{
     core::{
-        Anim, AnimFloat, AnimVector, BpmList, Chart, ChartExtra, ChartSettings, JudgeLine, JudgeLineCache, JudgeLineKind, Keyframe, Note, NoteKind,
+        AnimFloat, AnimVector, BpmList, Chart, ChartExtra, ChartSettings, JudgeLine, JudgeLineCache, JudgeLineKind, Keyframe, Note, NoteKind,
         Object, HEIGHT_RATIO,
     },
     ext::NotNanExt,
@@ -233,6 +233,7 @@ fn parse_notes(r: f32, mut pgr: Vec<PgrNote>, _speed: &mut AnimFloat, height: &m
                 multiple_hint: false,
                 fake: false,
                 judge: JudgeStatus::NotJudged,
+                judge_scale: 1.0,
                 protected: false,
             })
         })
@@ -265,7 +266,6 @@ fn parse_judge_line(pgr: PgrJudgeLine, max_time: f32, format_version: u32) -> Re
         height,
         incline: AnimFloat::default(),
         notes,
-        color: Anim::default(),
         parent: None,
         rotate_with_parent: false,
         anchor: [0.5, 0.5],

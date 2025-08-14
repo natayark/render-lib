@@ -160,6 +160,7 @@ fn parse_judge_line(mut pec: PECJudgeLine, id: usize, max_time: f32) -> Result<J
     let cache = JudgeLineCache::new(&mut pec.notes);
     Ok(JudgeLine {
         object: Object {
+            color: Anim::default(),
             alpha: parse_events(pec.alpha_events, id, "alpha")?,
             translation: AnimVector(parse_events(pec.move_events.0, id, "move X")?, parse_events(pec.move_events.1, id, "move Y")?),
             rotation: parse_events(pec.rotate_events, id, "rotate")?,
@@ -170,7 +171,6 @@ fn parse_judge_line(mut pec: PECJudgeLine, id: usize, max_time: f32) -> Result<J
         height,
         incline: AnimFloat::default(),
         notes: pec.notes,
-        color: Anim::default(),
         parent: None,
         rotate_with_parent: false,
         anchor: [0.5, 0.5],
@@ -276,6 +276,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         multiple_hint: false,
                         fake,
                         judge: JudgeStatus::NotJudged,
+                        judge_scale: 1.0,
                         protected: false,
                     });
                     if it.next() == Some("#") {

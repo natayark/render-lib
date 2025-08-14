@@ -14,6 +14,7 @@ use crate::{
 use anyhow::{Context, Result};
 use image::{codecs::gif, AnimationDecoder, DynamicImage, ImageError};
 use macroquad::prelude::{Color, WHITE};
+use ordered_float::NotNan;
 use sasa::AudioClip;
 use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap, future::IntoFuture, rc::Rc, str::FromStr, time::Duration};
@@ -73,6 +74,11 @@ pub struct RPESpeedEvent {
     end_time: Triple,
     start: f32,
     end: f32,
+    #[serde(default = "f32_zero")]
+    easing_left: f32,
+    #[serde(default = "f32_one")]
+    easing_right: f32,
+    easing_type: i32,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -87,6 +93,13 @@ pub struct RPEEventLayer {
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct RGBColor(u8, u8, u8);
+
+impl Default for RGBColor {
+    fn default() -> Self {
+        Self(255, 255, 255)
+    }
+}
+
 impl From<RGBColor> for Color {
     fn from(RGBColor(r, g, b): RGBColor) -> Self {
         Self::from_rgba(r, g, b, 255)
@@ -122,6 +135,10 @@ pub struct RPENote {
     speed: f32,
     is_fake: u8,
     visible_time: f32,
+    #[serde(default)]
+    color: RGBColor,
+    #[serde(default="f32_one", rename = "judgeArea")]
+    judge_scale: f32,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -217,23 +234,44 @@ fn parse_events<T: Tweenable, V: Clone + Into<T>>(
 }
 
 fn parse_speed_events(r: &mut BpmList, rpe: &[RPEEventLayer], max_time: f32) -> Result<AnimFloat> {
-    let rpe: Vec<_> = rpe.iter().filter_map(|it| it.speed_events.as_ref()).collect();
+    let rpe: Vec<&Vec<RPESpeedEvent>> = rpe.iter().filter_map(|it| it.speed_events.as_ref()).collect();
     if rpe.is_empty() {
         // TODO or is it?
         return Ok(AnimFloat::default());
     };
-    let anis: Vec<_> = rpe
+    let anis: Vec<AnimFloat> = rpe
         .into_iter()
         .map(|it| {
             let mut kfs = Vec::new();
             for e in it {
-                kfs.push(Keyframe::new(r.time(&e.start_time), e.start, 2));
-                kfs.push(Keyframe::new(r.time(&e.end_time), e.end, 0));
+                let start_beats = e.start_time.beats();
+                let end_beats = e.end_time.beats();
+                let tween = e.easing_type.max(1) as usize;
+                let tween_map = {
+                    let tween = RPE_TWEEN_MAP.get(tween).copied().unwrap_or(RPE_TWEEN_MAP[0]);
+                    if e.easing_left.abs() < EPS && (e.easing_right - 1.0).abs() < EPS {
+                        StaticTween::get_rc(tween)
+                    } else {
+                        Rc::new(ClampedTween::new(tween, e.easing_left..e.easing_right))
+                    }
+                };
+                kfs.push(Keyframe::new(r.time_beats(start_beats), e.start, 2));
+                if tween > 1 { // wtf rpe
+                    debug!("Speed event segmented: {} - {}", e.start_time.display(), e.end_time.display());
+                    let mut now_beats = start_beats;
+                    while end_beats - now_beats > 0.03125 {
+                        now_beats += 0.03125;
+                        let t = (now_beats - start_beats) / (end_beats - start_beats);
+                        let now = f32::tween(&e.start, &e.end, tween_map.y(t));
+                        kfs.push(Keyframe::new(r.time_beats(now_beats), now, 2));
+                    }
+                }
+                kfs.push(Keyframe::new(r.time_beats(end_beats), e.end, 0));
             }
             AnimFloat::new(kfs)
         })
         .collect();
-    let mut pts: Vec<_> = anis.iter().flat_map(|it| it.keyframes.iter().map(|it| it.time.not_nan())).collect();
+    let mut pts: Vec<NotNan<f32>> = anis.iter().flat_map(|it| it.keyframes.iter().map(|it| it.time.not_nan())).collect();
     pts.push(max_time.not_nan());
     pts.sort();
     pts.dedup();
@@ -284,7 +322,7 @@ fn parse_speed_events(r: &mut BpmList, rpe: &[RPEEventLayer], max_time: f32) -> 
     Ok(AnimFloat::new(kfs))
 }
 
-fn parse_gif_events<V: Clone + Into<f32>>(r: &mut BpmList, rpe: &[RPEEvent<V>], bezier_map: &BezierMap, gif: &GifFrames) -> Result<Anim<f32>> {
+fn parse_gif_events<V: Clone + Into<f32>>(r: &mut BpmList, rpe: &[RPEEvent<V>], bezier_map: &BezierMap, gif: &GifFrames) -> Result<AnimFloat> {
     let mut kfs = Vec::new();
     kfs.push(Keyframe::new(0.0, 0.0, 2));
     let mut next_rep_time: u128 = 0;
@@ -377,6 +415,14 @@ async fn parse_notes(
         };
         notes.push(Note {
             object: Object {
+                color: {
+                    let color = Color::from(note.color);
+                    if matches!(color, WHITE) {
+                        Anim::default()
+                    } else {
+                        Anim::fixed(color)
+                    }
+                },
                 alpha: if note.visible_time >= time {
                     if note.alpha >= 255 {
                         AnimFloat::default()
@@ -393,7 +439,7 @@ async fn parse_notes(
                 } else {
                     AnimVector(AnimFloat::fixed(note.size), AnimFloat::fixed(note.size))
                 },
-                ..Default::default()
+                rotation: AnimFloat::default(),
             },
             kind,
             hitsound,
@@ -405,6 +451,7 @@ async fn parse_notes(
             multiple_hint: false,
             fake: note.is_fake != 0,
             judge: JudgeStatus::NotJudged,
+            judge_scale: note.judge_scale,
             protected: false,
         })
     }
@@ -458,6 +505,11 @@ async fn parse_judge_line(
     let cache = JudgeLineCache::new(&mut notes);
     Ok(JudgeLine {
         object: Object {
+            color: if let Some(events) = rpe.extended.as_ref().and_then(|e| e.color_events.as_ref()) {
+                parse_events(r, events, Some(WHITE), bezier_map).with_context(|| ptl!("color-events-parse-failed"))?
+            } else {
+                Anim::default()
+            },
             alpha: events_with_factor(r, &event_layers, |it| &it.alpha_events, 1. / 255., "alpha", bezier_map)?,
             rotation: events_with_factor(r, &event_layers, |it| &it.rotate_events, -1., "rotate", bezier_map)?,
             translation: AnimVector(
@@ -596,11 +648,6 @@ async fn parse_judge_line(
                 )
             }
     },
-        color: if let Some(events) = rpe.extended.as_ref().and_then(|e| e.color_events.as_ref()) {
-            parse_events(r, events, Some(WHITE), bezier_map).with_context(|| ptl!("color-events-parse-failed"))?
-        } else {
-            Anim::default()
-        },
         parent: {
             let parent = rpe.parent.unwrap_or(-1);
             if parent == -1 {

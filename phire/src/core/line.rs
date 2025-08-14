@@ -146,7 +146,6 @@ pub struct JudgeLine {
     pub height: AnimFloat,
     pub incline: AnimFloat,
     pub notes: Vec<Note>,
-    pub color: Anim<Color>,
     pub parent: Option<usize>,
     pub rotate_with_parent: bool,
     pub z_index: i32,
@@ -185,7 +184,7 @@ impl JudgeLine {
             }
             _ => {}
         }
-        self.color.set_time(res.time);
+        self.object.color.set_time(res.time);
 
         let not_judge = |index: usize| {
             match self.notes[index].kind {
@@ -254,8 +253,8 @@ impl JudgeLine {
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource, lines: &[JudgeLine], bpm_list: &mut BpmList, settings: &ChartSettings, id: usize) {
-        let alpha = self.object.alpha.now_opt().unwrap_or(1.0);
-        let color = self.color.now_opt();
+        let alpha = self.object.now_alpha();
+        let color = self.object.color.now_opt();
         res.with_model(self.now_transform(res, lines), |res| {
             res.with_model(self.object.now_scale(), |res| {
                 res.apply_model(|res| match &self.kind {

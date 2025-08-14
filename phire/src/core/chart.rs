@@ -70,17 +70,17 @@ impl Chart {
         if let Some(id) = self.attach_ui[element as usize - 1] {
             let lines = &self.lines;
             let line = &lines[id];
-            let obj = &line.object;
+            let object = &line.object;
             let translation = {
                 let mut tr = line.fetch_pos(res, lines);
                 tr.y *= -res.aspect_ratio;
                 tr.x *= res.aspect_ratio;
-                let sc = obj.now_scale_wrt_point(scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
+                let sc = object.now_scale_wrt_point(scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
                 let ro = Object::new_translation_wrt_point(line.fetch_rotate(res, &lines), rotation_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
                 Matrix::new_translation(&tr) * ro * sc
             };
-            let mut color = self.lines[id].color.now_opt().unwrap_or(default_color);
-            color.a *= obj.now_alpha().max(0.); 
+            let mut color = object.color.now_opt().unwrap_or(default_color);
+            color.a *= object.now_alpha().max(0.); 
             ui.with(translation, |ui| f(ui, color))
         } else {
             f(ui, default_color)

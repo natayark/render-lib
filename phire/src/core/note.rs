@@ -46,6 +46,7 @@ pub struct Note {
     pub multiple_hint: bool,
     pub fake: bool,
     pub judge: JudgeStatus,
+    pub judge_scale: f32,
     pub protected: bool,
 }
 
@@ -212,7 +213,8 @@ impl Note {
         let ctrl_obj = &mut config.ctrl_obj;
         self.init_ctrl_obj(ctrl_obj, config.line_height);
         let mut color = self.object.now_color();
-        color.a = parse_alpha(color.a, 1.0, 0.2, res.config.chart_debug_note > 0.);
+        let alpha = self.object.now_alpha().max(0.);
+        color.a = parse_alpha(color.a * alpha, 1.0, 0.2, res.config.chart_debug_note > 0.);
 
         if config.invisible_time.is_finite() && self.time - config.invisible_time < res.time {
             if res.config.chart_debug_note > 0. {
