@@ -333,7 +333,6 @@ impl<T: BinaryData + Tweenable> BinaryData for Anim<T> {
 impl BinaryData for Object {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         Ok(Self {
-            color: r.read()?,
             alpha: r.read()?,
             scale: AnimVector(r.read()?, r.read()?),
             rotation: r.read()?,
@@ -342,7 +341,6 @@ impl BinaryData for Object {
     }
 
     fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
-        w.write(&self.color)?;
         w.write(&self.alpha)?;
         w.write(&self.scale.0)?;
         w.write(&self.scale.1)?;
@@ -400,6 +398,8 @@ impl BinaryData for Note {
             fake: r.read()?,
             judge: JudgeStatus::NotJudged,
             judge_scale: r.read()?,
+            color: r.read()?,
+            hit_fx_color: r.read()?,
             protected: false,
         })
     }
@@ -430,6 +430,8 @@ impl BinaryData for Note {
         w.write_val(self.above)?;
         w.write_val(self.fake)?;
         w.write_val(self.judge_scale)?;
+        w.write(&self.color)?;
+        w.write(&self.hit_fx_color)?;
         Ok(())
     }
 }
@@ -438,6 +440,7 @@ impl BinaryData for JudgeLine {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         r.reset_time();
         let object = r.read()?;
+        let color = r.read()?;
         let kind = match r.read::<u8>()? {
             0 => JudgeLineKind::Normal,
             1 => JudgeLineKind::Texture(Texture2D::empty().into(), r.read()?),
@@ -459,6 +462,7 @@ impl BinaryData for JudgeLine {
         let cache = JudgeLineCache::new(&mut notes);
         Ok(Self {
             object,
+            color,
             kind,
             height,
             notes,
@@ -496,6 +500,7 @@ impl BinaryData for JudgeLine {
                 bail!("gif texture binary not supported");
             }
         }
+        w.write(&self.color)?;
         w.write(&self.height)?;
         w.array(&self.notes)?;
         w.write(&self.parent)?;

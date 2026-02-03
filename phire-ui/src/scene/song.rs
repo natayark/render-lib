@@ -13,7 +13,7 @@ use crate::{
     save_data,
     tags::TagsDialog,
 };
-use ::rand::{thread_rng, Rng};
+use ::rand::{rng, Rng};
 use anyhow::{anyhow, bail, Context, Result};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
@@ -807,7 +807,7 @@ impl SongScene {
                             "/play/upload",
                             &Req {
                                 chart: id.unwrap(),
-                                token: base64::encode(data),
+                                token: base64::Engine::encode(&base64::engine::general_purpose::STANDARD, data),
                                 chart_updated,
                             },
                         ))
@@ -1135,7 +1135,7 @@ impl Scene for SongScene {
         let res = match res.downcast::<SimpleRecord>() {
             Err(res) => res,
             Ok(rec) => {
-                if self.my_rate_score == Some(0) && thread_rng().gen_ratio(2, 5) {
+                if self.my_rate_score == Some(0) && rng().random_ratio(2, 5) {
                     self.rate_dialog.enter(tm.real_time() as _);
                 }
                 self.update_record(*rec)?;
@@ -1657,7 +1657,7 @@ impl Scene for SongScene {
                 let chart_bytes = {
                     let mut bytes = Vec::new();
                     let mut zip = ZipWriter::new(Cursor::new(&mut bytes));
-                    let options = FileOptions::default()
+                    let options = FileOptions::<()>::default()
                         .compression_method(CompressionMethod::Deflated)
                         .unix_permissions(0o755);
                     #[allow(deprecated)]
@@ -1674,7 +1674,6 @@ impl Scene for SongScene {
                         }
                     }
                     zip.finish()?;
-                    drop(zip);
                     bytes
                 };
                 let file = Client::upload_file("chart.zip", chart_bytes)

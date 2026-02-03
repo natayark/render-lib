@@ -26,7 +26,7 @@ use std::{
 };
 
 fn build_emitter(pack: &ResourcePack) -> ParticleEmitter {
-    ParticleEmitter::new(pack, get_data().config.note_scale * 0.6, pack.info.hide_particles, None)
+    ParticleEmitter::new(pack, get_data().config.note_scale * 0.6, None)
 }
 
 pub struct ResPackItem {

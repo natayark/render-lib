@@ -79,7 +79,7 @@ impl Chart {
                 let ro = Object::new_translation_wrt_point(line.fetch_rotate(res, &lines), rotation_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
                 Matrix::new_translation(&tr) * ro * sc
             };
-            let mut color = object.color.now_opt().unwrap_or(default_color);
+            let mut color = line.color.now_opt().unwrap_or(default_color);
             color.a *= object.now_alpha().max(0.); 
             ui.with(translation, |ui| f(ui, color))
         } else {
@@ -103,6 +103,7 @@ impl Chart {
             .for_each(|note| {
                 note.judge = JudgeStatus::NotJudged;
                 note.protected = false;
+                note.object.set_time(0.0);
             });
         for line in &mut self.lines {
             line.cache.reset(&mut line.notes);

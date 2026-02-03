@@ -659,6 +659,8 @@ struct OtherList {
     chinese_btn: DRectButton,
     rotation_mode: DRectButton,
     rotation_flat_mode: DRectButton,
+    #[cfg(feature = "play")]
+    shake_play_mode_btn: DRectButton,
 }
 
 impl OtherList {
@@ -675,6 +677,8 @@ impl OtherList {
             chinese_btn: DRectButton::new(),
             rotation_mode: DRectButton::new(),
             rotation_flat_mode: DRectButton::new(),
+            #[cfg(feature = "play")]
+            shake_play_mode_btn: DRectButton::new(),
         }
     }
 
@@ -735,6 +739,11 @@ impl OtherList {
             if config.rotation_flat_mode && !config.rotation_mode {
                 config.rotation_mode = true;
             }
+            return Ok(Some(true));
+        }
+        #[cfg(feature = "play")]
+        if self.shake_play_mode_btn.touch(touch, t) {
+            config.shake_play_mode ^= true;
             return Ok(Some(true));
         }
         Ok(None)
@@ -822,6 +831,11 @@ impl OtherList {
         item! {
             render_title(ui, c, tl!("item-rotation-flat-mode"), Some(tl!("item-rotation-flat-mode-sub")));
             render_switch(ui, rr, t, c, &mut self.rotation_flat_mode, config.rotation_flat_mode);
+        }
+        #[cfg(feature = "play")]
+        item! {
+            render_title(ui, c, tl!("item-shake-play-mode"), None);
+            render_switch(ui, rr, t, c, &mut self.shake_play_mode_btn, config.shake_play_mode);
         }
         (w, h)
     }

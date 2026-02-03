@@ -12,7 +12,7 @@ use crate::{
     scene::ProfileScene,
     sync_data,
 };
-use ::rand::{random, thread_rng, Rng};
+use ::rand::{random, rng, Rng};
 use anyhow::Result;
 use image::DynamicImage;
 use macroquad::prelude::*;
@@ -219,7 +219,7 @@ impl Page for HomePage {
             if charts.is_empty() || (charts.len() == 1 && last_index.is_some()) {
                 self.board_task = Some(Task::new(async move { Ok(None) }));
             } else {
-                let mut index = thread_rng().gen_range(0..(charts.len() - last_index.is_some() as usize));
+                let mut index = rng().random_range(0..(charts.len() - last_index.is_some() as usize));
                 if last_index.map_or(false, |it| it <= index) {
                     index += 1;
                 }

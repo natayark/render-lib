@@ -9,4 +9,4 @@ ex-time-out-of-range = Невозможно установить такое вр
 ex-invalid-format = Неверный формат
 ex-time-set = Время изменено
 ex-time-start = Начать
-ex-time-stop = Остановить
+ex-time-end = Остановить

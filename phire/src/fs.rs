@@ -20,7 +20,7 @@ use zip::{write::FileOptions, CompressionMethod, ZipArchive, ZipWriter};
 pub fn update_zip<R: Read + Seek>(zip: &mut ZipArchive<R>, patches: HashMap<String, Vec<u8>>) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
     let mut w = ZipWriter::new(Cursor::new(&mut buffer));
-    let options = FileOptions::default()
+    let options = FileOptions::<()>::default()
         .compression_method(CompressionMethod::Deflated)
         .unix_permissions(0o755);
     for i in 0..zip.len() {
@@ -42,7 +42,6 @@ pub fn update_zip<R: Read + Seek>(zip: &mut ZipArchive<R>, patches: HashMap<Stri
         w.write_all(&data)?;
     }
     w.finish()?;
-    drop(w);
     Ok(buffer)
 }
 

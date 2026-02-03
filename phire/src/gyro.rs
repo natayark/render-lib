@@ -3,49 +3,42 @@ use std::sync::Mutex;
 use std::f32;
 use nalgebra::{Unit, UnitQuaternion, Vector3};
 use lazy_static::lazy_static;
-use tracing::debug;
 
 use crate::config::Config;
 
 #[derive(Debug, Clone, Copy)]
 pub struct GyroData {
     pub angular_velocity: Vector3<f32>, // 角速度 (rad/s)
-    pub timestamp: Instant,             // 数据时间戳
+    pub timestamp: Instant,
 }
 
 pub struct Gyro {
-    rotation_gravity: UnitQuaternion<f32>,
-
-    rotation_gyroscope: UnitQuaternion<f32>,
-    last_gyroscope_data: Option<GyroData>,
+    gravity: UnitQuaternion<f32>,
+    gyroscope: UnitQuaternion<f32>,
+    pub gyro_data: Option<GyroData>,
 }
 
 lazy_static! {
-    pub static ref GYROSCOPE_DATA: Mutex<GyroData> = Mutex::new(GyroData {
-        angular_velocity: Vector3::new(0.0, 0.0, 0.0),
-        timestamp: Instant::now()
-    });
     pub static ref GYRO: Mutex<Gyro> = Mutex::new(Gyro::new());
 }
 
 impl Gyro {
     pub fn new() -> Self {
         Self {
-            rotation_gravity: UnitQuaternion::identity(),
-
-            rotation_gyroscope: UnitQuaternion::identity(),
-            last_gyroscope_data: None,
+            gravity: UnitQuaternion::identity(),
+            gyroscope: UnitQuaternion::identity(),
+            gyro_data: None,
         }
     }
 
     pub(crate) fn reset_gyroscope(&mut self) {
-        self.rotation_gyroscope = UnitQuaternion::identity();
+        self.gyroscope = UnitQuaternion::identity();
     }
 
     pub fn update_gyroscope(&mut self, gyro_data: GyroData) {
-        if let Some(last) = self.last_gyroscope_data {
+        if let Some(last_gyro_data) = self.gyro_data {
             let dt = gyro_data.timestamp
-                .duration_since(last.timestamp)
+                .duration_since(last_gyro_data.timestamp)
                 .as_secs_f32();
 
             let omega = gyro_data.angular_velocity;
@@ -54,10 +47,10 @@ impl Gyro {
             if angle > 0.0 {
                 let axis_unit: Unit<Vector3<f32>> = Unit::new_normalize(omega);
                 let dq = UnitQuaternion::from_axis_angle(&axis_unit, angle); // 增量
-                self.rotation_gyroscope *= dq;
+                self.gyroscope *= dq;
             }
         }
-        self.last_gyroscope_data = Some(gyro_data);
+        self.gyro_data = Some(gyro_data);
     }
 
     pub fn update_gravity(&mut self, gravity_data: Vector3<f32>) {
@@ -74,16 +67,16 @@ impl Gyro {
         let q = UnitQuaternion::rotation_between(&g_dev, &world_gravity)
             .unwrap_or_else(UnitQuaternion::identity);
 
-        self.rotation_gravity = q;
+        self.gravity = q;
     }
 
     fn get_gyroscope_angle(&self) -> f32 {
-        let (_, _, yaw) = self.rotation_gyroscope.to_rotation_matrix().euler_angles();
+        let (_, _, yaw) = self.gyroscope.to_rotation_matrix().euler_angles();
         yaw
     }
 
     fn get_gravity_angle(&self) -> f32 {
-        let world = self.rotation_gravity.transform_vector(&Vector3::new(0.0, 1.0, 0.0));
+        let world = self.gravity.transform_vector(&Vector3::new(0.0, 1.0, 0.0));
         //let device = self.rotation.transform_vector(&Vector3::new(1.0, 0.0, 0.0));
 
         let proj: nalgebra::Matrix<f32, nalgebra::Const<3>, nalgebra::Const<1>, nalgebra::ArrayStorage<f32, 3, 1>> = Vector3::new(world.x, world.y, world.z);
@@ -101,5 +94,9 @@ impl Gyro {
         } else {
             0.0
         }
+    }
+
+    pub fn get_current_acceleration(&self) -> f32 {
+        self.gyro_data.map(|d| d.angular_velocity.norm()).unwrap_or(0.0)
     }
 }

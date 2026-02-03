@@ -208,12 +208,11 @@ impl JudgeInner {
         (self.counts[0] as f64 + self.counts[1] as f64 * 0.65) / cnt as f64
     }
 
-    pub fn score(&self) -> u32 {
+    pub fn score(&self) -> f64 {
         if self.counts[0] == self.num_of_notes {
-            1_000_000
+            1_000_000.0
         } else {
-            let score = (0.9 * self.accuracy() + self.max_combo as f64 / self.num_of_notes as f64 * 0.1) * 1_000_000.;
-            score.round() as u32
+            (0.9 * self.accuracy() + self.max_combo as f64 / self.num_of_notes as f64 * 0.1) * 1_000_000.
         }
     }
 
@@ -310,7 +309,7 @@ impl Judge {
     }
 
     #[inline]
-    pub fn score(&self) -> u32 {
+    pub fn score(&self) -> f64 {
         self.inner.score()
     }
 
@@ -815,11 +814,21 @@ impl Judge {
             }
             if match judgement {
                 Judgement::Perfect => {
-                    res.with_model(line_tr * note.object.now(res), |res| res.emit_at_origin(note.rotation(line), res.res_pack.info.fx_perfect()));
+                    let color = if let Some(color) = note.hit_fx_color.now_opt() {
+                        color
+                    } else {
+                        res.res_pack.info.fx_perfect()
+                    };
+                    res.with_model(line_tr * note.object.now(res), |res| res.emit_at_origin(note.rotation(line), color));
                     true
                 }
                 Judgement::Good => {
-                    res.with_model(line_tr * note.object.now(res), |res| res.emit_at_origin(note.rotation(line), res.res_pack.info.fx_good()));
+                    let color = if let Some(color) = note.hit_fx_color.now_opt() {
+                        color
+                    } else {
+                        res.res_pack.info.fx_good()
+                    };
+                    res.with_model(line_tr * note.object.now(res), |res| res.emit_at_origin(note.rotation(line), color));
                     true
                 }
                 Judgement::Bad => {
@@ -892,13 +901,12 @@ impl Judge {
                     break;
                 }
                 note.judge = if matches!(note.kind, NoteKind::Hold { .. }) {
-                    if !res.config.disable_audio {
+                    if note.time >= res.config.play_start_time && !res.disable_hit_fx {
                         note.hitsound.play(res);
                     }
                     self.judgements.borrow_mut().push((t, line_id as _, *id, Err(true)));
-                    //println!("{}\t{}\t{}", t, note.time, t - note.time);
-                    // 都是AutoPlay了为什么还要输出判定时间差
-                    //JudgeStatus::Hold(true, t, (t - note.time) / spd, false, f32::INFINITY)
+                    // AutoPlay 无需输出打击时间差
+                    // JudgeStatus::Hold(true, t, (t - note.time) / spd, false, f32::INFINITY)
                     JudgeStatus::Hold(true, t, judge_time, true, f32::INFINITY)
                 } else {
                     judgements.push((line_id, *id));
@@ -913,43 +921,60 @@ impl Judge {
             }
         }
         for (line_id, id) in judgements.into_iter() {
-            let (note_transform, note_kind, note_hitsound) = {
+            let note_transform = {
                 let line = &mut chart.lines[line_id];
                 let note = &mut line.notes[id as usize];
                 let nt = if matches!(note.kind, NoteKind::Hold { .. }) { t } else { note.time };
                 line.object.set_time(nt);
                 note.object.set_time(nt);
-                (note.object.now(res), note.kind.clone(), note.hitsound.clone())
+                note.object.now(res)
             };
             let line = &chart.lines[line_id];
-            match note_kind {
+            let note = &line.notes[id as usize];
+            match note.kind {
                 NoteKind::Click => {
+                    let color = if let Some(color) = note.hit_fx_color.now_opt() {
+                        color
+                    } else {
+                        fx_color
+                    };
                     self.commit(t, judge_type, line_id as _, id, 0.);
-                    res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
-                        res.emit_at_origin(line.notes[id as usize].rotation(line), fx_color)
-        
-                    });
+                    if note.time >= res.config.play_start_time && !res.disable_hit_fx {
+                        res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
+                            res.emit_at_origin(line.notes[id as usize].rotation(line), color)
+                        });
+                        if !res.config.all_bad {
+                            note.hitsound.play(res)
+                        }
+                    }
                 }
                 NoteKind::Hold { .. } => {
                     self.commit(t, judge_type_hold, line_id as _, id, 0.);
                 }
                 _ => {
+                    let color = if let Some(color) = note.hit_fx_color.now_opt() {
+                        color
+                    } else {
+                        res.res_pack.info.fx_perfect()
+                    };
                     self.commit(t, Judgement::Perfect, line_id as _, id, 0.);
-                    res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
-                        res.emit_at_origin(line.notes[id as usize].rotation(line), res.res_pack.info.fx_perfect())
-        
-                    });
+                    if note.time >= res.config.play_start_time && !res.disable_hit_fx {
+                        res.with_model(line.now_transform(res, &chart.lines) * note_transform, |res| {
+                            res.emit_at_origin(line.notes[id as usize].rotation(line), color)
+                        });
+                        note.hitsound.play(res)
+                    }
                 },
             };
+        }
+    }
 
-            if !res.config.disable_audio {
-                match note_kind {
-                    NoteKind::Click => if !res.config.all_bad {note_hitsound.play(res)},
-                    NoteKind::Hold { .. } => (),
-                    _ => note_hitsound.play(res),
-                }
-            }
-
+    pub fn commit_all(&mut self, chart: &mut Chart) {
+        for _ in chart.lines.iter()
+            .flat_map(|it| it.notes.iter())
+            .filter(|it| !it.fake && matches!(it.judge, JudgeStatus::NotJudged | JudgeStatus::PreJudge))
+        {
+            self.commit(0., Judgement::Perfect, 0, 0, 0.);
         }
     }
 
@@ -1037,7 +1062,7 @@ impl EventHandler for Handler {
 
 #[derive(Default)]
 pub struct PlayResult {
-    pub score: u32,
+    pub score: f64,
     pub accuracy: f64,
     pub max_combo: u32,
     pub num_of_notes: u32,

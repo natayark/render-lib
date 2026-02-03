@@ -3,7 +3,6 @@ use crate::{
     config::Mods,
     core::NoteKind,
     ext::{get_viewport, parse_alpha, NotNanExt, SafeTexture},
-    info::ChartFormat,
     judge::{JudgeStatus, LIMIT_BAD},
     ui::Ui,
 };
@@ -141,6 +140,7 @@ impl JudgeLineCache {
 
 pub struct JudgeLine {
     pub object: Object,
+    pub color: Anim<Color>,
     pub ctrl_obj: RefCell<CtrlObject>,
     pub kind: JudgeLineKind,
     pub height: AnimFloat,
@@ -184,7 +184,7 @@ impl JudgeLine {
             }
             _ => {}
         }
-        self.object.color.set_time(res.time);
+        self.color.set_time(res.time);
 
         let not_judge = |index: usize| {
             match self.notes[index].kind {
@@ -254,14 +254,14 @@ impl JudgeLine {
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource, lines: &[JudgeLine], bpm_list: &mut BpmList, settings: &ChartSettings, id: usize) {
         let alpha = self.object.now_alpha();
-        let color = self.object.color.now_opt();
+        let color = self.color.now_opt();
         res.with_model(self.now_transform(res, lines), |res| {
             res.with_model(self.object.now_scale(), |res| {
                 res.apply_model(|res| match &self.kind {
                     JudgeLineKind::Normal => {
                         if res.config.render_line {
                             let mut color = color.unwrap_or(res.judge_line_color);
-                            color.a = parse_alpha(color.a * alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.);
+                            color.a = parse_alpha(color.a * alpha.max(0.0), if res.info.fold_animation { 1.0 } else { res.alpha }, 0.15, res.config.chart_debug_line > 0.);
                             if color.a == 0.0 {
                                 return;
                             }
@@ -434,7 +434,7 @@ impl JudgeLine {
                     _ => {}
                 }
             }
-            let (vw, vh) = (1.2 / res.config.chart_ratio, 1.0 / res.config.chart_ratio);
+            let (vw, vh) = (1.0 / res.config.chart_ratio, 1.0 / res.config.chart_ratio);
             let p = [
                 res.screen_to_world(Point::new(-vw, -vh)),
                 res.screen_to_world(Point::new(-vw, vh)),
@@ -471,8 +471,18 @@ impl JudgeLine {
                                 }
                             };
                             let note_height = (note.height - line_height + note.object.translation.1.now()) / res.aspect_ratio * speed;
-                            if note_height < height_below {
-                                continue;
+                            match note.kind {   
+                                NoteKind::Hold { end_height, .. } => {
+                                    if end_height < height_below {
+                                        continue;
+                                    }
+                                    
+                                },
+                                _ => {
+                                    if note_height < height_below {
+                                        continue;
+                                    }
+                                }
                             }
                             if note_height > height_above {
                                 break;
@@ -508,8 +518,18 @@ impl JudgeLine {
                                     }
                                 };
                                 let note_height = (note.height - line_height + note.object.translation.1.now()) / res.aspect_ratio * speed;
-                                if note_height < -height_above {
-                                    continue;
+                                match note.kind {   
+                                    NoteKind::Hold { end_height, .. } => {
+                                        if end_height < height_below {
+                                            continue;
+                                        }
+                                        
+                                    },
+                                    _ => {
+                                        if note_height < height_below {
+                                            continue;
+                                        }
+                                    }
                                 }
                                 if note_height > -height_below {
                                     break;

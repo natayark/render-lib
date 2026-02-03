@@ -1,10 +1,11 @@
 use super::{MSRenderTarget, Matrix, Point, NOTE_WIDTH_RATIO_BASE};
 use crate::{
     config::Config,
+    core::tween::Tweenable,
     ext::{create_audio_manger, nalgebra_to_glm, SafeTexture},
     fs::FileSystem,
-    info::{ChartFormat, ChartInfo},
-    particle::{AtlasConfig, ColorCurve, Emitter, EmitterConfig, ParticleShape},
+    info::ChartInfo,
+    particle::{AtlasConfig, ColorCurve, Curve, Emitter, EmitterConfig, Interpolation, ParticleShape}
 };
 use anyhow::{bail, Context, Result};
 use macroquad::prelude::*;
@@ -57,6 +58,11 @@ fn default_tinted() -> bool {
     true
 }
 
+#[inline]
+fn default_particle_count() -> usize {
+    4
+}
+
 #[allow(dead_code)]
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -75,6 +81,8 @@ pub struct ResPackInfo {
     pub hide_particles: bool,
     #[serde(default)]
     pub circle_particles: bool,
+    #[serde(default = "default_particle_count")]
+    pub particle_count: usize,
     #[serde(default = "default_tinted")]
     pub hit_fx_tinted: bool,
     #[serde(default = "default_tinted")]
@@ -309,10 +317,11 @@ pub struct ParticleEmitter {
     pub emitter: Emitter,
     pub emitter_square: Emitter,
     pub hide_particles: bool,
+    pub particle_count: usize,
 }
 
 impl ParticleEmitter {
-    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool, config: Option<Config>) -> Self {
+    pub fn new(res_pack: &ResourcePack, scale: f32, config: Option<Config>) -> Self {
         let colors_curve = {
             let start = WHITE;
             let mut mid = start;
@@ -321,10 +330,20 @@ impl ParticleEmitter {
             end.a = 0.;
             ColorCurve { start, mid, end }
         };
+        let size_curve = Some(Curve {
+            points: vec![
+                (0.0, 1.0),
+                (0.5, 0.9),
+                (0.8, 0.8),
+                (1.0, 0.7),
+            ],
+            interpolation: Interpolation::Linear,
+            resolution: 10,
+        });
         let config_default = Config::default();
         let config = config.unwrap_or(config_default);
         let emitter_config = EmitterConfig {
-            max_particles: config.max_particles / 4,
+            max_particles: config.max_particles,
             local_coords: false,
             texture: Some(*res_pack.hit_fx),
             lifetime: res_pack.info.hit_fx_duration,
@@ -342,28 +361,29 @@ impl ParticleEmitter {
         } else {
             ParticleShape::Rectangle { aspect_ratio: 1.0 }
         };
-        let rng = Pcg32::seed_from_u64(RNG_SEED);
         let emitter_square_config = EmitterConfig {
-            max_particles: config.max_particles,
-            rng: Some(rng),
+            max_particles: config.max_particles * res_pack.info.particle_count,
+            rng: Some(Pcg32::seed_from_u64(RNG_SEED)),
             local_coords: false,
             lifetime: res_pack.info.hit_fx_duration,
             lifetime_randomness: 0.0,
             initial_direction_spread: 2. * std::f32::consts::PI,
             size_randomness: 0.3,
             emitting: false,
-            initial_velocity: 4.3 * scale,
+            initial_velocity: 2.0 * scale,
             initial_velocity_randomness: 0.3  * scale,
-            linear_accel: -9.0,
+            linear_accel: |t| -(f32::tween(&1.6, &0.0, t.powi(4)).powi(2)),
             shape,
             colors_curve,
+            size_curve,
             ..Default::default()
         };
         let mut res = Self {
             scale: res_pack.info.hit_fx_scale,
             emitter: Emitter::new(emitter_config),
             emitter_square: Emitter::new(emitter_square_config),
-            hide_particles,
+            hide_particles: res_pack.info.hide_particles,
+            particle_count: res_pack.info.particle_count,
         };
         res.set_scale(scale);
         res
@@ -375,7 +395,7 @@ impl ParticleEmitter {
         self.emitter.emit(pt, 1);
         if !self.hide_particles {
             self.emitter_square.config.base_color = color;
-            self.emitter_square.emit(pt, 4);
+            self.emitter_square.emit(pt, self.particle_count);
         }
     }
 
@@ -456,6 +476,7 @@ pub struct Resource {
     pub sfx_flick: Sfx,
     pub extra_sfxs: SfxMap,
     pub frame_times: VecDeque<f64>, // frame interval time
+    pub disable_hit_fx: bool,
 
     pub chart_target: Option<MSRenderTarget>,
     pub no_effect: bool,
@@ -463,6 +484,10 @@ pub struct Resource {
     pub note_buffer: RefCell<NoteBuffer>,
 
     pub model_stack: Vec<Matrix>,
+    #[cfg(feature = "play")]
+    pub shake_play_mode_deque: VecDeque<(f64, f32)>, // time, acceleration
+    #[cfg(feature = "play")]
+    pub shake_play_paused: bool,
 }
 
 impl Resource {
@@ -534,7 +559,8 @@ impl Resource {
 
         let mut audio = create_audio_manger(&config)?;
         let music = AudioClip::new(fs.load_file(&info.music).await?)?;
-        let track_length = music.length() as f32;
+        let music_length = music.length() as f32;
+        let track_length = config.play_end_time.unwrap_or(music_length).min(music_length);
         let buffer_size = Some(BUFFER_SIZE);
         let sfx_click = audio.create_sfx(res_pack.sfx_click.clone(), buffer_size)?;
         let sfx_drag = audio.create_sfx(res_pack.sfx_drag.clone(), buffer_size)?;
@@ -547,7 +573,7 @@ impl Resource {
 
         let no_effect = !config.render_extra || has_no_effect;
 
-        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()));
+        let emitter = ParticleEmitter::new(&res_pack, note_scale, Some(config.clone()));
 
         macroquad::window::gl_set_drawcall_buffer_capacity(MAX_SIZE * 4, MAX_SIZE * 6);
         Ok(Self {
@@ -586,6 +612,7 @@ impl Resource {
             sfx_flick,
             extra_sfxs: SfxMap::new(),
             frame_times,
+            disable_hit_fx: false,
 
             chart_target: None,
             no_effect,
@@ -593,12 +620,16 @@ impl Resource {
             note_buffer: RefCell::new(NoteBuffer::default()),
 
             model_stack: vec![Matrix::identity()],
+            #[cfg(feature = "play")]
+            shake_play_mode_deque: VecDeque::new(),
+            #[cfg(feature = "play")]
+            shake_play_paused: false,
         })
     }
 
     pub fn reset(&mut self) {
         self.judge_line_color = self.res_pack.info.line_perfect();
-        self.emitter = ParticleEmitter::new(&self.res_pack, self.config.note_scale, self.res_pack.info.hide_particles, Some(self.config.clone()));
+        self.emitter.emitter_square.config.rng = Some(Pcg32::seed_from_u64(RNG_SEED));
     }
 
     pub fn emit_at_origin(&mut self, rotation: f32, color: Color) {

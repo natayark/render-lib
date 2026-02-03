@@ -28,7 +28,7 @@ use phire::{
     scene::{show_error, show_message},
     time::TimeManager,
     ui::{FontArc, TextPainter},
-    gyro::{GYRO, GyroData, GYROSCOPE_DATA},
+    gyro::{GYRO, GyroData},
     Main,
 };
 use scene::MainScene;
@@ -36,9 +36,9 @@ use std::{collections::VecDeque, sync::{mpsc, Mutex}, time::Instant};
 use nalgebra::{UnitQuaternion, Vector3};
 use tracing::{error, debug, info};
 
-static MESSAGES_TX: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
-static MESSAGES_TX_FOUCUS_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
-static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
+static ACTIVITY_LIFECYCLE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
+static ACTIVITY_FOUCUS: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
+static ANTI_ADDICTION_CALLBACK: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
 pub static mut DATA: Option<Data> = None;
@@ -162,21 +162,21 @@ async fn the_main() -> Result<()> {
     set_data(data);
     sync_data();
 
-    let rx = {
+    let activity_lifecycle = {
         let (tx, rx) = mpsc::channel();
-        *MESSAGES_TX.lock().unwrap() = Some(tx);
+        *ACTIVITY_LIFECYCLE.lock().unwrap() = Some(tx);
         rx
     };
 
-    let rx_only_pause = {
+    let activity_foucus = {
         let (tx, rx) = mpsc::channel();
-        *MESSAGES_TX_FOUCUS_PAUSE.lock().unwrap() = Some(tx);
+        *ACTIVITY_FOUCUS.lock().unwrap() = Some(tx);
         rx
     };
 
-    let aa_rx = {
+    let anti_addiction_callback = {
         let (tx, rx) = mpsc::channel();
-        *AA_TX.lock().unwrap() = Some(tx);
+        *ANTI_ADDICTION_CALLBACK.lock().unwrap() = Some(tx);
         rx
     };
 
@@ -207,18 +207,17 @@ async fn the_main() -> Result<()> {
         let res = || -> Result<()> {
             main.update()?;
             main.render(&mut painter)?;
-            if let Ok(paused) = rx.try_recv() {
+            if let Ok(paused) = activity_lifecycle.try_recv() {
                 if paused {
                     main.pause()?;
                 } else {
                     main.resume()?;
                 }
-            }
-            if let Ok(paused) = rx_only_pause.try_recv() {
+            } else if let Ok(paused) = activity_foucus.try_recv() {
                 if paused {
-                    main.only_pause()?;
+                    main.foucus_pause()?;
                 } else {
-                    main.only_resume()?;
+                    main.foucus_resume()?;
                 }
             }
             Ok(())
@@ -232,7 +231,7 @@ async fn the_main() -> Result<()> {
             break 'app;
         }
 
-        if let Ok(code) = aa_rx.try_recv() {
+        if let Ok(code) = anti_addiction_callback.try_recv() {
             info!("anti addiction callback: {code}");
             match code {
                 // login success
@@ -323,7 +322,7 @@ pub extern "C" fn quad_main() {
 }
 
 fn on_pause_resume(pause: bool) {
-    if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
+    if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
         let _ = tx.send(pause);
     }
 }
@@ -342,57 +341,33 @@ unsafe fn string_from_java(env: *mut ndk_sys::JNIEnv, s: ndk_sys::jstring) -> St
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("leaveGame", None);
-    if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
+    if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
         let _ = tx.send(true);
     }
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityFocusPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
-    anti_addiction_action("leaveGame", None);
-    if let Some(tx) = MESSAGES_TX_FOUCUS_PAUSE.lock().unwrap().as_mut() {
-        let _ = tx.send(true);
-    }
-}
-
-#[cfg(all(target_os = "android", not(feature = "closed")))]
-#[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_preprocessInput(
-    _: *mut std::ffi::c_void, 
-    _: *const std::ffi::c_void,
-    _: ndk_sys::AInputEvent,
-    _: ndk_sys::jfloat,
-    _: ndk_sys::jfloat,
-    _: ndk_sys::jboolean,
-    _: ndk_sys::jboolean,
-) {
-
-}
-
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("enterGame", None);
-    if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
+    if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
         let _ = tx.send(false);
     }
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityFocusResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
-    anti_addiction_action("leaveGame", None);
-    if let Some(tx) = MESSAGES_TX_FOUCUS_PAUSE.lock().unwrap().as_mut() {
-        let _ = tx.send(false);
+pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnWindowFocusChanged(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, has_focus: ndk_sys::jboolean) {
+    if let Some(tx) = ACTIVITY_FOUCUS.lock().unwrap().as_mut() {
+        let _ = tx.send(has_focus == 0);
     }
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnDestroy(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnDestroy(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     // std::process::exit(0);
 }
 
@@ -484,7 +459,7 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_antiAddictionCallback(
     #[allow(dead_code)] code: ndk_sys::jint,
 ) {
     if cfg!(feature = "aa") {
-        if let Some(tx) = AA_TX.lock().unwrap().as_mut() {
+        if let Some(tx) = ANTI_ADDICTION_CALLBACK.lock().unwrap().as_mut() {
             let _ = tx.send(code);
         }
     }
@@ -503,9 +478,6 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyroScope(
         angular_velocity: Vector3::new(x, y, z),
         timestamp: Instant::now(),
     };
-    if let mut gyro_data = GYROSCOPE_DATA.lock().unwrap() {
-        *gyro_data = set_gyro_data;
-    }
     GYRO.lock().unwrap().update_gyroscope(set_gyro_data);
 }
 

@@ -1,10 +1,9 @@
-use super::{Anim, AnimFloat, AnimVector, Color, Matrix, Resource, Vector};
+use super::{AnimFloat, AnimVector, Matrix, Resource, Vector};
 use macroquad::prelude::*;
 use nalgebra::Rotation2;
 
 #[derive(Default)]
 pub struct Object {
-    pub color: Anim<Color>,
     pub alpha: AnimFloat,
     pub scale: AnimVector,
     pub rotation: AnimFloat,
@@ -13,8 +12,7 @@ pub struct Object {
 
 impl Object {
     pub fn is_default(&self) -> bool {
-        self.color.is_default()
-            && self.alpha.is_default()
+        self.alpha.is_default()
             && self.scale.0.is_default()
             && self.scale.1.is_default()
             && self.rotation.is_default()
@@ -23,7 +21,6 @@ impl Object {
     }
 
     pub fn set_time(&mut self, time: f32) {
-        self.color.set_time(time);
         self.alpha.set_time(time);
         self.scale.0.set_time(time);
         self.scale.1.set_time(time);
@@ -33,8 +30,7 @@ impl Object {
     }
 
     pub fn dead(&self) -> bool {
-        self.color.dead()
-            && self.alpha.dead()
+        self.alpha.dead()
             && self.scale.0.dead()
             && self.scale.1.dead()
             && self.rotation.dead()
@@ -61,11 +57,6 @@ impl Object {
     #[inline]
     pub fn now_alpha(&self) -> f32 {
         self.alpha.now_opt().unwrap_or(1.0)
-    }
-
-    #[inline]
-    pub fn now_color(&self) -> Color {
-        self.color.now_opt().unwrap_or(WHITE)
     }
 
     #[inline]

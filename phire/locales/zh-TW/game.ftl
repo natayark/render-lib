@@ -9,3 +9,5 @@ speed = 速度
 ex-time-out-of-range = 時間不在範圍內
 ex-invalid-format = 格式有誤
 ex-time-set = 設定成功
+
+shake-to-resume = 搖一搖繼續遊玩

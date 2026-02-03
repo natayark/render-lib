@@ -13,10 +13,12 @@ use crate::{
     bin::BinaryReader,
     config::{Config, Mods},
     core::{BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, BUFFER_SIZE},
-    ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
-    fs::FileSystem, gyro::{Gyro, GYRO, GYROSCOPE_DATA},
+    ext::{draw_text_aligned, draw_text_aligned_opt_width, ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
+    fs::FileSystem,
+    gyro::GYRO,
     info::{ChartFormat, ChartInfo},
-    judge::Judge, parse::{parse_extra, parse_pec, parse_phigros, parse_rpe},
+    judge::Judge,
+    parse::{parse_extra, parse_pec, parse_phigros, parse_rpe},
     time::TimeManager,
     ui::{RectButton, Ui}
 };
@@ -39,7 +41,7 @@ mod inner;
 #[cfg(feature = "closed")]
 use inner::*;
 
-const WAIT_TIME: f32 = 0.5;
+pub const WAIT_TIME: f32 = 0.5;
 const AFTER_TIME: f32 = 0.7;
 const PAUSE_BACKGROUND_ALPHA: f32 = 0.6;
 
@@ -175,11 +177,11 @@ macro_rules! reset_music_speed {
             },
         ).expect("failed to create music");
         $tm.pause();
-        $self.music.pause();
+        $self.music.pause().ok();
         let now = $tm.now();
         $tm.speed = $res.config.speed as _;
         $tm.seek_to(now);
-        $self.music.seek_to(now);
+        $self.music.seek_to(now).ok();
     }};
 }
 
@@ -188,7 +190,7 @@ impl GameScene {
     pub const BEFORE_TIME: f32 = 0.7;
     pub const BEFORE_DURATION: f32 = 1.2;
     pub const WAIT_AFTER_TIME: f32 = AFTER_TIME + 0.3;
-    pub const FADEOUT_TIME: f32 = WAIT_TIME + AFTER_TIME + 0.3;
+    pub const FADEOUT_TIME: f32 = WAIT_TIME + Self::WAIT_AFTER_TIME;
 
     pub async fn load_chart_bytes(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<Vec<u8>> {
         if let Ok(bytes) = fs.load_file(&info.chart).await {
@@ -364,7 +366,7 @@ impl GameScene {
             }
             _ => {}
         }
-        let (mut chart, format) = if let Some((chart, format)) = preload_chart {
+        let (mut chart, _) = if let Some((chart, format)) = preload_chart {
             (chart, format)
         } else {
             Self::load_chart(fs.deref_mut(), &info, &config).await?
@@ -391,7 +393,8 @@ impl GameScene {
         )
         .await
         .context("Failed to load resources")?;
-        let exercise_range = (chart.offset + info_offset + res.config.offset)..res.track_length;
+        let offset = chart.offset + info_offset + res.config.offset;
+        let exercise_range = offset + res.config.play_start_time..res.track_length;
         
         // Prepare extra sfx from chart.hitsounds
         chart.hitsounds.drain().for_each(|(name, clip)| {
@@ -468,7 +471,7 @@ impl GameScene {
             State::Playing => 1.,
             State::Ending => {
                 let t = time - self.res.track_length - WAIT_TIME;
-                1. - (t / (AFTER_TIME + 0.3)).clamp(0., 1.).powi(2)
+                1. - (t / (Self::WAIT_AFTER_TIME)).clamp(0., 1.).powi(2)
             }
         };
         let c = Color::new(1., 1., 1., self.res.alpha);
@@ -509,7 +512,7 @@ impl GameScene {
             ui.fill_circle(pause_center.x, pause_center.y, 0.05 * scale_ratio, Color::new(1., 1., 1., 0.5));
         }
 
-        let score = (self.judge.score() as f64 / 1_000_000. * res.info.score_total as f64) as u32;
+        let score = (self.judge.score() / 1_000_000. * res.info.score_total as f64).round() as u32;
         let score = if res.config.roman {
             Self::int_to_roman(score)
         } else if res.config.chinese {
@@ -579,90 +582,48 @@ impl GameScene {
                 text_size *= max_width / text_width
             }
             let combo_y = top + eps * 1.55 - (1. - p) * 0.4 + ct.y;
-            let btm = text.anchor(0.5, 0.5).pos(0., combo_y).draw().bottom() + 0.01;
+            let btm = text.anchor(0.5, 0.5).pos(0., combo_y).draw().bottom() + 0.015;
             self.chart.with_element(ui, res, UIElement::ComboNumber, Some((0., combo_y)), Some((0., combo_y)), |ui, color| {
                 ui.text(&combo)
                     .pos(0., combo_y)
                     .anchor(0.5, 0.5)
                     .color(Color { a: color.a * c.a, ..color })
                     .size(text_size)
+                    .multiline()
                     .draw();
             });
             let mut text = ui.text(&res.config.combo).size(0.34 * scale_ratio);
             let ct = text.measure().center();
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + ct.y)), Some((0., btm + ct.y)), |ui, color| {
                 if (cfg!(feature = "play") && res.config.autoplay()) || validate_combo(&res.config.combo) || res.config.combo.len() > 50 {
-                    ui.text("AUTOPLAY")
-                        .pos(0., btm + ct.y)
-                        .anchor(0.5, 0.5)
-                        .size(0.34 * scale_ratio)
-                        .color(Color { a: color.a * c.a, ..color })
-                        .draw();
+                    draw_text_aligned(ui, "AUTOPLAY", 0., btm + ct.y, (0.5, 0.5), 0.34 * scale_ratio, Color { a: color.a * c.a, ..color });
                     return;
                 }
-                ui.text(&res.config.combo)
-                    .pos(0., btm + ct.y)
-                    .anchor(0.5, 0.5)
-                    .size(0.34 * scale_ratio)
-                    .color(Color { a: color.a * c.a, ..color })
-                    .draw();
+                draw_text_aligned_opt_width(ui, &res.config.combo, 0., btm + ct.y, (0.5, 0.5), 0.34 * scale_ratio, Color { a: color.a * c.a, ..color }, 0.55 * aspect_ratio);
             });
         }
         let lf = -aspect_ratio + margin;
         let bt = -top - eps * 3.5 + (1. - p) * 0.4;
         if res.config.render_ui_name {
-            let mut text_size = 0.505 * scale_ratio;
-            let mut text = ui.text(&res.info.name).size(text_size);
-            let max_width = 0.9 * aspect_ratio;
-            let text_width = text.measure().w;
-            if text_width > max_width {
-                text_size *= max_width / text_width
-            }
             self.chart.with_element(ui, res, UIElement::Name, Some((lf, bt)), Some((lf, bt)), |ui, color| {
-                ui.text(&res.info.name)
-                    .pos(lf, bt)
-                    .anchor(0., 1.)
-                    .size(text_size)
-                    .color(Color { a: color.a * c.a, ..color })
-                    .draw();
+                draw_text_aligned_opt_width(ui, &res.info.name, lf, bt, (0., 1.), 0.505 * scale_ratio, Color { a: color.a * c.a, ..color }, 0.9 * aspect_ratio);
             });
         }
         if res.config.render_ui_level {
-            let mut text_size = 0.505 * scale_ratio;
-            let mut text = ui.text(&res.info.level).size(text_size);
-            let max_width = 0.9 * aspect_ratio;
-            let text_width = text.measure().w;
-            if text_width > max_width {
-                text_size *= max_width / text_width
-            }
             self.chart.with_element(ui, res, UIElement::Level, Some((-lf, bt)), Some((-lf, bt)), |ui, color| {
-                ui.text(&res.info.level)
-                    .pos(-lf, bt)
-                    .anchor(1., 1.)
-                    .size(0.505 * scale_ratio)
-                    .color(Color { a: color.a * c.a, ..color })
-                    .draw();
+                draw_text_aligned_opt_width(ui, &res.info.level, -lf, bt, (1., 1.), 0.505 * scale_ratio, Color { a: color.a * c.a, ..color }, 0.9 * aspect_ratio);
             });
         }
         if !res.config.watermark.is_empty() {
-            ui.text(&res.config.watermark)
-                .pos(0., -top * 0.98 + (1. - p) * 0.4)
-                .anchor(0.5, 1.)
-                .size(0.25 * scale_ratio)
-                .color(Color::new(1., 1., 1., 0.5 * c.a))
-                .draw();
+            draw_text_aligned_opt_width(ui, &res.config.watermark, 0., -top * 0.98 + (1. - p) * 0.4, (0.5, 1.), 0.25 * scale_ratio, semi_white(0.5 * c.a), 2.0 * aspect_ratio);
             if res.config.chart_ratio <= 0.95 {
-                ui.text(&res.config.watermark)
-                .pos(0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio)
-                .anchor(0.5, 1.)
-                .size(0.25 * scale_ratio / res.config.chart_ratio)
-                .color(Color::new(1., 1., 1., 0.5 * c.a))
-                .draw();
+                draw_text_aligned_opt_width(ui, &res.config.watermark, 0., (-top * 0.98 + (1. - p) * 0.4) / res.config.chart_ratio, (0.5, 1.), 0.25 * scale_ratio / res.config.chart_ratio, semi_white(0.5 * c.a), 2.0 * aspect_ratio);
             }
         };
         let hw = 0.003;
         let height = eps * 1.0;
-        let dest = (aspect_ratio * 2. * res.time / res.track_length).max(0.).min(aspect_ratio * 2.);
+        let offset = self.chart.offset + self.info_offset + res.config.offset;
+        let dest = (aspect_ratio * 2. * (res.time - self.exercise_range.start + offset) / (self.exercise_range.end - self.exercise_range.start)).max(0.).min(aspect_ratio * 2.);
         if res.config.render_ui_bar {
             self.chart.with_element(ui, res, UIElement::Bar, Some((-aspect_ratio, top + height / 2.)), Some((-aspect_ratio, top + height / 2.)), |ui, color| {
                 //let ct = Vector::new(0., top + height / 2.);
@@ -670,7 +631,7 @@ impl GameScene {
                     Rect::new(-aspect_ratio, top, dest, height),
                     Color{ a: color.a * c.a, ..color },
                 );
-                ui.fill_rect(Rect::new(-aspect_ratio + dest - hw, top, hw * 2., height), Color::new(1., 1., 1., color.a * c.a));
+                ui.fill_rect(Rect::new(-aspect_ratio + dest - hw, top, hw * 2., height), Color::new(0.95, 0.95, 0.95, color.a * c.a));
             });
         }
         Ok(())
@@ -681,6 +642,35 @@ impl GameScene {
         let res = &mut self.res;
         for pos in &self.touch_points {
             ui.fill_circle(pos.0, pos.1, 0.04, Color { a: 0.4, ..BLUE });
+        }
+        #[cfg(feature = "play")]
+        if res.config.shake_play_mode && matches!(self.state, State::Playing) {
+            let acc = GYRO.lock().unwrap().get_current_acceleration().abs();
+            res.shake_play_mode_deque.push_back((tm.real_time(), acc));
+            while res.shake_play_mode_deque.front().is_some_and(|it| tm.real_time() - it.0 > 1.0) {
+                res.shake_play_mode_deque.pop_front();
+            }
+            let none_gt_1 = res.shake_play_mode_deque.iter().all(|(_, a)| *a <= 1.0);
+            if none_gt_1 && !is_key_down(KeyCode::Enter) {
+                res.shake_play_paused = true;
+                if !tm.paused() {
+                    tm.pause();
+                    self.music.pause()?;
+                    debug!("Shake Mode: Paused");
+                }
+                ui.text(tl!("shake-to-resume"))
+                    .pos(0., 0.)
+                    .anchor(0.5, 0.5)
+                    .size(1.0)
+                    .color(semi_white(1.0))
+                    .draw();
+                return Ok(());
+            } else if tm.paused() && res.shake_play_paused {
+                res.shake_play_paused = false;
+                tm.resume();
+                self.music.play()?;
+                debug!("Shake Mode: Resumed");
+            }
         }
         if tm.paused() {
             let o = if matches!(self.mode, GameMode::Exercise | GameMode::TweakOffset) { -0.3 } else { 0. };
@@ -737,7 +727,6 @@ impl GameScene {
                 if no_retry && clicked == Some(0) {
                     clicked = None;
                 }
-                let mut pos = self.music.position();
                 if clicked.map_or(false, |it| it != -1) && (tm.speed - res.config.speed as f64).abs() > 1e-3 {
                     reset_music_speed!(self, res, tm);
                 }
@@ -752,7 +741,7 @@ impl GameScene {
                             duration: Some(0.1),
                             dim: false,
                         };
-                        res.config.disable_audio = true;
+                        res.disable_hit_fx = true;
                     }
                     Some(1) => {
                         if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end - 0.1 < res.track_length {
@@ -764,13 +753,13 @@ impl GameScene {
                         tm.speed = res.config.speed as _;
                         tm.resume();
                         tm.seek_to(now - 1.);
-                        self.music.seek_to(now - 1.);
+                        self.music.seek_to(now - 1.)?;
                         self.pause_rewind = PauseRewind {
                             time: Some(tm.now()),
                             duration: Some(1.0),
                             dim: true
                         };
-                        self.res.config.disable_audio = true;
+                        self.res.disable_hit_fx = true;
                     }
                     _ => {}
                 }
@@ -827,6 +816,9 @@ impl GameScene {
                         .map(|it| (0, it.id));
                 }
                 ui.text(fmt_time(t)).pos(0., -0.23).anchor(0.5, 0.).size(0.8).draw();
+                if self.pause_rewind.time.is_some() {
+                    self.exercise_press = None;
+                }
                 if let Some((ctrl, id)) = &self.exercise_press {
                     if let Some(touch) = Judge::get_touches(1.0).iter().rfind(|it| it.id == *id) {
                         let x = touch.position.x;
@@ -900,7 +892,7 @@ impl GameScene {
                     duration: None,
                     dim: false
                 };
-                self.res.config.disable_audio = false;
+                self.res.disable_hit_fx = false;
             } else if dim {
                 let a = (t / duration).clamp(0.0, 1.0) * PAUSE_BACKGROUND_ALPHA as f64;
                 let h = 1. / self.res.aspect_ratio;
@@ -916,7 +908,7 @@ impl GameScene {
     }
 
     fn offset(&self) -> f32 {
-        self.chart.offset + self.res.config.offset + self.info_offset
+        self.chart.offset + self.info_offset + self.res.config.offset
     }
 
     fn offset_chart(&self) -> f32 {
@@ -994,7 +986,7 @@ impl GameScene {
             if (tm.speed - self.res.config.speed as f64).abs() > 1e-3 {
                 reset_music_speed!(self, self.res, tm);
                 tm.resume();
-                self.music.play();
+                self.music.play().ok();
             }
         });
     }
@@ -1011,6 +1003,12 @@ impl Scene for GameScene {
         reset!(self, self.res, tm);
         set_camera(&self.res.camera);
         self.first_in = true;
+        self.pause_rewind = PauseRewind {
+            time: Some(tm.now()),
+            duration: Some(0.1),
+            dim: false,
+        };
+        self.res.disable_hit_fx = true;
         Ok(())
     }
 
@@ -1028,9 +1026,29 @@ impl Scene for GameScene {
     }
 
     fn resume(&mut self, tm: &mut TimeManager) -> Result<()> {
-        // if !matches!(self.state, State::Playing) {
-        //     tm.resume();
-        // }
+        if tm.paused() && !matches!(self.state, State::Playing) {
+            tm.resume();
+        }
+        Ok(())
+    }
+
+    fn foucus_pause(&mut self, tm: &mut TimeManager) -> Result<()> {
+        if !tm.paused() {
+            self.pause_rewind = PauseRewind {
+                time: None,
+                duration: None,
+                dim: false
+            };
+            self.music.pause()?;
+            tm.pause();
+        }
+        Ok(())
+    }
+
+    fn foucus_resume(&mut self, tm: &mut TimeManager) -> Result<()> {
+        if tm.paused() && !matches!(self.state, State::Playing) {
+            tm.resume();
+        }
         Ok(())
     }
 
@@ -1053,7 +1071,19 @@ impl Scene for GameScene {
         let time = tm.now() as f32;
         let time = match self.state {
             State::Starting => {
-                if time >= Self::BEFORE_DURATION { // wait for animation
+                #[cfg(target_os = "windows")]
+                { // wtf bro. why must particles exist on Windows?
+                    let emitter_config = self.res.emitter.emitter.config.clone();
+                    let emitter_square_config = self.res.emitter.emitter_square.config.clone();
+                    self.res.emitter.emitter_square.config.rng = None;
+                    self.res.emitter.emitter.config.size = 0.0;
+                    self.res.emitter.emitter_square.config.size = 0.0;
+                    self.res.emitter.emitter.emit(vec2(0.0, 0.0), 1);
+                    self.res.emitter.emitter_square.emit(vec2(0.0, 0.0), 1);
+                    self.res.emitter.emitter.config = emitter_config;
+                    self.res.emitter.emitter_square.config = emitter_square_config;
+                }
+                if time >= Self::BEFORE_DURATION || !self.res.config.enter_animation { // wait for animation
                     self.res.alpha = 1.;
                     self.state = State::BeforeMusic;
                     tm.reset();
@@ -1066,21 +1096,12 @@ impl Scene for GameScene {
                     }
                     tm.now() as f32
                 } else {
-                    #[cfg(target_os = "windows")]
-                    { // wtf bro. why must particles exist on Windows?
-                        let emitter_config = self.res.emitter.emitter.config.clone();
-                        let emitter_square_config = self.res.emitter.emitter_square.config.clone();
-                        self.res.emitter.emitter_square.config.rng = None;
-                        self.res.emitter.emitter.config.size = 0.0;
-                        self.res.emitter.emitter_square.config.size = 0.0;
-                        self.res.emitter.emitter.emit(vec2(0.0, 0.0), 1);
-                        self.res.emitter.emitter_square.emit(vec2(0.0, 0.0), 1);
-                        self.res.emitter.emitter.config = emitter_config;
-                        self.res.emitter.emitter_square.config = emitter_square_config;
-                    }
-
                     GYRO.lock().unwrap().reset_gyroscope();
-                    self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
+                    if self.res.config.enter_animation {
+                        self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
+                    } else {
+                        self.res.alpha = 1.;
+                    };
                     self.exercise_range.start
                 }
             }
@@ -1093,14 +1114,18 @@ impl Scene for GameScene {
                 time
             }
             State::Playing => {
-                if time > self.res.track_length + WAIT_TIME {
+                if time >= self.res.track_length + WAIT_TIME {
+                    self.music.pause()?;
                     self.state = State::Ending;
                 }
                 time
             }
             State::Ending => {
                 let t = time - self.res.track_length - WAIT_TIME;
-                if t >= AFTER_TIME + 0.3 {
+                if t >= Self::WAIT_AFTER_TIME {
+                    if self.res.config.autoplay() {
+                        self.judge.commit_all(&mut self.chart);
+                    }
                     let mut record_data = None;
                     // TODO strengthen the protection
                     #[cfg(feature = "closed")]
@@ -1145,7 +1170,7 @@ impl Scene for GameScene {
                     };
                 }
                 self.res.alpha = 1. - (t / AFTER_TIME).clamp(0., 1.).powi(2);
-                self.res.track_length
+                self.res.track_length + WAIT_TIME
             }
         };
 
@@ -1205,7 +1230,7 @@ impl Scene for GameScene {
                         duration: Some(0.1),
                         dim: false
                     };
-                    res.config.disable_audio = true;
+                    res.disable_hit_fx = true;
                 }
             } else if matches!(self.state, State::Playing) && !self.pause_rewind.dim { // State::BeforeMusic
                 if !self.music.paused() {
@@ -1237,7 +1262,7 @@ impl Scene for GameScene {
                     duration: Some(0.1),
                     dim: false
                 };
-                res.config.disable_audio = true;
+                res.disable_hit_fx = true;
             }
             if is_key_pressed(KeyCode::Q) {
                 self.should_exit = true;
@@ -1315,10 +1340,10 @@ impl Scene for GameScene {
                 1. - (t / Self::BEFORE_DURATION).clamp(0., 1.)
             }
         };
-        let ratio = if res.config.chart_ratio == 1. || res.config.disable_loading {
-            res.config.chart_ratio
-        } else {
+        let ratio = if res.config.chart_ratio != 1. && res.config.enter_animation {
             1. + (res.config.chart_ratio - 1.) * ease_in_out_quartic(p)
+        } else {
+            res.config.chart_ratio
         };
 
         if res.update_size(ui.viewport) || self.mode == GameMode::View {
@@ -1388,7 +1413,16 @@ impl Scene for GameScene {
         let angle = GYRO.lock().unwrap().get_angle(&res.config);
         set_camera( &Camera2D {
             zoom: chart_zoom,
-            viewport: chart_viewport,
+            viewport: chart_viewport.map(|(x, y, w, h)| {
+                if res.info.fold_animation && matches!(self.state, State::Starting) {
+                    let scale_x = (1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3)).powf(2.0);
+                    let new_w = (w as f32 * scale_x).round() as i32;
+                    let dx = (w - new_w) / 2;
+                    (x + dx, y, new_w, h)
+                } else {
+                    (x, y, w, h)
+                }
+            }),
             rotation: angle.to_degrees(),
             ..Default::default()
         });

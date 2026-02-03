@@ -11,3 +11,5 @@ ex-invalid-format = 格式有误
 ex-time-set = 设置成功
 ex-time-start = 开始时间
 ex-time-end = 结束时间
+
+shake-to-resume = 摇一摇继续游玩

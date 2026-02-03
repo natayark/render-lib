@@ -2,7 +2,7 @@ use super::{
     chart::ChartSettings, BpmList, CtrlObject, JudgeLine, Matrix, Object, Point, Resource, Vector
 };
 use crate::{
-    core::HEIGHT_RATIO, ext::parse_alpha, info::ChartFormat, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
+    core::{Anim, HEIGHT_RATIO}, ext::parse_alpha, judge::JudgeStatus, parse::RPE_HEIGHT, ui::Ui
 };
 
 
@@ -47,6 +47,8 @@ pub struct Note {
     pub fake: bool,
     pub judge: JudgeStatus,
     pub judge_scale: f32,
+    pub color: Anim<Color>,
+    pub hit_fx_color: Anim<Color>,
     pub protected: bool,
 }
 
@@ -140,6 +142,9 @@ impl Note {
     }
 
     pub fn update(&mut self, res: &mut Resource, parent_rot: f32, parent_tr: &Matrix, ctrl_obj: &mut CtrlObject, line_height: f32, bpm_list: &mut BpmList, index: usize) {
+        if self.time < res.config.play_start_time || res.disable_hit_fx {
+            return;
+        }
         self.object.set_time(res.time);
         //let mut _immediate_particle = false;
         let color = if let JudgeStatus::Hold(perfect, ref mut at, ..) = self.judge {
@@ -149,8 +154,10 @@ impl Note {
                     if bpm_list.per_line_bpm_storage { index as f32 } else { self.time }
                 );
                 //println!("{} {} {}", index, bpm_list.now_bpm(index as f32), beat);
-                *at = res.time + beat / res.config.speed; //HOLD_PARTICLE_INTERVAL
-                Some(if perfect && !res.config.all_good && !res.config.all_bad {
+                *at = res.time + beat * res.info.hold_particle_interval_ratio / res.config.speed; //HOLD_PARTICLE_INTERVAL
+                Some(if let Some(color) = self.hit_fx_color.now_opt() {
+                    color
+                } else if perfect && !res.config.all_good && !res.config.all_bad {
                     res.res_pack.info.fx_perfect()
                 } else {
                     res.res_pack.info.fx_good()
@@ -187,16 +194,14 @@ impl Note {
         tr.x *= incline_val * ctrl_obj.pos.now_opt().unwrap_or(1.);
         tr.y += base;
         let mut scale = self.object.scale.now_with_def(1.0, 1.0);
-        if can_scale_x {
-            scale.x *= ctrl_obj.size.now_opt().unwrap_or(1.0);
-        } else {
+        if !can_scale_x {
             scale.x = 1.0;
         };
-        if res.info.note_uniform_scale && can_scale_y {
-            scale.y *= ctrl_obj.size.now_opt().unwrap_or(1.0);
-        } else {
+        scale.x *= ctrl_obj.size.now_opt().unwrap_or(1.0);
+        if !res.info.note_uniform_scale || !can_scale_y {
             scale.y = 1.0;
         };
+        scale.y *= ctrl_obj.size.now_opt().unwrap_or(1.0);
         self.object.now_rotation().append_nonuniform_scaling(&scale).append_translation(&tr)
     }
 
@@ -212,7 +217,7 @@ impl Note {
 
         let ctrl_obj = &mut config.ctrl_obj;
         self.init_ctrl_obj(ctrl_obj, config.line_height);
-        let mut color = self.object.now_color();
+        let mut color = self.color.now_opt().unwrap_or(WHITE);
         let alpha = self.object.now_alpha().max(0.);
         color.a = parse_alpha(color.a * alpha, 1.0, 0.2, res.config.chart_debug_note > 0.);
 

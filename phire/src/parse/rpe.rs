@@ -40,6 +40,10 @@ fn f32_one() -> f32 {
     1.
 }
 
+fn i32_one() -> i32 {
+    1
+}
+
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEEvent<T = f32> {
@@ -78,6 +82,7 @@ pub struct RPESpeedEvent {
     easing_left: f32,
     #[serde(default = "f32_one")]
     easing_right: f32,
+    #[serde(default = "i32_one")]
     easing_type: i32,
 }
 
@@ -135,8 +140,10 @@ pub struct RPENote {
     speed: f32,
     is_fake: u8,
     visible_time: f32,
-    #[serde(default)]
+    #[serde(default, rename = "tint")]
     color: RGBColor,
+    #[serde(rename = "tintHitEffects")]
+    hit_fx_color: Option<RGBColor>,
     #[serde(default="f32_one", rename = "judgeArea")]
     judge_scale: f32,
 }
@@ -209,7 +216,7 @@ fn parse_events<T: Tweenable, V: Clone + Into<T>>(
 ) -> Result<Anim<T>> {
     let mut kfs = Vec::new();
     if let Some(default) = default {
-        if rpe[0].start_time.beats() != 0.0 {
+        if !rpe.is_empty() && rpe[0].start_time.beats() != 0.0 {
             kfs.push(Keyframe::new(0.0, default, 0));
         }
     }
@@ -279,13 +286,13 @@ fn parse_speed_events(r: &mut BpmList, rpe: &[RPEEventLayer], max_time: f32) -> 
     sani.map_value(|v| v * SPEED_RATIO);
     for i in 0..(pts.len() - 1) {
         let now_time = *pts[i];
-        let end_time = *pts[i + 1];
+        let next_time = *pts[i + 1];
         sani.set_time(now_time);
         let speed = sani.now();
-        sani.set_time(end_time - 1e-4);
+        sani.set_time(next_time.next_down());
         let end_speed = sani.now();
         if speed.signum() * end_speed.signum() < 0. {
-            pts.push(f32::tween(&now_time, &end_time, speed / (speed - end_speed)).not_nan());
+            pts.push(f32::tween(&now_time, &next_time, speed / (speed - end_speed)).not_nan());
         }
     }
     pts.sort();
@@ -294,12 +301,12 @@ fn parse_speed_events(r: &mut BpmList, rpe: &[RPEEventLayer], max_time: f32) -> 
     let mut height = 0.0;
     for i in 0..(pts.len() - 1) {
         let now_time = *pts[i];
-        let end_time = *pts[i + 1];
+        let next_time = *pts[i + 1];
         sani.set_time(now_time);
         let speed = sani.now();
         // this can affect a lot! do not use end_time...
         // using end_time causes Hold tween (x |-> 0) to be recognized as Linear tween (x |-> x)
-        sani.set_time(end_time - 1e-4);
+        sani.set_time(next_time.next_down());
         let end_speed = sani.now();
         kfs.push(if (speed - end_speed).abs() < EPS {
             Keyframe::new(now_time, height, 2)
@@ -316,7 +323,7 @@ fn parse_speed_events(r: &mut BpmList, rpe: &[RPEEventLayer], max_time: f32) -> 
                 tween: Rc::new(ClampedTween::new(6 /*quadIn*/, (speed / end_speed)..1.)),
             }
         });
-        height += (speed + end_speed) * (end_time - now_time) / 2.;
+        height += (speed + end_speed) * (next_time - now_time) / 2.;
     }
     kfs.push(Keyframe::new(max_time, height, 0));
     Ok(AnimFloat::new(kfs))
@@ -392,37 +399,26 @@ async fn parse_notes(
         };
         let hitsound = match note.hitsound {
             Some(s) => {
-                // TODO: RPE doc needed...
-                if s == "flick.mp3" {
-                    HitSound::Flick
-                } else if s == "tap.mp3" {
-                    HitSound::Click
-                } else if s == "drag.mp3" {
-                    HitSound::Drag
-                } else {
-                    if hitsounds.get(&s).is_none() {
-                        let data = fs.load_file(&s).await;
-                        if let Ok(data) = data {
-                            hitsounds.insert(s.clone(), AudioClip::new(data)?);
-                        } else {
-                            ptl!(bail "hitsound-missing", "name" => s);
+                match s.trim() {
+                    "tap.mp3" | "tap.ogg" => HitSound::Click,
+                    "drag.mp3" | "drag.ogg" => HitSound::Drag,
+                    "flick.mp3" | "flick.ogg" => HitSound::Flick,
+                    _ => {
+                        if hitsounds.get(&s).is_none() {
+                            if let Ok(data) = fs.load_file(&s).await {
+                                hitsounds.insert(s.clone(), AudioClip::new(data)?);
+                            } else {
+                                ptl!(bail "hitsound-missing", "name" => s);
+                            }
                         }
+                        HitSound::Custom(String::from_str(&s)?)
                     }
-                    HitSound::Custom(String::from_str(&s)?)
                 }
             }
             None => HitSound::default_from_kind(&kind),
         };
         notes.push(Note {
             object: Object {
-                color: {
-                    let color = Color::from(note.color);
-                    if matches!(color, WHITE) {
-                        Anim::default()
-                    } else {
-                        Anim::fixed(color)
-                    }
-                },
                 alpha: if note.visible_time >= time {
                     if note.alpha >= 255 {
                         AnimFloat::default()
@@ -452,6 +448,21 @@ async fn parse_notes(
             fake: note.is_fake != 0,
             judge: JudgeStatus::NotJudged,
             judge_scale: note.judge_scale,
+            color: {
+                let color = Color::from(note.color);
+                if matches!(color, WHITE) {
+                    Anim::default()
+                } else {
+                    Anim::fixed(color)
+                }
+            },
+            hit_fx_color: {
+                if let Some(color) = note.hit_fx_color {
+                    Anim::fixed(Color::from(color))
+                } else {
+                    Anim::default()
+                }
+            },
             protected: false,
         })
     }
@@ -505,11 +516,6 @@ async fn parse_judge_line(
     let cache = JudgeLineCache::new(&mut notes);
     Ok(JudgeLine {
         object: Object {
-            color: if let Some(events) = rpe.extended.as_ref().and_then(|e| e.color_events.as_ref()) {
-                parse_events(r, events, Some(WHITE), bezier_map).with_context(|| ptl!("color-events-parse-failed"))?
-            } else {
-                Anim::default()
-            },
             alpha: events_with_factor(r, &event_layers, |it| &it.alpha_events, 1. / 255., "alpha", bezier_map)?,
             rotation: events_with_factor(r, &event_layers, |it| &it.rotate_events, -1., "rotate", bezier_map)?,
             translation: AnimVector(
@@ -560,6 +566,11 @@ async fn parse_judge_line(
                     .transpose()?
                     .unwrap_or_default()
             },
+        },
+        color: if let Some(events) = rpe.extended.as_ref().and_then(|e| e.color_events.as_ref()) {
+            parse_events(r, events, Some(WHITE), bezier_map).with_context(|| ptl!("color-events-parse-failed"))?
+        } else {
+            Anim::default()
         },
         ctrl_obj: RefCell::new(CtrlObject {
             alpha: parse_ctrl_events(&rpe.alpha_control, "alpha"),

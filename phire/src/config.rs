@@ -1,3 +1,5 @@
+use std::fmt;
+
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +24,20 @@ pub enum ChallengeModeColor {
     Golden,
     #[default] 
     Rainbow,
+}
+
+impl fmt::Display for ChallengeModeColor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            ChallengeModeColor::White   => "white",
+            ChallengeModeColor::Green   => "green",
+            ChallengeModeColor::Blue    => "blue",
+            ChallengeModeColor::Red     => "red",
+            ChallengeModeColor::Golden  => "golden",
+            ChallengeModeColor::Rainbow => "rainbow",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -67,12 +83,11 @@ pub struct Config {
     pub chinese: bool,
     pub combo: String,
     pub difficulty: String,
-    pub disable_loading: bool,
+    pub enter_animation: bool,
 
     // for compatibility
     pub autoplay: Option<bool>,
 
-    pub disable_audio: bool,
     pub judge_offset: f32,
 
     pub render_line: bool,
@@ -97,6 +112,11 @@ pub struct Config {
 
     pub rotation_mode: bool,
     pub rotation_flat_mode: bool,
+
+    pub play_start_time: f32,
+    pub play_end_time: Option<f32>,
+    #[cfg(feature = "play")]
+    pub shake_play_mode: bool,
 }
 
 impl Default for Config {
@@ -146,11 +166,10 @@ impl Default for Config {
             chinese: false,
             combo: "RECALL".to_string(),
             difficulty: "".to_string(),
-            disable_loading: false,
+            enter_animation: true,
 
             autoplay: None,
 
-            disable_audio: false,
             judge_offset: 0.,
 
             render_line: true,
@@ -168,13 +187,18 @@ impl Default for Config {
             render_extra: true,
             bg_blurriness: 80.,
 
-            max_particles: 20000,
+            max_particles: 5000,
 
             fade: 0.,
             alpha_tint: false,
 
             rotation_mode: false,
             rotation_flat_mode: false,
+
+            play_start_time: 0.,
+            play_end_time: None,
+            #[cfg(feature = "play")]
+            shake_play_mode: false,
         }
     }
 }

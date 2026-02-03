@@ -4,7 +4,7 @@ use super::{draw_background, game::{SimpleRecord, GameScene}, loading::UploadFn,
 use crate::{
     config::Config,
     ext::{
-        create_audio_manger, draw_illustration, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, draw_text_aligned_fix, SafeTexture, ScaleType,
+        create_audio_manger, draw_illustration, draw_parallelogram, draw_parallelogram_ex, draw_text_aligned, draw_text_aligned_opt_width, SafeTexture, ScaleType,
         PARALLELOGRAM_SLOPE,
     },
     info::ChartInfo,
@@ -81,7 +81,7 @@ impl EndingScene {
         record_data: Option<Vec<u8>>,
         record: Option<SimpleRecord>,
     ) -> Result<Self> {
-        let index = icon_index(result.score, result.num_of_notes == result.max_combo);
+        let index = icon_index(result.score.round() as u32, result.num_of_notes == result.max_combo);
         let mut audio = create_audio_manger(config)?;
         let bgm = audio.create_music(
             endings[index].clone(),
@@ -110,7 +110,7 @@ impl EndingScene {
             } else {
                 Some(RecordUpdateState {
                     best: true,
-                    improvement: result.score,
+                    improvement: result.score.round() as u32,
                     gain_exp: 0.,
                     new_rks: 0.,
                 })
@@ -317,27 +317,10 @@ impl Scene for EndingScene {
             Color::new(0., 0., 0., 0.7),
             true,
         );
-        let rr = draw_text_aligned(ui, &self.info.level, r.right() - r.h / 7. * 13. * 0.13 - 0.029, r.bottom() - top / 18.5, (1., 1.), 0.40, WHITE); // 难度
         let p = (r.x + 0.055, r.bottom() - top / 14.5);
-        let mw = rr.x - 0.02 - p.0;
-        let mut text_size = 0.92;
-        let mut text = ui.text(&self.info.name).pos(p.0, p.1).anchor(0., 1.).size(text_size); // 曲名
-        let max_width = mw;
-        let text_width = text.measure().w;
-        if text_width > max_width {
-            text_size *= max_width / text_width
-        }
-        //if text.measure().w <= mw {
-        //    text.draw();
-        //} else {
-        drop(text);
-        ui.text(&self.info.name)
-            .pos(p.0, p.1)
-            .anchor(0., 1.)
-            .size(text_size)
-            //.max_width(mw)
-            .draw();
-        //}
+        let mw = (r.right() - p.0) * 0.4 - 0.02;
+        draw_text_aligned_opt_width(ui, &self.info.level, r.right() - r.h / 7. * 13. * 0.13 - 0.029, r.bottom() - top / 18.5, (1., 1.), 0.40, WHITE, mw); // 难度
+        draw_text_aligned_opt_width(ui, &self.info.name, p.0, p.1, (0., 1.), 0.92, WHITE, mw);
         gl.pop_model_matrix();
 
         let dx = 0.07;
@@ -375,7 +358,7 @@ impl Scene for EndingScene {
             };
             let pa = ran(t, A_SCORE_ALPHA_START, A_SCORE_ALPHA_END);
             let r = draw_text_aligned(ui, &text, main.x + dx + 0.01, main.bottom() - 0.040, (0., 1.), 0.34, Color::new(1., 1., 1., pa)); // 分数下面的字
-            let score = (res.score as f64 / 1_000_000. * self.info.score_total as f64) as u32;
+            let score = (res.score / 1_000_000. * self.info.score_total as f64).round() as u32;
             let score = if self.config.roman {
                 GameScene::int_to_roman(score)
             } else if self.config.chinese {
@@ -383,7 +366,7 @@ impl Scene for EndingScene {
             } else {
                 format!("{:07}", score)
             };
-            let r = draw_text_aligned_fix(ui, &score, r.x - 0.012, r.y - 0.019, (0., 1.), 1.05, Color::new(1., 1., 1., pa), 0.4); // 分数
+            let r = draw_text_aligned_opt_width(ui, &score, r.x - 0.012, r.y - 0.019, (0., 1.), 1.05, Color::new(1., 1., 1., pa), 0.4); // 分数
             let pa = ran(t, A_ICON_ALPHA_START, A_ICON_ALPHA_END);
             let ps = ran(t, A_ICON_SCALE_START, A_ICON_SCALE_END).powi(3);
             let s = main.h * 0.72;
@@ -411,7 +394,7 @@ impl Scene for EndingScene {
             let dy = 0.025;
             let max_combo = if self.config.roman {GameScene::int_to_roman(res.max_combo)} else if self.config.chinese {GameScene::int_to_chinese(res.max_combo)} else {res.max_combo.to_string()};
             let r = draw_text_aligned(ui, text_max_combo, s1.x + dx - 0.005, s1.bottom() - dy, (0., 1.), 0.31, Color::new(1., 1., 1., pa)); // 连击数文本
-            draw_text_aligned_fix(ui, &max_combo, r.x, r.y - 0.006, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.3); // 连击数
+            draw_text_aligned_opt_width(ui, &max_combo, r.x, r.y - 0.006, (0., 1.), 0.65, Color::new(1., 1., 1., pa), 0.3); // 连击数
             let accuracy = if self.config.roman {
                 format!("{}%", GameScene::int_to_roman((res.accuracy * 100.) as u32))
             } else if self.config.chinese {
@@ -420,7 +403,7 @@ impl Scene for EndingScene {
                 format!("{:.2}%", res.accuracy * 100.)
             };
             let r = draw_text_aligned(ui, text_accuracy, s1.right() - dx + 0.022, s1.bottom() - dy, (1., 1.), 0.31, Color::new(1., 1., 1., pa)); // 准度 Acc 文本
-            draw_text_aligned_fix(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.62, Color::new(1., 1., 1., pa), 0.3); // 准度 Acc
+            draw_text_aligned_opt_width(ui, &accuracy, r.right(), r.y - 0.008, (1., 1.), 0.62, Color::new(1., 1., 1., pa), 0.3); // 准度 Acc
         }
         gl.pop_model_matrix();
 
@@ -436,7 +419,7 @@ impl Scene for EndingScene {
             let draw_count = |ui: &mut Ui, ratio: f32, name: &str, count: u32| {
                 let r = draw_text_aligned(ui, name, s2.x + s2.w * ratio, s2.bottom() - dy, (0.5, 1.), sm, Color::new(1., 1., 1., pa)); // Perfect Good Bad Miss 的文本
                 let text = if self.config.roman {GameScene::int_to_roman(count)} else if self.config.chinese {GameScene::int_to_chinese(count)} else {count.to_string()};
-                draw_text_aligned_fix(ui, &text, r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa), 0.125); // Perfect Good Bad Miss 的值
+                draw_text_aligned_opt_width(ui, &text, r.center().x, r.y - dy2, (0.5, 1.), bg, Color::new(1., 1., 1., pa), 0.125); // Perfect Good Bad Miss 的值
             };
             draw_count(ui, 0.127, text_perfect, res.counts[0]);
             draw_count(ui, 0.325, text_good, res.counts[1]);
@@ -449,9 +432,9 @@ impl Scene for EndingScene {
             let cy = s2.center().y; // 文本y中心
             let (early, late) = if self.config.roman {(GameScene::int_to_roman(res.early), GameScene::int_to_roman(res.late))} else if self.config.chinese {(GameScene::int_to_chinese(res.early), GameScene::int_to_chinese(res.late))} else {(res.early.to_string(), res.late.to_string())};
             let r = draw_text_aligned(ui, text_early, l, cy, (0., 1.), sm, Color::new(1., 1., 1., pa)); // Early
-            draw_text_aligned_fix(ui, &early, rt, r.bottom(), (1., 1.), sm, Color::new(1., 1., 1., pa), 0.1);
+            draw_text_aligned_opt_width(ui, &early, rt, r.bottom(), (1., 1.), sm, Color::new(1., 1., 1., pa), 0.1);
             let r = draw_text_aligned(ui, text_late, l, cy + dy2 / 2.3, (0., 0.), sm, Color::new(1., 1., 1., pa)); // Late
-            draw_text_aligned_fix(ui, &late, rt, r.y, (1., 0.), sm, Color::new(1., 1., 1., pa), 0.1);
+            draw_text_aligned_opt_width(ui, &late, rt, r.y, (1., 0.), sm, Color::new(1., 1., 1., pa), 0.1);
         }
         gl.pop_model_matrix();
 
@@ -494,7 +477,7 @@ impl Scene for EndingScene {
         let sub = Rect::new(1. - 0.125, main.center().y + 0.015, 0.12, 0.03);
         let color = Color::new(1., 1., 1., alpha);
         draw_parallelogram(sub, None, color, false);
-        draw_text_aligned_fix(
+        draw_text_aligned_opt_width(
             ui,
             /*&if let Some(state) = &self.update_state {
                 format!("{:.2}", state.new_rks)
