@@ -13,7 +13,7 @@ use crate::{
     bin::BinaryReader,
     config::{Config, Mods},
     core::{BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, BUFFER_SIZE},
-    ext::{draw_text_aligned, draw_text_aligned_opt_width, ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
+    ext::{draw_text_aligned, draw_text_aligned_opt_width, ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, RectExt, SafeTexture},
     fs::FileSystem,
     gyro::GYRO,
     info::{ChartFormat, ChartInfo},
@@ -595,7 +595,7 @@ impl GameScene {
             let mut text = ui.text(&res.config.combo).size(0.34 * scale_ratio);
             let ct = text.measure().center();
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + ct.y)), Some((0., btm + ct.y)), |ui, color| {
-                if (cfg!(feature = "play") && res.config.autoplay()) || validate_combo(&res.config.combo) || res.config.combo.len() > 50 {
+                if (cfg!(feature = "play") && res.config.autoplay()) || res.config.combo.len() > 50 {
                     draw_text_aligned(ui, "AUTOPLAY", 0., btm + ct.y, (0.5, 0.5), 0.34 * scale_ratio, Color { a: color.a * c.a, ..color });
                     return;
                 }

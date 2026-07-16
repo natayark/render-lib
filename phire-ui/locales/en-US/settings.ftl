@@ -63,7 +63,7 @@ item-rotation-flat-mode-sub = Orientation calibrates when the game starts. If it
 item-shake-play-mode = Shake Mode
 
 load-cali-failed = Failed to load audio
-not-combo = Cannot be COMBO
+not-combo = Text too long
 
 about-content =
   Phira v{ $version }

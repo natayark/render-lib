@@ -63,7 +63,7 @@ item-rotation-flat-mode-sub = 此模式会根据开始游戏时的方向来矫�
 item-shake-play-mode = 摇一摇模式
 
 load-cali-failed = 加载音频失败
-not-combo = 不能是 COMBO
+not-combo = 文字过长
 
 about-content =
   Phire v{ $version }

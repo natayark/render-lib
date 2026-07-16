@@ -5,7 +5,7 @@ use crate::{get_data, get_data_mut, popup::ChooseButton, save_data, scene::BGM_V
 use anyhow::Result;
 use macroquad::prelude::*;
 use phire::{
-    ext::{poll_future, semi_black, validate_combo, LocalTask, RectExt, SafeTexture, ScaleType},
+    ext::{poll_future, semi_black, LocalTask, RectExt, SafeTexture, ScaleType},
     l10n::{LanguageIdentifier, LANG_IDENTS, LANG_NAMES},
     scene::{request_input, return_input, show_error, show_message, take_input},
     ui::{DRectButton, Scroll, Slider, Ui},
@@ -761,7 +761,7 @@ impl OtherList {
         }
         if let Some((id, text)) = take_input() {
             if id == "combo" {
-                if validate_combo(&text) || text.len() > 50 {
+                if text.len() > 50 {
                     show_message(tl!("not-combo")).error();
                     return Ok(false);
                 }
