@@ -341,7 +341,7 @@ unsafe fn string_from_java(env: *mut ndk_sys::JNIEnv, s: ndk_sys::jstring) -> St
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("leaveGame", None);
     if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
         let _ = tx.send(true);
@@ -350,7 +350,7 @@ pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnPause(_: *mut std::f
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("enterGame", None);
     if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
         let _ = tx.send(false);
@@ -359,7 +359,7 @@ pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnResume(_: *mut std::
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnWindowFocusChanged(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, has_focus: ndk_sys::jboolean) {
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnWindowFocusChanged(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, has_focus: ndk_sys::jboolean) {
     if let Some(tx) = ACTIVITY_FOUCUS.lock().unwrap().as_mut() {
         let _ = tx.send(has_focus == 0);
     }
@@ -367,7 +367,7 @@ pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnWindowFocusChanged(_
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_libActivityOnDestroy(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnDestroy(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     // std::process::exit(0);
 }
 
@@ -426,6 +426,10 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_setInputText(_: *mut std::
     let env = crate::miniquad::native::attach_jni_env();
     INPUT_TEXT.lock().unwrap().1 = Some(string_from_java(env, text));
 }
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_preprocessInput(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, _text: ndk_sys::jstring) {}
 
 #[cfg(not(all(target_os = "android", feature = "aa")))]
 pub fn anti_addiction_action(_action: &str, _arg: Option<String>) {}
