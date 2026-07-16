@@ -35,7 +35,7 @@ pollster = "0.2.5"
 phire = { path = "../phire" }
 rand = "0.9.2"
 regex = "1.7.0"
-reqwest = { version = "0.11", features = ["json", "stream", "gzip"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "stream", "gzip", "rustls-tls"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 serde_yaml = "0.9.33"
@@ -57,7 +57,6 @@ logos = "0.13.0"
 ndk-sys = "0.2"
 ndk-context = "0.1"
 sasa = { git = "https://github.com/2278535805/sasa", default-features = false, features = ["oboe"] }
-openssl = { version = "*", features = ["vendored"] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 sasa = { git = "https://github.com/2278535805/sasa" }
