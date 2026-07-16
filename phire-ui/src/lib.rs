@@ -28,17 +28,15 @@ use phire::{
     scene::{show_error, show_message},
     time::TimeManager,
     ui::{FontArc, TextPainter},
-    gyro::{GYRO, GyroData},
     Main,
 };
 use scene::MainScene;
-use std::{collections::VecDeque, sync::{mpsc, Mutex}, time::Instant};
-use nalgebra::{UnitQuaternion, Vector3};
-use tracing::{error, debug, info};
+use std::sync::{mpsc, Mutex};
+use tracing::{error, info};
 
-static ACTIVITY_LIFECYCLE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
-static ACTIVITY_FOUCUS: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
-static ANTI_ADDICTION_CALLBACK: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
+static MESSAGES_TX: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
+static MESSAGES_TX_ONLY_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
+static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
 pub static mut DATA: Option<Data> = None;
@@ -162,21 +160,21 @@ async fn the_main() -> Result<()> {
     set_data(data);
     sync_data();
 
-    let activity_lifecycle = {
+    let rx = {
         let (tx, rx) = mpsc::channel();
-        *ACTIVITY_LIFECYCLE.lock().unwrap() = Some(tx);
+        *MESSAGES_TX.lock().unwrap() = Some(tx);
         rx
     };
 
-    let activity_foucus = {
+    let rx_only_pause = {
         let (tx, rx) = mpsc::channel();
-        *ACTIVITY_FOUCUS.lock().unwrap() = Some(tx);
+        *MESSAGES_TX_ONLY_PAUSE.lock().unwrap() = Some(tx);
         rx
     };
 
-    let anti_addiction_callback = {
+    let aa_rx = {
         let (tx, rx) = mpsc::channel();
-        *ANTI_ADDICTION_CALLBACK.lock().unwrap() = Some(tx);
+        *AA_TX.lock().unwrap() = Some(tx);
         rx
     };
 
@@ -195,10 +193,7 @@ async fn the_main() -> Result<()> {
     let mut main = Main::new(Box::new(MainScene::new().await?), TimeManager::default(), None).await?;
 
     let tm = TimeManager::default();
-
-    #[cfg(not(feature = "play"))]
-    let mut frame_times: VecDeque<(f64, u32)> = VecDeque::new();
-    let mut fps_last_update_sec: u32 = 0;
+    let mut fps_time = -1;
 
     let mut exit_time = f64::INFINITY;
 
@@ -207,17 +202,18 @@ async fn the_main() -> Result<()> {
         let res = || -> Result<()> {
             main.update()?;
             main.render(&mut painter)?;
-            if let Ok(paused) = activity_lifecycle.try_recv() {
+            if let Ok(paused) = rx.try_recv() {
                 if paused {
                     main.pause()?;
                 } else {
                     main.resume()?;
                 }
-            } else if let Ok(paused) = activity_foucus.try_recv() {
+            }
+            if let Ok(paused) = rx_only_pause.try_recv() {
                 if paused {
-                    main.foucus_pause()?;
+                    main.only_pause()?;
                 } else {
-                    main.foucus_resume()?;
+                    main.only_resume()?;
                 }
             }
             Ok(())
@@ -231,7 +227,7 @@ async fn the_main() -> Result<()> {
             break 'app;
         }
 
-        if let Ok(code) = anti_addiction_callback.try_recv() {
+        if let Ok(code) = aa_rx.try_recv() {
             info!("anti addiction callback: {code}");
             match code {
                 // login success
@@ -267,40 +263,19 @@ async fn the_main() -> Result<()> {
             }
         }
 
-        let frame_end = tm.real_time();
-        let now_fps = (1. / (frame_end - frame_start)) as u32;
+        let t = tm.real_time();
 
-        #[cfg(not(feature = "play"))]
-        {
-            frame_times.push_back((frame_end, now_fps));
-            while frame_times.front().is_some_and(|it| frame_end - it.0 > 1.0) {
-                frame_times.pop_front();
-            }
+        if t > exit_time + 5. {
+            //break;
         }
 
-        if frame_end > exit_time + 5. {
-            break;
+        let fps_now = t as i32;
+        if fps_now != fps_time {
+            fps_time = fps_now;
+            info!("FPS {}", (1. / (t - frame_start)) as u32);
         }
 
         next_frame().await;
-        #[cfg(not(feature = "play"))]
-        let flash_end = tm.real_time();
-
-        let fps_now_sec = frame_end as u32;
-        #[cfg(feature = "play")]
-        if fps_now_sec != fps_last_update_sec {
-            fps_last_update_sec = fps_now_sec;
-            info!("FPS {}", now_fps);
-        }
-        #[cfg(not(feature = "play"))]
-        if fps_last_update_sec != fps_now_sec {
-            fps_last_update_sec = fps_now_sec;
-            let real_fps = frame_times.len() as u32;
-            let real_now_fps = (1. / (flash_end - frame_start)) as u32;
-            let avg_fps = frame_times.iter().map(|(_, fps)| fps).sum::<u32>() / real_fps;
-            let min_fps = frame_times.iter().map(|(_, fps)| fps).min().unwrap_or(&0);
-            info!("| AVG: {}|{} NOW: {}|{}, MIN: {}", real_fps, avg_fps, real_now_fps, now_fps, min_fps);
-        }
     }
     Ok(())
 }
@@ -322,7 +297,7 @@ pub extern "C" fn quad_main() {
 }
 
 fn on_pause_resume(pause: bool) {
-    if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
+    if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
         let _ = tx.send(pause);
     }
 }
@@ -343,25 +318,49 @@ unsafe fn string_from_java(env: *mut ndk_sys::JNIEnv, s: ndk_sys::jstring) -> St
 #[no_mangle]
 pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("leaveGame", None);
-    if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
+    if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
         let _ = tx.send(true);
     }
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnlyPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+    anti_addiction_action("leaveGame", None);
+    if let Some(tx) = MESSAGES_TX_ONLY_PAUSE.lock().unwrap().as_mut() {
+        let _ = tx.send(true);
+    }
+}
+
+#[cfg(all(target_os = "android", not(feature = "closed")))]
+#[no_mangle]
+pub extern "C" fn Java_quad_1native_QuadNative_preprocessInput(
+    _: *mut std::ffi::c_void, 
+    _: *const std::ffi::c_void,
+    _: ndk_sys::AInputEvent,
+    _: ndk_sys::jfloat,
+    _: ndk_sys::jfloat,
+    _: ndk_sys::jboolean,
+    _: ndk_sys::jboolean,
+) {
+
+}
+
+#[cfg(target_os = "android")]
+#[no_mangle]
 pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("enterGame", None);
-    if let Some(tx) = ACTIVITY_LIFECYCLE.lock().unwrap().as_mut() {
+    if let Some(tx) = MESSAGES_TX.lock().unwrap().as_mut() {
         let _ = tx.send(false);
     }
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnWindowFocusChanged(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, has_focus: ndk_sys::jboolean) {
-    if let Some(tx) = ACTIVITY_FOUCUS.lock().unwrap().as_mut() {
-        let _ = tx.send(has_focus == 0);
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnlyResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+    anti_addiction_action("leaveGame", None);
+    if let Some(tx) = MESSAGES_TX_ONLY_PAUSE.lock().unwrap().as_mut() {
+        let _ = tx.send(false);
     }
 }
 
@@ -459,52 +458,8 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_antiAddictionCallback(
     #[allow(dead_code)] code: ndk_sys::jint,
 ) {
     if cfg!(feature = "aa") {
-        if let Some(tx) = ANTI_ADDICTION_CALLBACK.lock().unwrap().as_mut() {
+        if let Some(tx) = AA_TX.lock().unwrap().as_mut() {
             let _ = tx.send(code);
         }
     }
-}
-
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyroScope(
-    env: ndk_sys::JNIEnv,
-    _class: ndk_sys::jclass,
-    x: ndk_sys::jfloat,
-    y: ndk_sys::jfloat,
-    z: ndk_sys::jfloat,
-) {
-    let set_gyro_data = GyroData {
-        angular_velocity: Vector3::new(x, y, z),
-        timestamp: Instant::now(),
-    };
-    GYRO.lock().unwrap().update_gyroscope(set_gyro_data);
-}
-
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGravity(
-    env: ndk_sys::JNIEnv,
-    _class: ndk_sys::jclass,
-    roll: ndk_sys::jfloat,
-    pitch: ndk_sys::jfloat,
-    yaw: ndk_sys::jfloat,
-) {
-    if let mut gyro_data = GYRO.lock().unwrap() {
-        gyro_data.update_gravity(Vector3::new(roll, pitch, yaw));
-    }
-}
-
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_preprocessInput(
-    _: *mut std::ffi::c_void,
-    _: *const std::ffi::c_void,
-    #[allow(dead_code)] motionEvent: ndk_sys::AInputEvent,
-    #[allow(dead_code)] f: ndk_sys::jfloat,
-    #[allow(dead_code)] f2: ndk_sys::jfloat,
-    #[allow(dead_code)] z: ndk_sys::jboolean,
-    #[allow(dead_code)] z2: ndk_sys::jboolean,
-) {
-    
 }
