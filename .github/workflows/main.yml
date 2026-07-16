@@ -66,4 +66,60 @@ jobs:
           target/armv7-linux-androideabi/release/libphireui.so
           target/armv7-linux-androideabi/release/libphire.so
           target/armv7-linux-androideabi/release/libmain.so
-          
+
+  Package-APK:
+    needs: Build-For-Android
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download aarch64 .so
+      uses: actions/download-artifact@v4
+      with:
+        name: android-build-aarch64
+        path: android/app/src/main/jniLibs/arm64-v8a
+
+    - name: Download armeabi .so
+      uses: actions/download-artifact@v4
+      with:
+        name: android-build-armeabi
+        path: android/app/src/main/jniLibs/armeabi-v7a
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Generate Gradle Wrapper
+      run: |
+        cd android
+        gradle wrapper --gradle-version 8.5
+
+    - name: Build APK
+      run: |
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleRelease
+
+    - name: Sign APK
+      run: |
+        keytool -genkeypair -v -keystore release.keystore \
+          -alias phiwow -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass phiwow123 -dname "CN=PhiWOW"
+        zipalign -v 4 \
+          android/app/build/outputs/apk/release/app-release-unsigned.apk \
+          android/app/build/outputs/apk/release/app-release-aligned.apk
+        apksigner sign --ks release.keystore --ks-pass pass:phiwow123 \
+          android/app/build/outputs/apk/release/app-release-aligned.apk
+        cp android/app/build/outputs/apk/release/app-release-aligned.apk PhiWOW.apk
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: PhiWOW-apk
+        path: PhiWOW.apk
