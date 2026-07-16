@@ -427,10 +427,6 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_setInputText(_: *mut std::
     INPUT_TEXT.lock().unwrap().1 = Some(string_from_java(env, text));
 }
 
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_preprocessInput(_: *mut std::ffi::c_void, _: *const std::ffi::c_void, _text: ndk_sys::jstring) {}
-
 #[cfg(not(all(target_os = "android", feature = "aa")))]
 pub fn anti_addiction_action(_action: &str, _arg: Option<String>) {}
 
