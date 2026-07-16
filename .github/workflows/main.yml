@@ -23,22 +23,7 @@ jobs:
     - run: |
         sudo apt-get update
         sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev libssl-dev pkg-config
-        
-    - name: Download static-lib
-      uses: suisei-cn/actions-download-file@v1.3.0
-      id: downlod-static-lib
-      with:
-        url: "https://teamflos.github.io/phira-docs/phira_build_guide/prpr-avc.zip"
-        target: ./
 
-    - name: Set Up static-lib
-      run: |
-        unzip -o prpr-avc.zip -d ./
-    - name: Install Android SDK Tools
-      run: |
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip commandlinetools-linux-8512546_latest.zip -d $ANDROID_HOME
-        echo y | $ANDROID_HOME/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_HOME} "platform-tools" "build-tools;33.0.2" "platforms;android-35"
     - name: Install Android NDK
       run: |
         wget https://googledownloads.cn/android/repository/android-ndk-r27c-linux.zip
