@@ -211,9 +211,9 @@ async fn the_main() -> Result<()> {
             }
             if let Ok(paused) = rx_only_pause.try_recv() {
                 if paused {
-                    main.only_pause()?;
+                    main.pause()?;
                 } else {
-                    main.only_resume()?;
+                    main.resume()?;
                 }
             }
             Ok(())
