@@ -1,13 +1,14 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
-    namespace 'org.flos.phira'
+    namespace 'com.hlmc.phire'
     compileSdk 34
 
     defaultConfig {
-        applicationId "org.flos.phira"
+        applicationId "com.hlmc.phire"
         minSdk 21
         targetSdk 34
         versionCode 1

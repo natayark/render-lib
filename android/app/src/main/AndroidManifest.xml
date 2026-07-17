@@ -15,7 +15,7 @@
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
         <activity
-            android:name="org.flos.phira.MainActivity"
+            android:name="com.hlmc.phire.MainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize"
             android:exported="true"
             android:launchMode="singleTask"
@@ -23,6 +23,26 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.hlmc.phire.ImportActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.hlmc.phire.ImportRespackActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
     </application>
