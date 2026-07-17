@@ -207,21 +207,27 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         QuadNative.activityOnResume();
-        QuadNative.prprActivityOnResume();
+        QuadNative.libActivityOnResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         QuadNative.activityOnPause();
-        QuadNative.prprActivityOnPause();
+        QuadNative.libActivityOnPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         QuadNative.activityOnDestroy();
-        QuadNative.prprActivityOnDestroy();
+        QuadNative.libActivityOnDestroy();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        QuadNative.libActivityOnWindowFocusChanged(hasFocus);
     }
 
     @Override

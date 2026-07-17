@@ -21,11 +21,10 @@ public class QuadNative {
     public native static void surfaceOnCharacter(int character);
 
     // PhiWOW / Phira extensions
-    public native static void prprActivityOnPause();
-    public native static void prprActivityOnlyPause();
-    public native static void prprActivityOnResume();
-    public native static void prprActivityOnlyResume();
-    public native static void prprActivityOnDestroy();
+    public native static void libActivityOnPause();
+    public native static void libActivityOnResume();
+    public native static void libActivityOnWindowFocusChanged(boolean hasFocus);
+    public native static void libActivityOnDestroy();
     public native static void setDataPath(String path);
     public native static void setTempDir(String path);
     public native static void setDpi(int dpi);
@@ -33,6 +32,7 @@ public class QuadNative {
     public native static void markImport();
     public native static void markImportRespack();
     public native static void setInputText(String text);
-    public native static void preprocessInput(Object motionEvent, float f, float f2, boolean z, boolean z2);
     public native static void antiAddictionCallback(int code);
+    public native static void updateGyroScope(float x, float y, float z);
+    public native static void updateGravity(float roll, float pitch, float yaw);
 }
