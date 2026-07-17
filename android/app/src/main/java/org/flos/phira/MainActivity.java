@@ -225,12 +225,6 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        QuadNative.prprActivityOnWindowFocusChanged(hasFocus);
-    }
-
-    @Override
     public void onBackPressed() {
         // Let Rust handle back press
     }
