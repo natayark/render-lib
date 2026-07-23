@@ -1,100 +1,43 @@
-name: Build Android Phi Recorder
+name: Build PhiWOW APK
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
 
-
 env:
   CARGO_TERM_COLOR: always
-  ANDROID_HOME: ${{github.workspace}}/android-sdk
-  ANDROID_NDK_HOME: ${{github.workspace}}/android-ndk-r27c
-  ANDROID_NDK_ROOT: ${{github.workspace}}/android-ndk-r27c
+  ANDROID_NDK_HOME: ${{github.workspace}}/android-ndk-r26d
 
 jobs:
-  Build-For-Android:
-
+  build:
     runs-on: ubuntu-22.04
-
-    steps:
-    - uses: actions/checkout@v4.2.2
-    
-    - run: |
-        sudo apt-get update
-        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev libssl-dev pkg-config
-
-    - name: Install Android NDK
-      run: |
-        wget https://googledownloads.cn/android/repository/android-ndk-r27c-linux.zip
-        unzip android-ndk-r27c-linux.zip -d ${{github.workspace}}
-    - name: Install Rust Toolchains
-      uses: actions-rs/toolchain@v1.0.6
-      with:
-        toolchain: stable
-        target: aarch64-linux-android
-    
-    - name: Build for Android , arm-v8a
-      run: |
-        cd phire-ui
-        cargo install cargo-ndk
-        cargo ndk -t arm64-v8a build --release
-        
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-build-aarch64
-        path: |
-          target/aarch64-linux-android/release/libphire.so
-          target/aarch64-linux-android/release/libphireui.so
-          target/aarch64-linux-android/release/libphire_ui.so
-          target/aarch64-linux-android/release/libmain.so
-    - name: Build for Android , armeabi-v7a
-      run: |
-        cd phire-ui
-        rustup target install armv7-linux-androideabi
-        cargo install cargo-ndk
-        cargo ndk -t armeabi-v7a build --release
-        ls
-    
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-build-armeabi
-        path: |
-          target/armv7-linux-androideabi/release/libphire_ui.so
-          target/armv7-linux-androideabi/release/libphireui.so
-          target/armv7-linux-androideabi/release/libphire.so
-          target/armv7-linux-androideabi/release/libmain.so
-
-  Package-APK:
-    needs: Build-For-Android
-    runs-on: ubuntu-22.04
-
     steps:
     - uses: actions/checkout@v4
 
-    - name: Download aarch64 .so
-      uses: actions/download-artifact@v4
-      with:
-        name: android-build-aarch64
-        path: android/app/src/main/jniLibs/arm64-v8a
-
-    - name: Download armeabi .so
-      uses: actions/download-artifact@v4
-      with:
-        name: android-build-armeabi
-        path: android/app/src/main/jniLibs/armeabi-v7a
-
-    - name: Install Android NDK for libc++_shared.so
+    - name: Install Android NDK
       run: |
-        wget https://googledownloads.cn/android/repository/android-ndk-r27c-linux.zip
-        unzip android-ndk-r27c-linux.zip -d ${{github.workspace}}
+        wget -q https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
+        unzip -q android-ndk-r26d-linux.zip -d ${{github.workspace}}
 
-    - name: Copy libc++_shared.so
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1.0.6
+      with:
+        toolchain: stable
+        targets: aarch64-linux-android,armv7-linux-androideabi
+
+    - name: Install cargo-ndk
+      run: cargo install cargo-ndk
+
+    - name: Build arm64-v8a .so
       run: |
-        cp ${{github.workspace}}/android-ndk-r27c/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so android/app/src/main/jniLibs/arm64-v8a/
-        cp ${{github.workspace}}/android-ndk-r27c/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so android/app/src/main/jniLibs/armeabi-v7a/
+        cd phire-ui
+        cargo ndk -t arm64-v8a -o ./android/app/src/main/jniLibs build --release
+
+    - name: Build armeabi-v7a .so
+      run: |
+        cd phire-ui
+        cargo ndk -t armeabi-v7a -o ./android/app/src/main/jniLibs build --release
 
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -102,22 +45,57 @@ jobs:
         distribution: temurin
         java-version: 17
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
-
-    - name: Generate Gradle Wrapper
+    - name: Compile Java to DEX
       run: |
-        cd android
-        gradle wrapper --gradle-version 8.5
+        SDK="${{github.workspace}}/android-sdk"
+        # Use Android SDK build-tools from NDK
+        BT="${{github.workspace}}/android-ndk-r26d/build-tools"
+        # Install Android SDK command-line tools for aapt2
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdtools.zip
+        mkdir -p $SDK/cmdline-tools
+        unzip -q cmdtools.zip -d $SDK/cmdline-tools-tmp
+        mv $SDK/cmdline-tools-tmp/cmdline-tools $SDK/cmdline-tools/latest
+        
+        # Accept licenses and install build-tools
+        yes | $SDK/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK "build-tools;30.0.2" "platforms;android-30" > /dev/null 2>&1 || true
+        
+        BT="$SDK/build-tools/30.0.2"
+        JAR="$SDK/platforms/android-30/android.jar"
+        JAVA_HOME="${{env.JAVA_HOME}}"
+        
+        # Find javac
+        JAVAC="$JAVA_HOME/bin/javac"
+        JAR_CMD="$JAVA_HOME/bin/jar"
+        JAVA_CMD="$JAVA_HOME/bin/java"
+        DXJAR=$(find $SDK -name "dx.jar" | head -1)
+        
+        # Compile Java
+        mkdir -p build_classes
+        find android/app/src/main/java -name "*.java" > build_sources.txt
+        $JAVAC --release 8 -classpath "$JAR" -d build_classes @build_sources.txt
+        
+        # Generate DEX
+        $JAR_CMD cf build_classes.jar -C build_classes .
+        $JAVA_CMD -cp "$DXJAR" com.android.dx.command.Main --dex --output=origin/classes.dex --min-sdk-version=21 build_classes.jar
+        
+        # Build manifest
+        $BT/aapt2 compile android/app/src/main/res/values/strings.xml -o compiled_strings.zip
+        $BT/aapt2 link -o manifest_fixed.zip --manifest android/app/src/main/AndroidManifest.xml -I "$JAR" -R compiled_strings.zip --auto-add-overlay --rename-manifest-package com.hlmc.phire
+        python3 -c "import zipfile; zipfile.ZipFile('manifest_fixed.zip','r').extract('AndroidManifest.xml','origin_temp')"
+        cp origin_temp/AndroidManifest.xml origin/AndroidManifest.xml
 
-    - name: Build APK
+    - name: Package APK
+      run: python3 package_apk.py
+
+    - name: Align and Sign
       run: |
-        cd android
-        chmod +x gradlew
-        ./gradlew assembleDebug
+        SDK="${{github.workspace}}/android-sdk"
+        BT="$SDK/build-tools/30.0.2"
+        $BT/zipalign -f 4 installed_raw.apk installed_aligned.apk
+        $BT/apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out installed.apk installed_aligned.apk
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: PhiWOW-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        path: installed.apk
