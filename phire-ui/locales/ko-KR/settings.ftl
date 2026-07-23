@@ -40,3 +40,6 @@ item-touch-debug = 터치 디버그 모드
 item-touch-debug-sub = 터치 지점 표시
 
 load-cali-failed = 오디오를 로드하는데 실패했습니다.
+item-show-hp-bar = HP 바 표시
+item-show-judgement-detail = 판정 상세 표시
+item-render-extra = 추가 렌더링

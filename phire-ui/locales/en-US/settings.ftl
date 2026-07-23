@@ -69,3 +69,5 @@ about-content =
   Phira v{ $version }
 
   Phira is a non-commercial community-driven rhythm game, inspired by Phigros, developed with Rust.
+item-show-hp-bar = Show HP Bar
+item-show-judgement-detail = Show Judgement Detail

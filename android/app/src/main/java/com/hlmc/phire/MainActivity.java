@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+// nanoTime maps to CLOCK_MONOTONIC, matching Rust's get_uptime()
 import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -62,28 +63,28 @@ public class MainActivity extends Activity {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_MOVE:
                     for (int i = 0; i < pointerCount; i++) {
-                        QuadNative.surfaceOnTouch(event.getPointerId(i), 0, event.getX(i), event.getY(i), System.currentTimeMillis());
+                        QuadNative.surfaceOnTouch(event.getPointerId(i), 0, event.getX(i), event.getY(i), System.nanoTime() / 1_000_000);
                     }
                     break;
                 case MotionEvent.ACTION_UP:
-                    QuadNative.surfaceOnTouch(event.getPointerId(0), 1, event.getX(0), event.getY(0), System.currentTimeMillis());
+                    QuadNative.surfaceOnTouch(event.getPointerId(0), 1, event.getX(0), event.getY(0), System.nanoTime() / 1_000_000);
                     break;
                 case MotionEvent.ACTION_DOWN:
-                    QuadNative.surfaceOnTouch(event.getPointerId(0), 2, event.getX(0), event.getY(0), System.currentTimeMillis());
+                    QuadNative.surfaceOnTouch(event.getPointerId(0), 2, event.getX(0), event.getY(0), System.nanoTime() / 1_000_000);
                     break;
                 case MotionEvent.ACTION_POINTER_UP: {
                     int idx = event.getActionIndex();
-                    QuadNative.surfaceOnTouch(event.getPointerId(idx), 1, event.getX(idx), event.getY(idx), System.currentTimeMillis());
+                    QuadNative.surfaceOnTouch(event.getPointerId(idx), 1, event.getX(idx), event.getY(idx), System.nanoTime() / 1_000_000);
                     break;
                 }
                 case MotionEvent.ACTION_POINTER_DOWN: {
                     int idx = event.getActionIndex();
-                    QuadNative.surfaceOnTouch(event.getPointerId(idx), 2, event.getX(idx), event.getY(idx), System.currentTimeMillis());
+                    QuadNative.surfaceOnTouch(event.getPointerId(idx), 2, event.getX(idx), event.getY(idx), System.nanoTime() / 1_000_000);
                     break;
                 }
                 case MotionEvent.ACTION_CANCEL:
                     for (int i = 0; i < pointerCount; i++) {
-                        QuadNative.surfaceOnTouch(event.getPointerId(i), 3, event.getX(i), event.getY(i), System.currentTimeMillis());
+                        QuadNative.surfaceOnTouch(event.getPointerId(i), 3, event.getX(i), event.getY(i), System.nanoTime() / 1_000_000);
                     }
                     break;
             }
@@ -124,6 +125,15 @@ public class MainActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         getWindow().setDecorFitsSystemWindows(false);
+
+        // Immersive mode: hide system bars and prevent gesture navigation
+        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        getWindow().getDecorView().setSystemUiVisibility(flags);
 
         view = new QuadSurface(this);
         setContentView(view);

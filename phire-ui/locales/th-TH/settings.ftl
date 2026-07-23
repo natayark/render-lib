@@ -31,3 +31,6 @@ item-touch-debug = Touch debug mode
 item-touch-debug-sub = แสดงจุดที่สัมผัส
 
 load-cali-failed = ไม่สามารถโหลดเสียงได้
+item-show-hp-bar = แสดงแถบ HP
+item-show-judgement-detail = แสดงรายละเอียดการตัดสิน
+item-render-extra = การเรนเดอร์เพิ่มเติม

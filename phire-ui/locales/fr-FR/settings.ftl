@@ -38,3 +38,6 @@ item-touch-debug = Mode de débogage tactile
 item-touch-debug-sub = Afficher les points de contact
 
 load-cali-failed = Échec du chargement de l'audio
+item-show-hp-bar = Barre HP
+item-show-judgement-detail = Détails du jugement
+item-render-extra = Rendu supplémentaire

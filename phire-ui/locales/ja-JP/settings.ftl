@@ -25,3 +25,6 @@ item-opt-sub = パフォーマンスが向上しますが、不正な動作を�
 item-note-size = Note size
 
 load-cali-failed = オーディオの読み込みに失敗しました
+item-show-hp-bar = HP バーを表示
+item-show-judgement-detail = 判定詳細を表示
+item-render-extra = 追加レンダリング

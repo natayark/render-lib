@@ -39,3 +39,6 @@ item-touch-debug = Gỡ lỗi chạm
 item-touch-debug-sub = Hiển thị điểm chạm
 
 load-cali-failed = Tải âm thanh thất bại
+item-show-hp-bar = Hiển thị thanh HP
+item-show-judgement-detail = Hiển thị chi tiết phán đoán
+item-render-extra = Hiển thị nội dung bổ sung

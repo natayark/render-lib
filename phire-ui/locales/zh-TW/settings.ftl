@@ -43,3 +43,6 @@ item-touch-debug = 觸摸調試
 item-touch-debug-sub = 遊玩過程中顯示觸摸點
 
 load-cali-failed = 載入音訊失敗
+item-show-hp-bar = 顯示 HP 血條
+item-show-judgement-detail = 顯示判定詳情
+item-render-extra = 顯示額外內容

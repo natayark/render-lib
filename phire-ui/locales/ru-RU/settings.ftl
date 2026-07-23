@@ -40,3 +40,6 @@ item-touch-debug = Отладка касаний
 item-touch-debug-sub = Точки нажатия отображаются
 
 load-cali-failed = Ошибка загрузки аудио
+item-show-hp-bar = Показать полоску HP
+item-show-judgement-detail = Показать детали судейства
+item-render-extra = Дополнительная отрисовка

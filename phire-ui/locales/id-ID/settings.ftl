@@ -37,3 +37,6 @@ item-speed = Kecepatan
 item-note-size = Ukuran note
 
 load-cali-failed = Gagal memuat audio
+item-show-hp-bar = Tampilkan Bar HP
+item-show-judgement-detail = Tampilkan Detail Penilaian
+item-render-extra = Rendering Tambahan

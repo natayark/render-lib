@@ -27,3 +27,6 @@ item-note-size = Rozmiar nut
 load-cali-failed = Nie załadowano plików audio
 
 item-touch-debug-sub = Pokazuje dotknięcia
+item-show-hp-bar = Pasek HP
+item-show-judgement-detail = Szczegóły oceny
+item-render-extra = Dodatkowe renderowanie
