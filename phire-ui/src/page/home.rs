@@ -273,8 +273,8 @@ impl Page for HomePage {
         let offset = s.gyro_offset;
 
         s.render_fader(ui, |ui, c| {
-            let r = Rect::new(offset.x * 0.4 - 0.9, offset.y * 0.4 - ui.top + 0.1, 1.5, 1.5);
-            ui.fill_rect(r, (*self.character, r, ScaleType::CropCenter, c));
+            let _r = Rect::new(offset.x * 0.4 - 0.9, offset.y * 0.4 - ui.top + 0.1, 1.5, 1.5);
+            // ui.fill_rect(r, (*self.character, r, ScaleType::CropCenter, c));
         });
 
         // play button

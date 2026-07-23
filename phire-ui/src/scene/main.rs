@@ -99,9 +99,9 @@ impl MainScene {
         load_sfx!(UI_BTN_HITSOUND, "button.ogg");
         load_sfx!(UI_SWITCH_SOUND, "switch.ogg");
 
-        let background: SafeTexture = load_texture("background.png").await?.into();
+        let background: SafeTexture = load_texture("background.jpg").await?.into();
 
-        let image = image::load_from_memory(&load_file("background.png").await?).context("Failed to decode image")?;
+        let image = image::load_from_memory(&load_file("background.jpg").await?).context("Failed to decode image")?;
         let background_blur = blur_image(image, 80.)?;
 
         let icon_back: SafeTexture = load_texture("back.png").await?.into();

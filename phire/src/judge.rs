@@ -237,6 +237,14 @@ impl JudgeInner {
     pub fn counts(&self) -> [u32; 4] {
         self.counts
     }
+
+    pub fn early(&self) -> u32 {
+        self.diffs.iter().filter(|it| **it < 0.).count() as u32
+    }
+
+    pub fn late(&self) -> u32 {
+        self.diffs.iter().filter(|it| **it >= 0.).count() as u32
+    }
 }
 
 #[cfg(feature = "closed")]
@@ -311,6 +319,16 @@ impl Judge {
     #[inline]
     pub fn score(&self) -> f64 {
         self.inner.score()
+    }
+
+    #[inline]
+    pub fn early(&self) -> u32 {
+        self.inner.early()
+    }
+
+    #[inline]
+    pub fn late(&self) -> u32 {
+        self.inner.late()
     }
 
     pub(crate) fn on_new_frame() {

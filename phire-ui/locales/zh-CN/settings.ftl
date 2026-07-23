@@ -42,6 +42,8 @@ item-opt-sub = 采用激进的优化策略，提升性能但可能导致部分�
 item-speed = 速度
 item-note-size = 音符大小
 item-render-extra = 显示额外内容 (着色器/特效)
+item-show-hp-bar = 显示 HP 血条
+item-show-judgement-detail = 显示判定详情
 
 item-chart-debug-line = 谱面调试 - 判定线
 item-chart-debug-line-sub = 显示判定线属性
@@ -66,6 +68,6 @@ load-cali-failed = 加载音频失败
 not-combo = 文字过长
 
 about-content =
-  Phire v{ $version }
+  PhiWOW v{ $version }
 
-  Phire 是一款玩法基于 Phigros 的非商业社区音乐游戏，使用 Rust 开发。
+  PhiWOW 是一款玩法基于 Phigros 的非商业社区音乐游戏，使用 Rust 开发。

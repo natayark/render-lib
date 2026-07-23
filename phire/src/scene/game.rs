@@ -595,8 +595,7 @@ impl GameScene {
             let mut text = ui.text(&res.config.combo).size(0.34 * scale_ratio);
             let ct = text.measure().center();
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + ct.y)), Some((0., btm + ct.y)), |ui, color| {
-                if (cfg!(feature = "play") && res.config.autoplay()) || res.config.combo.len() > 50 {
-                    draw_text_aligned(ui, "AUTOPLAY", 0., btm + ct.y, (0.5, 0.5), 0.34 * scale_ratio, Color { a: color.a * c.a, ..color });
+                if res.config.combo.len() > 50 {
                     return;
                 }
                 draw_text_aligned_opt_width(ui, &res.config.combo, 0., btm + ct.y, (0.5, 0.5), 0.34 * scale_ratio, Color { a: color.a * c.a, ..color }, 0.55 * aspect_ratio);
@@ -633,6 +632,65 @@ impl GameScene {
                 );
                 ui.fill_rect(Rect::new(-aspect_ratio + dest - hw, top, hw * 2., height), Color::new(0.95, 0.95, 0.95, color.a * c.a));
             });
+        }
+        // HP bar
+        if res.config.show_hp_bar {
+            let hp = self.judge.accuracy() as f32;
+            let bar_width = 0.015 * aspect_ratio;
+            let bar_height = 2.0;
+            let bar_x = -aspect_ratio;
+            let bar_y = -1.0;
+            let fill_height = bar_height * hp;
+            // Background
+            ui.fill_rect(
+                Rect::new(bar_x, bar_y, bar_width, bar_height),
+                Color::new(0.2, 0.2, 0.2, c.a * 0.8),
+            );
+            // HP fill (from bottom)
+            let hp_color = if hp > 0.6 {
+                Color::new(0.0, 0.8, 0.0, c.a)
+            } else if hp > 0.3 {
+                Color::new(0.8, 0.8, 0.0, c.a)
+            } else {
+                Color::new(0.8, 0.0, 0.0, c.a)
+            };
+            ui.fill_rect(
+                Rect::new(bar_x, bar_y + bar_height - fill_height, bar_width, fill_height),
+                hp_color,
+            );
+        }
+        // Judgement detail
+        if res.config.show_judgement_detail {
+            let counts = self.judge.counts();
+            let early = self.judge.early();
+            let late = self.judge.late();
+            let good = counts[1];
+            let early_good = early.min(good);
+            let late_good = late.min(good.saturating_sub(early_good));
+
+            let detail_x = aspect_ratio - 0.04;
+            let detail_y_start = -0.2;
+            let line_height = 0.06;
+            let text_size = 0.28 * scale_ratio;
+
+            let details = [
+                ("Bad", counts[2], Color::new(1.0, 0.5, 0.0, c.a)),
+                ("EarlyGood", early_good, Color::new(0.5, 0.8, 1.0, c.a)),
+                ("Perfect", counts[0], Color::new(1.0, 1.0, 0.0, c.a)),
+                ("LateGood", late_good, Color::new(0.5, 0.8, 1.0, c.a)),
+                ("Miss", counts[3], Color::new(0.8, 0.2, 0.2, c.a)),
+            ];
+
+            for (i, (label, count, color)) in details.iter().enumerate() {
+                let y = detail_y_start + i as f32 * line_height;
+                let text = format!("{}: {}", label, count);
+                ui.text(&text)
+                    .pos(detail_x, y)
+                    .anchor(1., 0.)
+                    .size(text_size)
+                    .color(*color)
+                    .draw();
+            }
         }
         Ok(())
     }

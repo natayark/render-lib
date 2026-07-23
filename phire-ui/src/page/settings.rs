@@ -546,6 +546,8 @@ struct ChartList {
     speed_slider: Slider,
     size_slider: Slider,
     render_extra_btn: DRectButton,
+    show_hp_bar_btn: DRectButton,
+    show_judgement_detail_btn: DRectButton,
 }
 
 impl ChartList {
@@ -558,6 +560,8 @@ impl ChartList {
             speed_slider: Slider::new(0.1..2.0, 0.05),
             size_slider: Slider::new(0.0..5.0, 0.005),
             render_extra_btn: DRectButton::new(),
+            show_hp_bar_btn: DRectButton::new(),
+            show_judgement_detail_btn: DRectButton::new(),
         }
     }
 
@@ -592,6 +596,14 @@ impl ChartList {
         }
         if self.render_extra_btn.touch(touch, t) {
             config.render_extra ^= true;
+            return Ok(Some(true));
+        }
+        if self.show_hp_bar_btn.touch(touch, t) {
+            config.show_hp_bar ^= true;
+            return Ok(Some(true));
+        }
+        if self.show_judgement_detail_btn.touch(touch, t) {
+            config.show_judgement_detail ^= true;
             return Ok(Some(true));
         }
         Ok(None)
@@ -642,6 +654,14 @@ impl ChartList {
         item! {
             render_title(ui, c, tl!("item-render-extra"), None);
             render_switch(ui, rr, t, c, &mut self.render_extra_btn, config.render_extra);
+        }
+        item! {
+            render_title(ui, c, tl!("item-show-hp-bar"), None);
+            render_switch(ui, rr, t, c, &mut self.show_hp_bar_btn, config.show_hp_bar);
+        }
+        item! {
+            render_title(ui, c, tl!("item-show-judgement-detail"), None);
+            render_switch(ui, rr, t, c, &mut self.show_judgement_detail_btn, config.show_judgement_detail);
         }
         (w, h)
     }
