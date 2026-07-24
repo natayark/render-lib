@@ -143,6 +143,10 @@ pub struct GameScene {
     update_fn: Option<UpdateFn>,
 
     pub touch_points: Vec<(f32, f32)>,
+
+    hp_prev: f32,
+    hp_color_r: f32,
+    hp_color_b: f32,
 }
 
 macro_rules! reset {
@@ -151,6 +155,9 @@ macro_rules! reset {
         $self.judge.reset();
         $self.chart.reset();
         $res.reset();
+        $self.hp_prev = 1.0;
+        $self.hp_color_r = 0.0;
+        $self.hp_color_b = 1.0;
         $self.music.pause()?;
         $self.music.seek_to(0.)?;
         $tm.speed = $res.config.speed as _;
@@ -379,7 +386,7 @@ impl GameScene {
                 .push(Effect::new(0.0..f32::INFINITY, include_str!("fxaa.glsl"), Vec::new(), false).unwrap());
         }
 
-        let judge = Judge::new(&chart);
+        let mut judge = Judge::new(&chart);
 
         let info_offset = info.offset;
         let mut res = Resource::new(
@@ -404,7 +411,8 @@ impl GameScene {
         });
 
         let music = Self::new_music(&mut res)?;
-        Ok(Self {
+        judge.set_hp_duration(res.track_length * 1000.0);
+        let mut game = Self {
             should_exit: false,
             next_scene: None,
 
@@ -439,7 +447,12 @@ impl GameScene {
             update_fn,
 
             touch_points: Vec::new(),
-        })
+
+            hp_prev: 1.0,
+            hp_color_r: 0.0,
+            hp_color_b: 1.0,
+        };
+        Ok(game)
     }
 
     fn new_music(res: &mut Resource) -> Result<Music> {
@@ -635,7 +648,7 @@ impl GameScene {
         }
         // HP bar
         if res.config.show_hp_bar {
-            let hp = self.judge.accuracy() as f32;
+            let hp = self.judge.hp() / 100.0;
             let bar_width = 0.015 * aspect_ratio;
             let bar_height = 2.0;
             let bar_x = -aspect_ratio;
@@ -646,14 +659,19 @@ impl GameScene {
                 Rect::new(bar_x, bar_y, bar_width, bar_height),
                 Color::new(0.2, 0.2, 0.2, c.a * 0.8),
             );
-            // HP fill (from bottom)
-            let hp_color = if hp > 0.6 {
-                Color::new(0.0, 0.8, 0.0, c.a)
-            } else if hp > 0.3 {
-                Color::new(0.8, 0.8, 0.0, c.a)
-            } else {
-                Color::new(0.8, 0.0, 0.0, c.a)
-            };
+            // Direction-based color with smooth transition
+            let blend_speed = 0.15;
+            if hp > self.hp_prev + 0.001 {
+                // Rising → blue
+                self.hp_color_r = (self.hp_color_r - blend_speed).max(0.0);
+                self.hp_color_b = (self.hp_color_b + blend_speed).min(1.0);
+            } else if hp < self.hp_prev - 0.001 {
+                // Falling → red
+                self.hp_color_r = (self.hp_color_r + blend_speed).min(1.0);
+                self.hp_color_b = (self.hp_color_b - blend_speed).max(0.0);
+            }
+            self.hp_prev = hp;
+            let hp_color = Color::new(self.hp_color_r, 0.15, self.hp_color_b, c.a);
             ui.fill_rect(
                 Rect::new(bar_x, bar_y + bar_height - fill_height, bar_width, fill_height),
                 hp_color,
@@ -667,23 +685,37 @@ impl GameScene {
             let good = counts[1];
             let early_good = early.min(good);
             let late_good = late.min(good.saturating_sub(early_good));
+            let avg_early = self.judge.avg_early_delay();
+            let avg_late = self.judge.avg_late_delay();
+            let avg_all = self.judge.avg_all_delay();
 
             let detail_x = aspect_ratio - 0.04;
-            let detail_y_start = -0.2;
             let line_height = 0.06;
             let text_size = 0.28 * scale_ratio;
+            let num_size = 0.24 * scale_ratio;
+            let detail_y_start = -0.2;
 
-            let details = [
-                ("Bad", counts[2], Color::new(1.0, 0.5, 0.0, c.a)),
-                ("EarlyGood", early_good, Color::new(0.5, 0.8, 1.0, c.a)),
-                ("Perfect", counts[0], Color::new(1.0, 1.0, 0.0, c.a)),
-                ("LateGood", late_good, Color::new(0.5, 0.8, 1.0, c.a)),
-                ("Miss", counts[3], Color::new(0.8, 0.2, 0.2, c.a)),
+            // Early delay at top
+            let early_text = format!("{:.1}ms", avg_early * 1000.0);
+            ui.text(&early_text)
+                .pos(detail_x, detail_y_start - line_height)
+                .anchor(1., 0.)
+                .size(num_size)
+                .color(Color::new(0.5, 0.8, 1.0, c.a * 0.7))
+                .draw();
+
+            // Numbers only, from top to bottom: Bad, EarlyGood, Perfect(avg), LateGood, Miss
+            let rows = [
+                (counts[2], Color::new(1.0, 0.5, 0.0, c.a)),
+                (early_good, Color::new(0.5, 0.8, 1.0, c.a)),
+                (counts[0], Color::new(1.0, 1.0, 0.0, c.a)),
+                (late_good, Color::new(0.5, 0.8, 1.0, c.a)),
+                (counts[3], Color::new(0.8, 0.2, 0.2, c.a)),
             ];
 
-            for (i, (label, count, color)) in details.iter().enumerate() {
+            for (i, (count, color)) in rows.iter().enumerate() {
                 let y = detail_y_start + i as f32 * line_height;
-                let text = format!("{}: {}", label, count);
+                let text = format!("{}", count);
                 ui.text(&text)
                     .pos(detail_x, y)
                     .anchor(1., 0.)
@@ -691,6 +723,25 @@ impl GameScene {
                     .color(*color)
                     .draw();
             }
+
+            // Average delay to the left of Perfect (row index 2)
+            let avg_text = format!("{:.1}", avg_all * 1000.0);
+            let perfect_y = detail_y_start + 2 as f32 * line_height;
+            ui.text(&avg_text)
+                .pos(detail_x - 0.08, perfect_y)
+                .anchor(1., 0.)
+                .size(num_size)
+                .color(Color::new(1.0, 1.0, 0.5, c.a * 0.7))
+                .draw();
+
+            // Late delay at bottom
+            let late_text = format!("{:.1}ms", avg_late * 1000.0);
+            ui.text(&late_text)
+                .pos(detail_x, detail_y_start + 5 as f32 * line_height)
+                .anchor(1., 0.)
+                .size(num_size)
+                .color(Color::new(0.5, 0.8, 1.0, c.a * 0.7))
+                .draw();
         }
         Ok(())
     }
@@ -1168,6 +1219,7 @@ impl Scene for GameScene {
                     self.music.seek_to(time as f64)?;
                     self.music.play()?;
                     self.state = State::Playing;
+                    self.judge.set_hp_duration(self.res.track_length * 1000.0);
                 }
                 time
             }
@@ -1246,6 +1298,7 @@ impl Scene for GameScene {
             let angle = GYRO.lock().unwrap().get_angle(&self.res.config);
 
             self.judge.update(&mut self.res, &mut self.chart, &mut self.bad_notes, -angle);
+            self.judge.update_hp(self.res.time * 1000.0);
             self.gl.quad_gl.viewport(None);
         }
         if let Some(update) = &mut self.update_fn {

@@ -146,34 +146,110 @@ pub enum Judgement {
     Miss,
 }
 
+fn get_total_recall(ntc: u32) -> f32 {
+    if ntc < 400 {
+        80.0 + ntc as f32 * 0.2
+    } else if ntc < 600 {
+        32.0 + ntc as f32 * 0.2
+    } else {
+        96.0 + ntc as f32 * 0.08
+    }
+}
+
 #[cfg(not(feature = "closed"))]
 #[derive(Default)]
 pub(crate) struct JudgeInner {
     diffs: Vec<f32>,
+    all_diffs: Vec<f32>,
 
     combo: u32,
     max_combo: u32,
     counts: [u32; 4],
     num_of_notes: u32,
+
+    // HP state (Phigros-style)
+    hp_lasttime: f32,
+    hp_hit_hps: f32,
+    hp_nonhit_hps: f32,
+    hp_duration: f32,
+    hp_single_recall: f32,
+    hp_total_recall: f32,
+    hp_note_count: u32,
+    hp_v16: f32,
+    pub hp: f32,
 }
 
 #[cfg(not(feature = "closed"))]
 impl JudgeInner {
     pub fn new(num_of_notes: u32) -> Self {
+        let total_recall = get_total_recall(num_of_notes);
+        let single_recall = if num_of_notes > 0 { total_recall / num_of_notes as f32 } else { 0.0 };
+        let hp_v16 = if total_recall < 100.0 { 100.0 - total_recall } else { 0.0 };
         Self {
             diffs: Vec::new(),
+            all_diffs: Vec::new(),
 
             combo: 0,
             max_combo: 0,
             counts: [0; 4],
             num_of_notes,
+
+            hp_lasttime: 0.0,
+            hp_hit_hps: 0.0,
+            hp_nonhit_hps: 0.0,
+            hp_duration: 0.0,
+            hp_single_recall: single_recall,
+            hp_total_recall: total_recall,
+            hp_note_count: num_of_notes,
+            hp_v16: hp_v16,
+            hp: 100.0,
         }
+    }
+
+    pub fn set_hp_duration(&mut self, duration: f32) {
+        self.hp_duration = duration;
+    }
+
+    pub fn handle_action(&mut self, action: u32) {
+        match action {
+            0 => self.hp_hit_hps += self.hp_single_recall * 2.0, // Perfect
+            1 => self.hp_hit_hps += self.hp_single_recall,       // Good
+            2 => self.hp_nonhit_hps -= 18.0,                     // Miss
+            _ => {}
+        }
+    }
+
+    pub fn update_hp(&mut self, current_time: f32) {
+        let dt = if self.hp_lasttime < current_time {
+            let d = (current_time - self.hp_lasttime) / 1000.0;
+            self.hp_lasttime = current_time;
+            d
+        } else {
+            0.0
+        };
+        let v6 = 2.0_f32.powf(-dt);
+        let v7 = 2.0_f32.powf(-dt * 0.5);
+        let v16 = (1.0 - v6) * self.hp_hit_hps + (1.0 - v7) * self.hp_nonhit_hps + self.hp_v16;
+        self.hp_hit_hps *= v6;
+        self.hp_nonhit_hps *= v7;
+        let ratio = if self.hp_duration > 0.0 { (current_time / self.hp_duration).min(1.0) } else { 0.0 };
+        let mut new_hp = self.hp_total_recall * (1.0 - ratio) + v16;
+        let mut final_v16 = v16;
+        if new_hp > 100.0 {
+            final_v16 -= new_hp - 100.0;
+            new_hp = 100.0;
+        }
+        self.hp_v16 = final_v16;
+        self.hp = new_hp;
     }
 
     pub fn commit(&mut self, what: Judgement, diff: f32) {
         use Judgement::*;
         if matches!(what, Judgement::Good) {
             self.diffs.push(diff);
+        }
+        if matches!(what, Judgement::Perfect | Judgement::Good) {
+            self.all_diffs.push(diff);
         }
         self.counts[what as usize] += 1;
         match what {
@@ -194,6 +270,17 @@ impl JudgeInner {
         self.max_combo = 0;
         self.counts = [0; 4];
         self.diffs.clear();
+        self.all_diffs.clear();
+
+        let total_recall = get_total_recall(self.hp_note_count);
+        let single_recall = if self.hp_note_count > 0 { total_recall / self.hp_note_count as f32 } else { 0.0 };
+        self.hp_lasttime = 0.0;
+        self.hp_hit_hps = 0.0;
+        self.hp_nonhit_hps = 0.0;
+        self.hp_single_recall = single_recall;
+        self.hp_total_recall = total_recall;
+        self.hp_v16 = if total_recall < 100.0 { 100.0 - total_recall } else { 0.0 };
+        self.hp = 100.0;
     }
 
     pub fn accuracy(&self) -> f64 {
@@ -244,6 +331,20 @@ impl JudgeInner {
 
     pub fn late(&self) -> u32 {
         self.diffs.iter().filter(|it| **it >= 0.).count() as u32
+    }
+
+    pub fn avg_early_delay(&self) -> f32 {
+        let early_diffs: Vec<f32> = self.all_diffs.iter().filter(|it| **it < 0.).copied().collect();
+        if early_diffs.is_empty() { 0.0 } else { early_diffs.iter().sum::<f32>() / early_diffs.len() as f32 }
+    }
+
+    pub fn avg_late_delay(&self) -> f32 {
+        let late_diffs: Vec<f32> = self.all_diffs.iter().filter(|it| **it >= 0.).copied().collect();
+        if late_diffs.is_empty() { 0.0 } else { late_diffs.iter().sum::<f32>() / late_diffs.len() as f32 }
+    }
+
+    pub fn avg_all_delay(&self) -> f32 {
+        if self.all_diffs.is_empty() { 0.0 } else { self.all_diffs.iter().sum::<f32>() / self.all_diffs.len() as f32 }
     }
 }
 
@@ -304,6 +405,12 @@ impl Judge {
     pub fn commit(&mut self, t: f32, what: Judgement, line_id: u32, note_id: u32, diff: f32) {
         self.judgements.borrow_mut().push((t, line_id, note_id, Ok(what)));
         self.inner.commit(what, diff);
+        let action = match what {
+            Judgement::Perfect => 0,
+            Judgement::Good => 1,
+            Judgement::Miss | Judgement::Bad => 2,
+        };
+        self.inner.handle_action(action);
     }
 
     #[inline]
@@ -329,6 +436,38 @@ impl Judge {
     #[inline]
     pub fn late(&self) -> u32 {
         self.inner.late()
+    }
+
+    #[inline]
+    pub fn avg_early_delay(&self) -> f32 {
+        self.inner.avg_early_delay()
+    }
+
+    #[inline]
+    pub fn avg_late_delay(&self) -> f32 {
+        self.inner.avg_late_delay()
+    }
+
+    #[inline]
+    pub fn avg_all_delay(&self) -> f32 {
+        self.inner.avg_all_delay()
+    }
+
+    #[inline]
+    pub fn hp(&self) -> f32 {
+        self.inner.hp
+    }
+
+    pub fn set_hp_duration(&mut self, duration: f32) {
+        self.inner.set_hp_duration(duration);
+    }
+
+    pub fn handle_action(&mut self, action: u32) {
+        self.inner.handle_action(action);
+    }
+
+    pub fn update_hp(&mut self, current_time: f32) {
+        self.inner.update_hp(current_time);
     }
 
     pub(crate) fn on_new_frame() {
